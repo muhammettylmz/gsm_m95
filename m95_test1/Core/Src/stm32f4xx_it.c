@@ -56,10 +56,12 @@
 
 /* External variables --------------------------------------------------------*/
 extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
 extern unsigned char rxRaw[2048];
 extern unsigned char rxData;
 extern uint8_t bufferCnt;
+extern uint8_t buttonPressed;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -215,17 +217,37 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 1 */
 }
 
+/**
+  * @brief This function handles USART3 global interrupt.
+  */
+void USART3_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART3_IRQn 0 */
+
+  /* USER CODE END USART3_IRQn 0 */
+  HAL_UART_IRQHandler(&huart3);
+  /* USER CODE BEGIN USART3_IRQn 1 */
+
+  /* USER CODE END USART3_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(huart);
-  /* NOTE: This function should not be modified, when the callback is needed,
-           the HAL_UART_RxCpltCallback could be implemented in the user file
-   */
   if(huart->Instance == huart2.Instance){
 	  rxRaw[bufferCnt++] = rxData;
 	  HAL_UART_Receive_IT(&huart2, &rxData, 1);
   }
+  else if(huart->Instance == huart3.Instance){
+	  rxRaw[bufferCnt++] = rxData;
+	  HAL_UART_Receive_IT(&huart3, &rxData, 1);
+  }
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin == B1_Pin){
+		buttonPressed = 1;
+	}
 }
 /* USER CODE END 1 */

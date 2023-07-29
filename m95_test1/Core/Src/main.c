@@ -41,19 +41,24 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 unsigned char rxRaw[2048];
 unsigned char rxData;
 uint8_t bufferCnt;
+
+uint8_t buttonPressed;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void powerOnM95(void);
+void checkButton(uint8_t* btn, uint8_t* rls);
 void checkGSMRxBuffer(void);
 /* USER CODE END PFP */
 
@@ -91,8 +96,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart2, &rxData, 1);
+  HAL_UART_Receive_IT(&huart3, &rxData, 1);
+  //HAL_UART_Receive_IT(&huart2, &rxData, 1);
 
 //  HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_SET);
 //  while(HAL_GPIO_ReadPin(STAT_M95_GPIO_Port, STAT_M95_Pin)!= GPIO_PIN_SET){
@@ -100,6 +107,8 @@ int main(void)
 //  }
 //  HAL_Delay(10);
 //  HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_RESET);
+  	 uint8_t btnState;
+  	 uint8_t isRls = 1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,6 +119,11 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  powerOnM95();
+	  checkButton(&btnState , &isRls);
+//	  if(btnState && isRls){
+//		  HAL_UART_Transmit(&huart3, (uint8_t*)"AT\r\n", 4 , 50);
+//	  }
+//	  HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
@@ -182,7 +196,7 @@ static void MX_USART2_UART_Init(void)
   huart2.Init.Parity = UART_PARITY_NONE;
   huart2.Init.Mode = UART_MODE_TX_RX;
   huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_8;
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     Error_Handler();
@@ -190,6 +204,39 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_8;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
 
 }
 
@@ -252,7 +299,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
@@ -342,6 +389,45 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void checkButton(uint8_t* btn , uint8_t* rls){
+	GPIO_PinState state = GPIO_PIN_RESET;
+	//btn pressed
+	state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+	if(state == GPIO_PIN_SET){
+		HAL_Delay(2);
+		state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+		if(state == GPIO_PIN_SET){
+			HAL_Delay(5);
+			state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+			if(state == GPIO_PIN_SET){
+				if(*btn == 0){
+					*rls = 1;
+				}
+				*btn = 1;
+				return;
+			}
+		}
+	}
+
+	//btn realesed
+	if(state == GPIO_PIN_RESET){
+		HAL_Delay(2);
+		state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+		if(state == GPIO_PIN_RESET){
+			HAL_Delay(5);
+			state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+			if(state == GPIO_PIN_RESET){
+				if(*btn == 1){
+					*rls = 1;
+				}
+				*btn = 0;
+				return;
+			}
+		}
+	}
+
+}
+
 void powerOnM95(void){
 	volatile GPIO_PinState m95StatState = GPIO_PIN_RESET;
 	// m95 power on with pwrkey pin high until status pin high level

@@ -1,7 +1,9 @@
-../Core/Src/main.c:69:5:main	1
-../Core/Src/main.c:121:6:SystemClock_Config	3
-../Core/Src/main.c:168:13:MX_USART2_UART_Init	2
-../Core/Src/main.c:201:13:MX_GPIO_Init	1
-../Core/Src/main.c:345:6:powerOnM95	2
-../Core/Src/main.c:358:6:checkGSMRxBuffer	2
-../Core/Src/main.c:370:6:Error_Handler	1
+../Core/Src/main.c:74:5:main	1
+../Core/Src/main.c:135:6:SystemClock_Config	3
+../Core/Src/main.c:182:13:MX_USART2_UART_Init	2
+../Core/Src/main.c:215:13:MX_USART3_UART_Init	2
+../Core/Src/main.c:248:13:MX_GPIO_Init	1
+../Core/Src/main.c:392:6:checkButton	9
+../Core/Src/main.c:431:6:powerOnM95	2
+../Core/Src/main.c:444:6:checkGSMRxBuffer	2
+../Core/Src/main.c:456:6:Error_Handler	1

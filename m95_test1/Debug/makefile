@@ -60,8 +60,8 @@ all: main-build
 main-build: m95_test1.elf secondary-outputs
 
 # Tool invocations
-m95_test1.elf m95_test1.map: $(OBJS) $(USER_OBJS) C:\Users\muham\STM32CubeIDE\workspace_1.13.0\m95_test1\STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "m95_test1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\muham\STM32CubeIDE\workspace_1.13.0\m95_test1\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="m95_test1.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+m95_test1.elf m95_test1.map: $(OBJS) $(USER_OBJS) C:\Users\muham\ws\m95_vehicle\firmware\gsm_m95\m95_test1\STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "m95_test1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\muham\ws\m95_vehicle\firmware\gsm_m95\m95_test1\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="m95_test1.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
