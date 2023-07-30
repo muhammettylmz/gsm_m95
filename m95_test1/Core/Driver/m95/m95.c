@@ -14,6 +14,7 @@ uint8_t rxGSMRaw[1024];
 uint8_t rxGSMByte;
 uint16_t rxBufferCnt;
 uint32_t m_systick;
+uint64_t m_timerCnt;
 
 /**
  * @brief Copy pointer GSM Module uart handle
@@ -96,6 +97,15 @@ void GSM_Virtual_UART_RxCpltCallback(void *uart) {
 		rxGSMRaw[rxBufferCnt++] = rxGSMByte;
 		GSM_Virtual_Rx_IT();
 	}
+}
+
+/**
+ * @brief Virtual Timer elapsed callback function
+ * @retval None
+ */
+void GSM_Virtual_TIM_ElapsedCallback(void* tim){
+	(void)tim;
+	m_timerCnt++;
 }
 
 /**
