@@ -22,6 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "m95.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,9 +59,9 @@
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
-extern unsigned char rxRaw[2048];
+extern unsigned char rxRaw[128];
 extern unsigned char rxData;
-extern uint8_t bufferCnt;
+extern uint8_t rxCnt;
 extern uint8_t buttonPressed;
 /* USER CODE END EV */
 
@@ -191,7 +192,7 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-
+  GSM_Virtual_Systick();
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -235,13 +236,15 @@ void USART3_IRQHandler(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if(huart->Instance == huart2.Instance){
-	  rxRaw[bufferCnt++] = rxData;
+	  rxRaw[rxCnt++] = rxData;
 	  HAL_UART_Receive_IT(&huart2, &rxData, 1);
   }
-  else if(huart->Instance == huart3.Instance){
-	  rxRaw[bufferCnt++] = rxData;
-	  HAL_UART_Receive_IT(&huart3, &rxData, 1);
-  }
+
+  GSM_Virtual_UART_RxCpltCallback(huart);
+//  else if(huart->Instance == huart3.Instance){
+//	  rxGSMBuffer[bufferCnt++] = rxGSMData;
+//	  HAL_UART_Receive_IT(&huart3, &rxGSMData, 1);
+//  }
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)

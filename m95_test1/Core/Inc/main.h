@@ -129,7 +129,7 @@ void Error_Handler(void);
 #define MEMS_INT2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
-
+extern UART_HandleTypeDef huart3;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
