@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "m95.h"
+#include "mqtt.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -194,6 +195,7 @@ void SysTick_Handler(void)
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
   GSM_Virtual_Systick();
+  MQTT_Virtual_Systick_Handler();
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -272,5 +274,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 // ~100us = prescaler * counterperiod / Clock
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	GSM_Virtual_TIM_ElapsedCallback(htim);
+	MQTT_Virtual_TIM_ElapsedCallback(htim);
 }
 /* USER CODE END 1 */

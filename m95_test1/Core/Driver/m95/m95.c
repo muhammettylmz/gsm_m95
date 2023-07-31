@@ -16,6 +16,11 @@ uint16_t rxBufferCnt;
 uint32_t m_systick;
 uint64_t m_timerCnt;
 
+//MQTT SSL cert and keys
+uint8_t sslCA[1024];
+uint8_t sslCC[1024];
+uint8_t sslCK[1024];
+
 /**
  * @brief Copy pointer GSM Module uart handle
  * @retval None
@@ -43,7 +48,8 @@ void powerOn(void) {
  * @retval None
  */
 void moduleConfig(void) {
-
+	// ATE<value> --> value = 0 echo mode off , value = 1 echo mode on
+	// AT+CMEE=2 --> error code with string type
 }
 
 /**
