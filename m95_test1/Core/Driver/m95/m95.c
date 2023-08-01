@@ -122,3 +122,13 @@ void GSM_Virtual_Systick(void) {
 	m_systick++;
 }
 
+/*
+  SMS
+  AT+CMGF=1 //Set SMS message format as text mode
+	OK
+  AT+CSCS="GSM" //Set character set as GSM which is used by the TE
+	OK
+  AT+CMGW="phone number"
+  > This is a test from Quectel //Enter in text, 0x1A <CTRL+Z> write message, 0x1B<ESC> quits  without sending
+
+ * */
