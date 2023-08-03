@@ -1,0 +1,111 @@
+/****03.08.2023 mqtt ayarları ile başarılı bir şekilde aws iot core publish yapıldı.***/
+at+cpin?
++CPIN: READY
+
+OK
+AT+QIREGAPP
+OK
+AT+QIACT
+OK
+
+AT+CGATT?
++CGATT: 1
+
+OK
+AT+QIREGAPP=?
++QIREGAPP: "APN","USER","PWD"
+
+OK
+AT+QIREGAPP?
++QIREGAPP: "CMNET","",""
+
+OK
+
+AT+QIDNSIP=?
++QIDNSIP: (0-IP ADDR,1-DOMAIN NAME)
+
+OK
+AT+QIDNSIP=1
+OK
+AT+QMTCFG="SSL",0,1,2
+OK
+
+// amazon client private
+at+qsecwrite="RAM:clientkey.pem",size,timeout
+connect
+input size
++QSECWRITE: size,checksum
+
+// amazon client cert
+at+qsecwrite="RAM:clientcert.pem",size,timeout
+connect
+input size
++QSECWRITE: size,checksum
+
+// amazon root ca
+at+qsecwrite="RAM:cacert.pem",size,timeout
+connect
+input size
++QSECWRITE: size,checksum
+
+
+AT+QSSLCFG="cacert",2,"RAM:cacert.pem"
+OK
+
+AT+QSSLCFG="clientcert",2,"RAM:clientcert.pem"
+OK
+AT+QSSLCFG="clientkey",2,"RAM:clientkey.pem"
+OK
+AT+QSSLCFG="seclevel",2,2
+OK
+AT+QSSLCFG="sslversion",2,4
+OK
+AT+QSSLCFG="ciphersuite",2,"0xFFFF"
+OK
+AT+QSSLCFG="ignorertctime",1
+OK
+
+AT+QMTOPEN=0,"a16f5x7vu3zfui-ats.iot.eu-central-1.amazonaws.com",8883
+OK
+
++QMTOPEN: 0,0
+AT+QMTCONN=0,"yehhep"
+OK
+
++QMTCONN: 0,0,0
+
+AT+QMTPUB=0,0,0,0,"yehhep/542/status"
+> {"working": true,"km": 542,"speed": 442,"fuel": 23,"location": {"latitude": 21.12345,"longitude": -88.54321}}
+
+OK
+
++QMTPUB: 0,0,0
+AT+QMTPUB=0,0,0,0,"yehhep/541/status"
+> {"working": true,"km": 541,"speed": 442,"fuel": 23,"location": {"latitude": 21.12345,"longitude": -88.54321}}
+
+OK
+
++QMTPUB: 0,0,0
+
+AT+QMTPUB=0,0,0,0,"yehhep/555/status"
+> {"working": true,"km": 555,"speed": 442,"fuel": 23,"location": {"latitude": 21.12345,"longitude": -88.54321}}
+
+OK
+
++QMTPUB: 0,0,0
+AT+QMTPUB=0,0,0,0,"yehhep/555/status"
+> {"working": true,"km": 555,"speed": 442,"fuel": 23,"location": {"latitude": 21.12345,"longitude": -88.54321}}
+
+OK
+
++QMTPUB: 0,0,0
+AT+QMTPUB=0,0,0,0,"yehhep/545/status"
+> {"working": true,"km": 545,"speed": 442,"fuel": 23,"location": {"latitude": 21.12345,"longitude": -88.54321}}
+
+OK
+
++QMTPUB: 0,0,0
+
+AT+QMTDISC=0
+
+OK
