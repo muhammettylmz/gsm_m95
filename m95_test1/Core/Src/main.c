@@ -108,12 +108,10 @@ int main(void) {
 	powerOn();
 	HAL_Delay(2000);
 
-	sendATCommand((const uint8_t*)"AT+QSECDEL=\"RAM:cacert.pem\"\r\n");
+	sendATCommand((const uint8_t*) "AT+QSECDEL=\"RAM:cacert.pem\"\r\n");
 	HAL_Delay(1000);
 	// gsm module power on
 	moduleConfig();
-
-
 
 	/* USER CODE END 2 */
 
@@ -159,8 +157,8 @@ void SystemClock_Config(void) {
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 	RCC_OscInitStruct.PLL.PLLM = 8;
-	RCC_OscInitStruct.PLL.PLLN = 50;
-	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+	RCC_OscInitStruct.PLL.PLLN = 64;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
 	RCC_OscInitStruct.PLL.PLLQ = 7;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
 		Error_Handler();
@@ -168,14 +166,13 @@ void SystemClock_Config(void) {
 
 	/** Initializes the CPU, AHB and APB buses clocks
 	 */
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) {
 		Error_Handler();
 	}
 }
@@ -199,15 +196,14 @@ static void MX_TIM6_Init(void) {
 	htim6.Instance = TIM6;
 	htim6.Init.Prescaler = 1;
 	htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim6.Init.Period = 2500;
+	htim6.Init.Period = 3200;
 	htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 	if (HAL_TIM_Base_Init(&htim6) != HAL_OK) {
 		Error_Handler();
 	}
 	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig)
-			!= HAL_OK) {
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK) {
 		Error_Handler();
 	}
 	/* USER CODE BEGIN TIM6_Init 2 */
@@ -300,13 +296,10 @@ static void MX_GPIO_Init(void) {
 	HAL_GPIO_WritePin(GPIOE, CS_I2C_SPI_Pin | PWRKEY_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin,
-			GPIO_PIN_SET);
+	HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_SET);
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOD,
-			LD4_Pin | LD3_Pin | LD5_Pin | LD6_Pin | Audio_RST_Pin,
-			GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD, LD4_Pin | LD3_Pin | LD5_Pin | LD6_Pin | Audio_RST_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pins : CS_I2C_SPI_Pin PWRKEY_Pin */
 	GPIO_InitStruct.Pin = CS_I2C_SPI_Pin | PWRKEY_Pin;

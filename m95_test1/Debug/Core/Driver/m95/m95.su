@@ -8,7 +8,7 @@
 ../Core/Driver/m95/m95.c:64:9:getRecvTimeoutState	4	static
 ../Core/Driver/m95/m95.c:72:6:moveUart	16	static
 ../Core/Driver/m95/m95.c:80:6:powerOn	8	static
-../Core/Driver/m95/m95.c:94:6:moduleConfig	24	static
+../Core/Driver/m95/m95.c:94:6:moduleConfig	16	static
 ../Core/Driver/m95/m95.c:195:6:monitoringPowerOff	8	static
 ../Core/Driver/m95/m95.c:207:6:clearUartBuffer	8	static
 ../Core/Driver/m95/m95.c:217:9:sendATCommand	24	static

@@ -23,8 +23,46 @@
 #include "main.h"
 #include "m95.h"
 
+#define GSM_TCP_IP_STACK_START_FMT 	(const uint8_t*)"AT+QIREGAPP\r\n"
+#define GPRS_ACTIVE_CTX_FMT			(const uint8_t*)"AT+QIACT\r\n"
+
+#define MQTT_CFG_FMT 				(const uint8_t*)"AT+QMTCFG=\"SSL\",0,1,2\r\n"
+#define SSLCFG_CA_FMT 				(const uint8_t*)"AT+QSSLCFG=\"cacert\",2,\"RAM:cacert.pem\"\r\n"
+#define SSLCFG_CC_FMT 				(const uint8_t*)"AT+QSSLCFG=\"clientcert\",2,\"RAM:clientcert.pem\"\r\n"
+#define SSLCFG_CK_FMT 				(const uint8_t*)"AT+QSSLCFG=\"clientkey\",2,\"RAM:clientkey.pem\"\r\n"
+#define SSLCFG_SECLEVL_FMT 			(const uint8_t*)"AT+QSSLCFG=\"seclevel\",2,2\r\n"
+#define SSLCFG_SSLVER_FMT 			(const uint8_t*)"AT+QSSLCFG=\"sslversion\",2,4\r\n"
+#define SSLCFG_CHIPHERSUIT_FMT  	(const uint8_t*)"AT+QSSLCFG=\"ciphersuite\",2,\"0xFFFF\"\r\n"
+#define SSLCFG_IGNRRTCTIME_FMT  	(const uint8_t*)"AT+QSSLCFG=\"ignorertctime\",1\r\n"
+
+#define SECDEL_CA_FMT 				(const uint8_t*)"AT+QSECDEL=\"RAM:cacert.pem\"\r\n"
+#define SECDEL_CC_FMT 				(const uint8_t*)"AT+QSECDEL=\"RAM:clientcert.pem\"\r\n"
+#define SECDEL_CK_FMT 				(const uint8_t*)"AT+QSECDEL=\"RAM:clientkey.pem\"\r\n"
+
+#define SECWRITE_CA_FMT 			(const uint8_t*)"AT+QSECWRITE=\"RAM:cacert.pem\",1188,100\r\n"
+#define SECWRITE_CC_FMT 			(const uint8_t*)"AT+QSECWRITE=\"RAM:clientcert.pem\",1220,100\r\n"
+#define SECWRITE_CK_FMT 			(const uint8_t*)"AT+QSECWRITE=\"RAM:clientkey.pem\",1679,100\r\n"
+
+#define MQTT_OPEN_FMT				(const uint8_t*)"AT+QMTOPEN=0,\"a16f5x7vu3zfui-ats.iot.eu-central-1.amazonaws.com\",8883\r\n"
+#define MQTT_OPEN_SUCCESS_FMT       (uint8_t*)"+QMTOPEN: 0,0" //75 saniye beklemeli olabilir. datasheet e bak
+
+#define MQTT_CLIENT_CONN_FMT		(const uint8_t*)"AT+QMTCONN=0,\"yehhep\""
+#define MQTT_CL_CONN_SUCCESS_FMT 	(uint8_t*)"+QMTCONN: 0,0,0"
+
+// %s yerine sprintf ile ilgili id girilmesi lazım
+#define MQTT_PUB_ST_TOPIC_FMT		(const uint8_t*)"AT+QMTPUB=0,0,0,0,\"yehhep/%d/status\"\r\n"
+#define MQTT_PUB_SUCCESS_FMT 		(uint8_t*)"+QMTPUB: 0,0,0"
+
+#define PUB_MSG_JSON_FMT 			(const uint8_t*)"{\"working\":%s,\"km\":%d,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%0.6f,\"longitude\":%0.6f}}"
+
+unsigned char pubMessage[512];
+
 uint32_t mqtt_systick;
 uint64_t mqtt_timer_cnt;
+
+uint32_t getMqttSystick(void) {
+	return mqtt_systick;
+}
 
 /**
  * @brief MQTT init
@@ -74,6 +112,84 @@ void mqttInit(void) {
 //	AT+QMTOPEN=0,"aws url",port
 	//OK
 	//+QMTOPEN: 0,0
+}
+
+/**
+ * @brief Delete cert and key in RAM
+ * @retval 0 is success, 1 is others
+ */
+uint8_t deleteCertKey(void) {
+#define DEL_CACERT			0
+#define DEL_CACERT_WAIT 	1
+#define DEL_CCCERT			2
+#define DEL_CCCERT_WAIT 	3
+#define DEL_CKCERT			4
+#define DEL_CKCERT_WAIT 	5
+
+	uint8_t whileBreak = 1;
+	uint8_t state = DEL_CACERT;
+	uint32_t prevtimeout = getMqttSystick();
+	uint8_t retry = 0;
+	while (whileBreak) {
+		switch (state) {
+		case DEL_CACERT: {
+			if (!sendATCommand(SECDEL_CA_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case DEL_CACERT_WAIT: {
+			if (getRecvCompleted()
+					&& (findATCommandResp((uint8_t*) "OK") || findATCommandResp((uint8_t*) "ERROR"))) {
+				state++;
+			}
+			break;
+		}
+		case DEL_CCCERT: {
+			if (!sendATCommand(SECDEL_CC_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case DEL_CCCERT_WAIT: {
+			if (getRecvCompleted()
+					&& (findATCommandResp((uint8_t*) "OK") || findATCommandResp((uint8_t*) "ERROR"))) {
+				state++;
+			}
+			break;
+		}
+		case DEL_CKCERT: {
+			if (!sendATCommand(SECDEL_CK_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case DEL_CKCERT_WAIT: {
+			if (getRecvCompleted()
+					&& (findATCommandResp((uint8_t*) "OK") || findATCommandResp((uint8_t*) "ERROR"))) {
+				state++;
+			}
+			break;
+		}
+		default:
+			whileBreak = 0;
+		break;
+		}
+
+		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
+		if ((getMqttSystick() - prevtimeout) >= 400 && retry < 3) {
+			state = 0;
+			retry++;
+		}
+		else if (retry >= 3) {
+			whileBreak = 0;
+			// config module error
+		}
+		else {
+			HAL_Delay(5);
+		}
+	}
+	return 0;
 }
 
 /**

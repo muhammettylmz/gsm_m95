@@ -9,8 +9,13 @@
 #define DRIVER_MQTT_CERT_H_
 
 
+
 extern const unsigned char awsRootCA1[1188];
 extern const unsigned char clientCert[1220];
 extern const unsigned char clientPrivateKey[1679];
+
+#define CHECKSUM_CA  0x2d13
+#define CHECKSUM_CC  0x2f6c
+#define CHECKSUM_CK  0x013b
 
 #endif /* DRIVER_MQTT_CERT_H_ */

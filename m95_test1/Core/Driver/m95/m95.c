@@ -97,10 +97,10 @@ void moduleConfig(void) {
 #define ECHO_MODE_WAIT 1
 #define STRING_TYPE 2
 #define STRING_TYPE_WAIT 3
-#define test_secwrite 4
-#define test_secwrite_wait 5
-#define test_secwrite_file_write 6
-#define test_secwrite_file_write_wait 7
+//#define test_secwrite 4
+//#define test_secwrite_wait 5
+//#define test_secwrite_file_write 6
+//#define test_secwrite_file_write_wait 7
 
 	uint8_t whileState = 1;
 	uint8_t state = ECHO_MODE;
@@ -108,7 +108,7 @@ void moduleConfig(void) {
 	uint32_t prevtimeout = getSystickCnt();
 	uint8_t retry = 0;
 
-	HAL_StatusTypeDef err = HAL_OK;
+//	HAL_StatusTypeDef err = HAL_OK;
 
 	while (whileState) {
 		switch (state) {
@@ -136,7 +136,7 @@ void moduleConfig(void) {
 			}
 			break;
 		}
-		case test_secwrite: {
+		/*case test_secwrite: {
 			if (!sendATCommand((const uint8_t*) "AT+QSECWRITE=\"RAM:cacert.pem\",1188,200\r\n")) {
 				state++;
 			}
@@ -169,7 +169,7 @@ void moduleConfig(void) {
 				}
 			}
 			break;
-		}
+		}*/
 		default:
 			whileState = 0;
 			break;
