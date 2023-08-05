@@ -101,14 +101,20 @@ int main(void) {
 	MX_USART3_UART_Init();
 	MX_TIM6_Init();
 	/* USER CODE BEGIN 2 */
+	HAL_TIM_Base_Start_IT(&htim6);
 
 	moveUart(&huart3);
 	GSM_Virtual_Rx_IT();
 	powerOn();
+	HAL_Delay(2000);
+
+	sendATCommand((const uint8_t*)"AT+QSECDEL=\"RAM:cacert.pem\"\r\n");
+	HAL_Delay(1000);
 	// gsm module power on
 	moduleConfig();
 
-	HAL_TIM_Base_Start_IT(&htim6);
+
+
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -119,10 +125,14 @@ int main(void) {
 		/* USER CODE BEGIN 3 */
 		monitoringPowerOff();
 		checkButton(&btnState, &isRls);
-		if (btnState && isRls) {
-			sendATCommand((const uint8_t*) "AT\r\n");
-		}
-		HAL_Delay(100);
+//		if (btnState && isRls) {
+//			sendATCommand((const uint8_t*) "AT\n");
+//			HAL_Delay(100);
+//			if(findATCommandResp((uint8_t*)"OK")){
+//				HAL_Delay(10);
+//			}
+//		}
+		HAL_Delay(2);
 	}
 	/* USER CODE END 3 */
 }

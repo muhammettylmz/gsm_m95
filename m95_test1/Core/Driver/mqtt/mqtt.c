@@ -21,14 +21,25 @@
  */
 #include "mqtt.h"
 #include "main.h"
+#include "m95.h"
 
 uint32_t mqtt_systick;
 uint64_t mqtt_timer_cnt;
+
 /**
  * @brief MQTT init
  * @retval None
  */
-void mqttInit(void){
+void mqttInit(void) {
+
+	/* Start TCPIP task */
+	//AT+QIREGAPP
+	sendATCommand((const uint8_t*) "AT+QIREGAPP\r\n");
+
+	/* Active the GPRS context */
+	//AT+QIACT
+	sendATCommand((const uint8_t*) "AT+QIACT\r\n");
+
 //	//Configure MQTT session into SSL mode.
 //	AT+QMTCFG="SSL",0,1,2
 //
@@ -61,15 +72,19 @@ void mqttInit(void){
 //
 //	//Start MQTT SSL connection.
 //	AT+QMTOPEN=0,"aws url",port
+	//OK
+	//+QMTOPEN: 0,0
 }
 
 /**
  * @brief connect MQTT broker server
  * @retval 0 is connect, others errors
  */
-uint8_t connectBroker(uint8_t* topic){
+uint8_t connectBroker(uint8_t *client) {
 	//Connect to MQTT server.
-//		AT+QMTCONN=0,"topic"
+//		AT+QMTCONN=0,"client"
+	// OK
+	// +QMTCONN: 0,0,0
 	return 0;
 }
 
@@ -77,33 +92,31 @@ uint8_t connectBroker(uint8_t* topic){
  * @brief disconnect MQTT broker server
  * @retval 0 is disconnect, others errors
  */
-uint8_t disconnectBroker(void){
+uint8_t disconnectBroker(void) {
 	//Disconnect a client from MQTT server.
 //		AT+QMTDISC=0
 	return 0;
 }
 
 /**
- * @brief send message MQTT topic
+ * @brief send message MQTT topic,value is json format
  * @retval 0 is success, others errors
  */
-uint8_t sendTopic(uint8_t* topic, uint8_t* value){
+uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value) {
 	//Publish messages.
-//		AT+QMTPUB=0,1,1,0,"$aws/topic/value"
+//		AT+QMTPUB=0,1,1,0,"topic"
+	// > value ctrl+z(0x1A);
+	//OK
+	//+QMTPUB: 0,0,0
 	return 0;
 }
 
-
-void MQTT_Virtual_Systick_Handler(void){
+void MQTT_Virtual_Systick_Handler(void) {
 	mqtt_systick++;
 }
 
-void MQTT_Virtual_TIM_ElapsedCallback(void* tim){
-	(void)tim;
+void MQTT_Virtual_TIM_ElapsedCallback(void *tim) {
+	(void) tim;
 	mqtt_timer_cnt++;
 }
-
-
-
-
 
