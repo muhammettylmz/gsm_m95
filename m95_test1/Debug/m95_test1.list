@@ -31,23 +31,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
  13 .comment      00000043  00000000  00000000  0002003c  2**0
                   CONTENTS, READONLY
- 14 .debug_info   0000d9a3  00000000  00000000  0002007f  2**0
+ 14 .debug_info   0000db41  00000000  00000000  0002007f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_abbrev 000020af  00000000  00000000  0002da22  2**0
+ 15 .debug_abbrev 0000214f  00000000  00000000  0002dbc0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_aranges 00000d30  00000000  00000000  0002fad8  2**3
+ 16 .debug_aranges 00000d48  00000000  00000000  0002fd10  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_rnglists 00000a4d  00000000  00000000  00030808  2**0
+ 17 .debug_rnglists 00000a61  00000000  00000000  00030a58  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_macro  00021301  00000000  00000000  00031255  2**0
+ 18 .debug_macro  0002135c  00000000  00000000  000314b9  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_line   0000f76d  00000000  00000000  00052556  2**0
+ 19 .debug_line   0000f966  00000000  00000000  00052815  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_str    000cb36e  00000000  00000000  00061cc3  2**0
+ 20 .debug_str    000cb4c4  00000000  00000000  0006217b  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_frame  00003744  00000000  00000000  0012d034  2**2
+ 21 .debug_frame  000037b0  00000000  00000000  0012d640  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_line_str 00000067  00000000  00000000  00130778  2**0
+ 22 .debug_line_str 00000067  00000000  00000000  00130df0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -489,11 +489,11 @@ uint8_t checkRecvTimeout(void) {
  80005a2:	701a      	strb	r2, [r3, #0]
 		stopRecvTimeout();
  80005a4:	f7ff ffd8 	bl	8000558 <stopRecvTimeout>
-		return 1; // timeout
+		return 1;  // timeout
  80005a8:	2301      	movs	r3, #1
  80005aa:	e000      	b.n	80005ae <checkRecvTimeout+0x36>
 	}
-	return 0; // not timeout
+	return 0;  // not timeout
  80005ac:	2300      	movs	r3, #0
 }
  80005ae:	4618      	mov	r0, r3
@@ -696,15 +696,15 @@ void moduleConfig(void) {
 			}
 			break;
  80006ce:	e008      	b.n	80006e2 <moduleConfig+0xae>
-				}
-			}
-			break;
-		}*/
+			 }
+			 }
+			 break;
+			 }*/
 		default:
 			whileState = 0;
  80006d0:	2300      	movs	r3, #0
  80006d2:	71fb      	strb	r3, [r7, #7]
-			break;
+		break;
  80006d4:	e006      	b.n	80006e4 <moduleConfig+0xb0>
 			break;
  80006d6:	bf00      	nop
@@ -738,7 +738,8 @@ void moduleConfig(void) {
  8000700:	3301      	adds	r3, #1
  8000702:	717b      	strb	r3, [r7, #5]
  8000704:	e008      	b.n	8000718 <moduleConfig+0xe4>
-		} else if (retry >= 3) {
+		}
+		else if (retry >= 3) {
  8000706:	797b      	ldrb	r3, [r7, #5]
  8000708:	2b02      	cmp	r3, #2
  800070a:	d902      	bls.n	8000712 <moduleConfig+0xde>
@@ -747,7 +748,8 @@ void moduleConfig(void) {
  800070e:	71fb      	strb	r3, [r7, #7]
  8000710:	e002      	b.n	8000718 <moduleConfig+0xe4>
 			// config module error
-		} else {
+		}
+		else {
 			HAL_Delay(5);
  8000712:	2005      	movs	r0, #5
  8000714:	f000 fe18 	bl	8001348 <HAL_Delay>
@@ -756,7 +758,7 @@ void moduleConfig(void) {
  800071a:	2b00      	cmp	r3, #0
  800071c:	d197      	bne.n	800064e <moduleConfig+0x1a>
 		}
-	} // while end
+	}  // while end
 }
  800071e:	bf00      	nop
  8000720:	bf00      	nop
@@ -788,7 +790,8 @@ void monitoringPowerOff(void) {
  8000748:	2110      	movs	r1, #16
  800074a:	4805      	ldr	r0, [pc, #20]	; (8000760 <monitoringPowerOff+0x2c>)
  800074c:	f001 f978 	bl	8001a40 <HAL_GPIO_WritePin>
-	} else {
+	}
+	else {
 		HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_RESET);
 	}
 }
@@ -970,7 +973,7 @@ void GSM_Virtual_UART_RxCpltCallback(void *uart) {
  800085c:	20000030 	.word	0x20000030
 
 08000860 <GSM_Virtual_TIM_ElapsedCallback>:
-
+}
 /**
  * @brief Virtual Timer elapsed callback function, ~100us
  * @retval None

@@ -10,7 +10,6 @@
 #include <string.h>
 #include "mqtt.h"
 
-
 /*timer cnt ~100us de bir artacak şekilde ayarlandı*/
 #define TIMER_TIMEOUT_UNIT100US(x)		(x*100)
 #define TIMER_TIMEOUT_UNIT1MS(x)	    (x*10)
@@ -56,9 +55,9 @@ uint8_t checkRecvTimeout(void) {
 	if ((getTimerCnt() - getRecvTimeoutCnt()) >= _5MS) {
 		m_uartRecvCompleted = 1;
 		stopRecvTimeout();
-		return 1; // timeout
+		return 1;  // timeout
 	}
-	return 0; // not timeout
+	return 0;  // not timeout
 }
 
 uint8_t getRecvTimeoutState(void) {
@@ -71,6 +70,14 @@ uint8_t getRecvTimeoutState(void) {
  */
 void moveUart(void *uart) {
 	m_uart = (UART_HandleTypeDef*) uart;
+}
+
+/**
+ * @brief get UART handle pointer
+ * @retval UART_HandleTypeDef void pointer.
+ */
+void* getGSMUart(void) {
+	return m_uart;
 }
 
 /**
@@ -136,56 +143,58 @@ void moduleConfig(void) {
 			}
 			break;
 		}
-		/*case test_secwrite: {
-			if (!sendATCommand((const uint8_t*) "AT+QSECWRITE=\"RAM:cacert.pem\",1188,200\r\n")) {
-				state++;
-			}
-			break;
-		}
-		case test_secwrite_wait: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "CONNECT")) {
-				state++;
-			} else if (getRecvCompleted() && findATCommandResp((uint8_t*) "ERROR")) {
-				continue;
-			}
-			break;
-		}
-		case test_secwrite_file_write: {
-			clearUartBuffer();
-			for (uint8_t u8 = 0; u8 < 18; u8++) {
-				err = HAL_UART_Transmit(m_uart, &awsRootCA1[0 + u8 * 64], 64, 100);
-			}
+			/*case test_secwrite: {
+			 if (!sendATCommand((const uint8_t*) "AT+QSECWRITE=\"RAM:cacert.pem\",1188,200\r\n")) {
+			 state++;
+			 }
+			 break;
+			 }
+			 case test_secwrite_wait: {
+			 if (getRecvCompleted() && findATCommandResp((uint8_t*) "CONNECT")) {
+			 state++;
+			 } else if (getRecvCompleted() && findATCommandResp((uint8_t*) "ERROR")) {
+			 continue;
+			 }
+			 break;
+			 }
+			 case test_secwrite_file_write: {
+			 clearUartBuffer();
+			 for (uint8_t u8 = 0; u8 < 18; u8++) {
+			 err = HAL_UART_Transmit(m_uart, &awsRootCA1[0 + u8 * 64], 64, 100);
+			 }
 
-			err = HAL_UART_Transmit(m_uart, &awsRootCA1[64 * 18], 36, 100);
-			if (err == HAL_OK) {
-				state++;
-			}
-			break;
-		}
-		case test_secwrite_file_write_wait: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "+QSECWRITE")) {
-				if (findATCommandResp((uint8_t*) "OK")) {
-					state++;
-				}
-			}
-			break;
-		}*/
+			 err = HAL_UART_Transmit(m_uart, &awsRootCA1[64 * 18], 36, 100);
+			 if (err == HAL_OK) {
+			 state++;
+			 }
+			 break;
+			 }
+			 case test_secwrite_file_write_wait: {
+			 if (getRecvCompleted() && findATCommandResp((uint8_t*) "+QSECWRITE")) {
+			 if (findATCommandResp((uint8_t*) "OK")) {
+			 state++;
+			 }
+			 }
+			 break;
+			 }*/
 		default:
 			whileState = 0;
-			break;
+		break;
 		}
 
 		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
 		if ((getSystickCnt() - prevtimeout) >= 1000 && retry < 3) {
 			state = 0;
 			retry++;
-		} else if (retry >= 3) {
+		}
+		else if (retry >= 3) {
 			whileState = 0;
 			// config module error
-		} else {
+		}
+		else {
 			HAL_Delay(5);
 		}
-	} // while end
+	}  // while end
 }
 
 /**
@@ -195,7 +204,8 @@ void moduleConfig(void) {
 void monitoringPowerOff(void) {
 	if (HAL_GPIO_ReadPin(STAT_M95_GPIO_Port, STAT_M95_Pin) != GPIO_PIN_SET) {
 		HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_SET);
-	} else {
+	}
+	else {
 		HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_RESET);
 	}
 }
@@ -250,6 +260,27 @@ void GSM_Virtual_UART_RxCpltCallback(void *uart) {
 	}
 }
 
+/**
+ * @brief Uart üzerinden gsm e data gönderme
+ * @retval 0 is ok , others 1
+ */
+uint8_t sendUartData(const uint8_t *data, uint16_t len) {
+	uint16_t forCnt = len / 64;
+	uint8_t leapCnt = len - (forCnt * 64);
+	HAL_StatusTypeDef err = HAL_OK;
+
+	clearUartBuffer();
+
+	for (uint8_t u8 = 0; u8 < forCnt; u8++) {
+		err = HAL_UART_Transmit(m_uart, &data[u8 * 64], 64, 30);
+	}
+
+	if (leapCnt) {
+		err = HAL_UART_Transmit(m_uart, &data[forCnt * 64], leapCnt, 30);
+	}
+
+	return err != HAL_OK;
+}
 /**
  * @brief Virtual Timer elapsed callback function, ~100us
  * @retval None

@@ -19,11 +19,13 @@ extern void GSM_Virtual_Rx_IT(void);
 extern void GSM_Virtual_UART_RxCpltCallback(void *uart);
 extern void GSM_Virtual_TIM_ElapsedCallback(void* tim);
 extern void moveUart(void *uart);
+extern void* getGSMUart(void);
 extern void powerOn(void);
 extern void moduleConfig(void);
 extern void monitoringPowerOff(void);
 extern uint8_t sendATCommand(const uint8_t *commad);
 extern uint8_t findATCommandResp(uint8_t* resp);
 extern uint8_t getRecvCompleted(void);
+extern uint8_t sendUartData(const uint8_t* data, uint16_t len);
 
 #endif /* DRIVER_M95_M95_H_ */

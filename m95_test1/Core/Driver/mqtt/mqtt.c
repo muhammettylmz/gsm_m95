@@ -69,7 +69,6 @@ uint32_t getMqttSystick(void) {
  * @retval None
  */
 void mqttInit(void) {
-
 	/* Start TCPIP task */
 	//AT+QIREGAPP
 	sendATCommand((const uint8_t*) "AT+QIREGAPP\r\n");
@@ -126,6 +125,7 @@ uint8_t deleteCertKey(void) {
 #define DEL_CKCERT			4
 #define DEL_CKCERT_WAIT 	5
 
+	uint8_t err = 1;
 	uint8_t whileBreak = 1;
 	uint8_t state = DEL_CACERT;
 	uint32_t prevtimeout = getMqttSystick();
@@ -173,6 +173,7 @@ uint8_t deleteCertKey(void) {
 		}
 		default:
 			whileBreak = 0;
+			err = 0;
 		break;
 		}
 
@@ -183,15 +184,157 @@ uint8_t deleteCertKey(void) {
 		}
 		else if (retry >= 3) {
 			whileBreak = 0;
+			err = 1;
 			// config module error
 		}
 		else {
 			HAL_Delay(5);
 		}
 	}
-	return 0;
+	return err;
 }
 
+/**
+ * @brief write cert and key in RAM
+ * @retval 0 is success, 1 is others
+ */
+uint8_t writeCertKey(void) {
+#define WRITE_CACERT 0 //at+qsecwrite ram
+#define WRITE_CACERT_WAIT 1 //connect
+#define WRITE_CACERT_SEND 2	//send cert file with uart
+#define WRITE_CACERT_SEND_WAIT 3 //+qsecwrite ..
+#define WRITE_CCCERT 4
+#define WRITE_CCCERT_WAIT 5
+#define WRITE_CCCERT_SEND 6
+#define WRITE_CCCERT_SEND_WAIT 7
+#define WRITE_CKCERT 8
+#define WRITE_CKCERT_WAIT 9
+#define WRITE_CKCERT_SEND 10
+#define WRITE_CKCERT_SEND_WAIT 11
+#define EXITS					12
+
+	uint8_t err = 1;
+	uint8_t whileBreak = 1;
+	uint8_t state = DEL_CACERT;
+	uint32_t prevtimeout = getMqttSystick();
+	uint8_t retry = 0;
+
+	while (whileBreak) {
+		switch (state) {
+		case WRITE_CACERT: {
+			if (!sendATCommand(SECWRITE_CA_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case WRITE_CACERT_WAIT: {
+			if (getRecvCompleted()) {
+				if (findATCommandResp((uint8_t*) "CONNECT")) {
+					state++;
+				}
+				else if (findATCommandResp((uint8_t*) "Already exits")
+						|| findATCommandResp((uint8_t*) "+CME ERROR")) {
+					state = WRITE_CCCERT;
+				}
+			}
+			break;
+		}
+		case WRITE_CACERT_SEND: {
+			if (!sendUartData(awsRootCA1, sizeof(awsRootCA1))) {
+				state++;
+			}
+			break;
+		}
+		case WRITE_CACERT_SEND_WAIT: {
+			if (getRecvCompleted() && (findATCommandResp((uint8_t*) "+QSECWRITE: 1188,2d13"))) {
+				state++;
+			}
+			break;
+		}
+		case WRITE_CCCERT: {
+			if (!sendATCommand(SECWRITE_CC_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case WRITE_CCCERT_WAIT: {
+			if (getRecvCompleted()) {
+				if (findATCommandResp((uint8_t*) "CONNECT")) {
+					state++;
+				}
+				else if (findATCommandResp((uint8_t*) "Already exits")
+						|| findATCommandResp((uint8_t*) "+CME ERROR")) {
+					state = WRITE_CACERT;
+				}
+			}
+			break;
+		}
+		case WRITE_CCCERT_SEND: {
+			if (!sendUartData(clientCert, sizeof(clientCert))) {
+				state++;
+			}
+			break;
+		}
+		case WRITE_CCCERT_SEND_WAIT: {
+			if (getRecvCompleted() && (findATCommandResp((uint8_t*) "+QSECWRITE: 1220,2f6c"))) {
+				state++;
+			}
+			break;
+		}
+		case WRITE_CKCERT: {
+			if (!sendATCommand(SECWRITE_CK_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case WRITE_CKCERT_WAIT: {
+			if (getRecvCompleted()) {
+				if (findATCommandResp((uint8_t*) "CONNECT")) {
+					state++;
+				}
+				else if (findATCommandResp((uint8_t*) "Already exits")
+						|| findATCommandResp((uint8_t*) "+CME ERROR")) {
+					state = EXITS;  // exits while
+				}
+			}
+			break;
+		}
+		case WRITE_CKCERT_SEND: {
+			if (!sendUartData(clientPrivateKey, sizeof(clientPrivateKey))) {
+				state++;
+			}
+			break;
+		}
+		case WRITE_CKCERT_SEND_WAIT: {
+			if (getRecvCompleted() && (findATCommandResp((uint8_t*) "+QSECWRITE: 1679,13b"))) {
+				state++;
+			}
+			break;
+		}
+		case EXITS:
+			whileBreak = 0;
+		default:
+			whileBreak = 0;
+			err = 0;
+		break;
+		}
+
+		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
+		if ((getMqttSystick() - prevtimeout) >= 400 && retry < 3) {
+			state = 0;
+			retry++;
+		}
+		else if (retry >= 3) {
+			whileBreak = 0;
+			err = 1;
+			// config module error
+		}
+		else {
+			HAL_Delay(5);
+		}
+	}
+	return err;
+}
 /**
  * @brief connect MQTT broker server
  * @retval 0 is connect, others errors
