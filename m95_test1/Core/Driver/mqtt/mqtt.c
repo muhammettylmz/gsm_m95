@@ -199,19 +199,19 @@ uint8_t deleteCertKey(void) {
  * @retval 0 is success, 1 is others
  */
 uint8_t writeCertKey(void) {
-#define WRITE_CACERT 0 //at+qsecwrite ram
-#define WRITE_CACERT_WAIT 1 //connect
-#define WRITE_CACERT_SEND 2	//send cert file with uart
-#define WRITE_CACERT_SEND_WAIT 3 //+qsecwrite ..
-#define WRITE_CCCERT 4
-#define WRITE_CCCERT_WAIT 5
-#define WRITE_CCCERT_SEND 6
-#define WRITE_CCCERT_SEND_WAIT 7
-#define WRITE_CKCERT 8
-#define WRITE_CKCERT_WAIT 9
-#define WRITE_CKCERT_SEND 10
-#define WRITE_CKCERT_SEND_WAIT 11
-#define EXITS					12
+#define WRITE_CACERT 				0 //at+qsecwrite ram
+#define WRITE_CACERT_WAIT 			1 //connect
+#define WRITE_CACERT_SEND 			2	//send cert file with uart
+#define WRITE_CACERT_SEND_WAIT 		3 //+qsecwrite ..
+#define WRITE_CCCERT 				4
+#define WRITE_CCCERT_WAIT 			5
+#define WRITE_CCCERT_SEND 			6
+#define WRITE_CCCERT_SEND_WAIT 		7
+#define WRITE_CKCERT 				8
+#define WRITE_CKCERT_WAIT 			9
+#define WRITE_CKCERT_SEND 			10
+#define WRITE_CKCERT_SEND_WAIT 		11
+#define EXIT						12
 
 	uint8_t err = 1;
 	uint8_t whileBreak = 1;
@@ -294,7 +294,7 @@ uint8_t writeCertKey(void) {
 				}
 				else if (findATCommandResp((uint8_t*) "Already exits")
 						|| findATCommandResp((uint8_t*) "+CME ERROR")) {
-					state = EXITS;  // exits while
+					state = EXIT;  // exit while
 				}
 			}
 			break;
@@ -311,8 +311,8 @@ uint8_t writeCertKey(void) {
 			}
 			break;
 		}
-		case EXITS:
-			whileBreak = 0;
+		//fallth
+		case EXIT:
 		default:
 			whileBreak = 0;
 			err = 0;
