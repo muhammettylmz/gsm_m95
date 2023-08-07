@@ -24,8 +24,17 @@ uint64_t m_timerCnt;
 
 uint64_t m_uartRecvTimeoutStart;
 uint8_t m_uartRecvCompleted;
+uint8_t m_moduleConfigState;
 
 void clearUartBuffer(void);
+
+uint8_t getModuleConfigState(void){
+	return m_moduleConfigState;
+}
+
+void setModuleConfigState(moduleCfgState_e state){
+	m_moduleConfigState = state;
+}
 
 uint8_t getRecvCompleted(void) {
 	return m_uartRecvCompleted;
@@ -98,28 +107,42 @@ void powerOn(void) {
  * @brief GSM Module configuration. Use after powerOn function.
  * @retval None
  */
-void moduleConfig(void) {
+void gsmConfig(void) {
 
-#define ECHO_MODE 0
-#define ECHO_MODE_WAIT 1
-#define STRING_TYPE 2
-#define STRING_TYPE_WAIT 3
-//#define test_secwrite 4
-//#define test_secwrite_wait 5
-//#define test_secwrite_file_write 6
-//#define test_secwrite_file_write_wait 7
+	typedef enum {
+		ECHO_MODE,
+		ECHO_MODE_WAIT,
+		STRING_TYPE,
+		STRING_TYPE_WAIT,
+		CPIN_READ,
+		CPIN_READ_WAIT,
+		CREG_READ,
+		CREG_READ_WAIT,
+		CGATT_READ,
+		CGATT_READ_WAIT,
+		REGISTER_TCP_IP,
+		REGISTER_TCP_IP_WAIT,
+		ACTIVE_GPRS,
+		ACTIVE_GPRS_WAIT,
+		CREG_ACTIVE,
+		CREG_ACTIVE_WAIT,
+		CGATT_ATTACH,
+		CGATT_ATTACH_WAIT,
+		EXIT,
+	} module_cfg_e;
 
 	uint8_t whileState = 1;
-	uint8_t state = ECHO_MODE;
+	module_cfg_e state = ECHO_MODE;
 
 	uint32_t prevtimeout = getSystickCnt();
 	uint8_t retry = 0;
 
-//	HAL_StatusTypeDef err = HAL_OK;
+	m_moduleConfigState = MODULE_CONFIG_START;
 
 	while (whileState) {
 		switch (state) {
 		case ECHO_MODE: {
+			//echo mode off
 			if (!sendATCommand((const uint8_t*) "ATE0\r\n")) {
 				state++;
 			}
@@ -132,6 +155,7 @@ void moduleConfig(void) {
 			break;
 		}
 		case STRING_TYPE: {
+			// string error type
 			if (!sendATCommand((const uint8_t*) "AT+CMEE=2\r\n")) {
 				state++;
 			}
@@ -143,40 +167,104 @@ void moduleConfig(void) {
 			}
 			break;
 		}
-			/*case test_secwrite: {
-			 if (!sendATCommand((const uint8_t*) "AT+QSECWRITE=\"RAM:cacert.pem\",1188,200\r\n")) {
-			 state++;
-			 }
-			 break;
-			 }
-			 case test_secwrite_wait: {
-			 if (getRecvCompleted() && findATCommandResp((uint8_t*) "CONNECT")) {
-			 state++;
-			 } else if (getRecvCompleted() && findATCommandResp((uint8_t*) "ERROR")) {
-			 continue;
-			 }
-			 break;
-			 }
-			 case test_secwrite_file_write: {
-			 clearUartBuffer();
-			 for (uint8_t u8 = 0; u8 < 18; u8++) {
-			 err = HAL_UART_Transmit(m_uart, &awsRootCA1[0 + u8 * 64], 64, 100);
-			 }
-
-			 err = HAL_UART_Transmit(m_uart, &awsRootCA1[64 * 18], 36, 100);
-			 if (err == HAL_OK) {
-			 state++;
-			 }
-			 break;
-			 }
-			 case test_secwrite_file_write_wait: {
-			 if (getRecvCompleted() && findATCommandResp((uint8_t*) "+QSECWRITE")) {
-			 if (findATCommandResp((uint8_t*) "OK")) {
-			 state++;
-			 }
-			 }
-			 break;
-			 }*/
+		case CPIN_READ: {
+			if (!sendATCommand((const uint8_t*) "AT+CPIN?\r\n")) {
+				state++;
+			}
+			break;
+		}
+		case CPIN_READ_WAIT: {
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "READY")) {
+				state++;
+			}
+			break;
+		}
+		case CREG_READ: {
+			if (!sendATCommand((const uint8_t*) "AT+CREG?\r\n")) {
+				state++;
+			}
+			break;
+		}
+		case CREG_READ_WAIT: {
+			if (getRecvCompleted()) {
+				if (findATCommandResp((uint8_t*) "+CREG: 0,1")
+						|| findATCommandResp((uint8_t*) "+CREG: 0,5")) {
+					state++;
+				}
+				else{
+					state = CREG_ACTIVE;
+				}
+			}
+			break;
+		}
+		case CREG_ACTIVE:{
+			if (!sendATCommand((const uint8_t*) "AT+CREG=1\r\n")) {
+				state++;
+			}
+			break;
+		}
+		case CREG_ACTIVE_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "+CREG: 1")) {
+				state = CGATT_READ;
+			}
+			break;
+		}
+		case CGATT_READ:{
+			if (!sendATCommand((const uint8_t*) "AT+CGATT?\r\n")) {
+				state++;
+			}
+			break;
+		}
+		case CGATT_READ_WAIT:{
+			if (getRecvCompleted()) {
+				if (findATCommandResp((uint8_t*) "+CGATT: 1")){
+					state++;
+				}
+				else {
+					state = CGATT_ATTACH;
+				}
+			}
+			break;
+		}
+		case CGATT_ATTACH:{
+			if (!sendATCommand((const uint8_t*) "AT+CGATT=1\r\n")) {
+				state++;
+			}
+			break;
+		}
+		case CGATT_ATTACH_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state = REGISTER_TCP_IP;
+			}
+			break;
+		}
+		case REGISTER_TCP_IP:{
+			if (!sendATCommand((const uint8_t*) "AT+QIREGAPP\r\n")) {
+				state++;
+			}
+			break;
+		}
+		case REGISTER_TCP_IP_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case ACTIVE_GPRS:{
+			if (!sendATCommand((const uint8_t*) "AT+QIACT\r\n")) {
+				state++;
+			}
+			break;
+		}
+		case ACTIVE_GPRS_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state = EXIT;
+			}
+			break;
+		}
+		//fallt
+		case EXIT:
+			m_moduleConfigState = MODULE_CONFIG_FINISH;
 		default:
 			whileState = 0;
 		break;
@@ -189,6 +277,7 @@ void moduleConfig(void) {
 		}
 		else if (retry >= 3) {
 			whileState = 0;
+			m_moduleConfigState = MODULE_CONFIG_TIMEOUT;
 			// config module error
 		}
 		else {
@@ -204,6 +293,8 @@ void moduleConfig(void) {
 void monitoringPowerOff(void) {
 	if (HAL_GPIO_ReadPin(STAT_M95_GPIO_Port, STAT_M95_Pin) != GPIO_PIN_SET) {
 		HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_SET);
+		setModuleConfigState(MODULE_CONFIG_START);
+		setMQTTConfigState(MQTT_CONFIG_START);
 	}
 	else {
 		HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_RESET);
@@ -299,6 +390,10 @@ void GSM_Virtual_TIM_ElapsedCallback(void *tim) {
  */
 void GSM_Virtual_Systick(void) {
 	m_systick++;
+}
+
+void gsmControl(void){
+	monitoringPowerOff();
 }
 
 /*

@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "m95.h"
+#include "mqtt.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -108,10 +109,10 @@ int main(void) {
 	powerOn();
 	HAL_Delay(2000);
 
-	sendATCommand((const uint8_t*) "AT+QSECDEL=\"RAM:cacert.pem\"\r\n");
-	HAL_Delay(1000);
 	// gsm module power on
-	moduleConfig();
+	gsmConfig();
+	mqttInit();
+
 
 	/* USER CODE END 2 */
 
@@ -121,7 +122,10 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		monitoringPowerOff();
+		gsmControl();
+		mqttControl();
+
+//		monitoringPowerOff();
 		checkButton(&btnState, &isRls);
 //		if (btnState && isRls) {
 //			sendATCommand((const uint8_t*) "AT\n");

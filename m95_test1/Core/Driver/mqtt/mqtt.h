@@ -17,8 +17,17 @@
 #define MQTT_CLIENT		"yehhep"
 #define MQTT_AWS_TOPIC	"yehhep/+/status/"
 
+typedef enum {
+	MQTT_CONFIG_START,
+	MQTT_CONFIG_FINISH,
+	MQTT_CONFIG_TIMEOUT,
+}mqttConfigState_e;
+
 
 extern void MQTT_Virtual_TIM_ElapsedCallback(void* tim);
 extern void MQTT_Virtual_Systick_Handler(void);
+extern void setMQTTConfigState(mqttConfigState_e state);
+extern void mqttInit(void);
+extern void mqttControl(void);
 
 #endif /* DRIVER_MQTT_MQTT_H_ */

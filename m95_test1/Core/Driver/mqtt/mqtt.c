@@ -59,6 +59,18 @@ unsigned char pubMessage[512];
 
 uint32_t mqtt_systick;
 uint64_t mqtt_timer_cnt;
+uint8_t m_mqttConfigState;
+
+uint8_t deleteCertKey(void);
+uint8_t writeCertKey(void);
+
+uint8_t getMQTTConfigState(void){
+	return m_mqttConfigState;
+}
+
+void setMQTTConfigState(mqttConfigState_e state){
+	m_mqttConfigState = state;
+}
 
 uint32_t getMqttSystick(void) {
 	return mqtt_systick;
@@ -69,43 +81,181 @@ uint32_t getMqttSystick(void) {
  * @retval None
  */
 void mqttInit(void) {
-	/* Start TCPIP task */
-	//AT+QIREGAPP
-	sendATCommand((const uint8_t*) "AT+QIREGAPP\r\n");
 
-	/* Active the GPRS context */
-	//AT+QIACT
-	sendATCommand((const uint8_t*) "AT+QIACT\r\n");
+	if(getModuleConfigState() != MODULE_CONFIG_FINISH){
+		setModuleConfigState(MODULE_CONFIG_START);
+		return;
+	}
 
-//	//Configure MQTT session into SSL mode.
-//	AT+QMTCFG="SSL",0,1,2
-//
-//	//store server root CA certificate to RAM
-//	AT+QSECWRITE="RAM:cacert.pem",size,timeout
-//
-//	//store server root CC certificate to RAM
-//	AT+QSECWRITE="RAM:clientcert.pem",size,timeout
-//
-//	//store server root CK certificate to RAM
-//	AT+QSECWRITE="RAM:clientkey.pem",size,timeout
-//
-//	//Configure server root CA certificate.
-//	AT+QSSLCFG="cacert",2,"RAM:cacert.pem
-//
-//	//Configure CC certificate.
-//	AT+QSSLCFG="clientcert",2,"RAM:client.pem"
-//
-//	//Configure CK certificate.
-//	AT+QSSLCFG="clientkey",2,"RAM:user_key.pem"
-//
-//	//Configure SSL parameters.
-//	AT+QSSLCFG="seclevel",2,2
-//
-//	AT+QSSLCFG="sslversion",2,4 //SSL authentication version
-//
-//	AT+QSSLCFG="ciphersuite",2,"0xFFFF" //Cipher suite
-//
-//	AT+QSSLCFG="ignorertctime",1 //Ignore the time of authentication.
+	typedef enum{
+		MQTT_CFG,
+		MQTT_CFG_WAIT,
+		MQTT_SSL_CERT_DELETE,
+		MQTT_SSL_CERT_WRITE,
+		SSL_CFG_CA_KEY,
+		SSL_CFG_CA_KEY_WAIT,
+		SSL_CFG_CC_KEY,
+		SSL_CFG_CC_KEY_WAIT,
+		SSL_CFG_CK_KEY,
+		SSL_CFG_CK_KEY_WAIT,
+		SSL_CFG_SECLEVEL,
+		SSL_CFG_SECLEVEL_WAIT,
+		SSL_CFG_SSLVERSION,
+		SSL_CFG_SSLVERSION_WAIT,
+		SSL_CFG_CIPHERSUITE,
+		SSL_CFG_CIPHERSUITE_WAIT,
+		SSL_CFG_IGNORERTCTIME,
+		SSL_CFG_IGNORERTCTIME_WAIT,
+		EXIT
+	}mqttConfig_e;
+
+	m_mqttConfigState = MQTT_CONFIG_START;
+
+	uint8_t whileState = 1;
+	mqttConfig_e state = MQTT_CFG;
+
+	uint32_t prevtimeout = getMqttSystick();
+	uint8_t retry = 0;
+
+	while(whileState){
+		switch(state){
+		case MQTT_CFG:{
+			if (!sendATCommand(MQTT_CFG_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case MQTT_CFG_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case MQTT_SSL_CERT_DELETE:{
+			if(deleteCertKey()){
+				state++;
+			}
+			else{
+				whileState = 0;
+				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
+			}
+			break;
+		}
+		case MQTT_SSL_CERT_WRITE:{
+			if(writeCertKey()){
+				state++;
+			}
+			else{
+				whileState = 0;
+				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
+			}
+			break;
+		}
+		case SSL_CFG_CA_KEY:{
+			if (!sendATCommand(SSLCFG_CA_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_CA_KEY_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_CC_KEY:{
+			if (!sendATCommand(SSLCFG_CC_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_CC_KEY_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_CK_KEY:{
+			if (!sendATCommand(SSLCFG_CK_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_CK_KEY_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_SECLEVEL:{
+			if (!sendATCommand(SSLCFG_SECLEVL_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_SECLEVEL_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_SSLVERSION:{
+			if (!sendATCommand(SSLCFG_SSLVER_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_SSLVERSION_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_CIPHERSUITE:{
+			if (!sendATCommand(SSLCFG_CHIPHERSUIT_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_CIPHERSUITE_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_IGNORERTCTIME:{
+			if (!sendATCommand(SSLCFG_IGNRRTCTIME_FMT)) {
+				state++;
+			}
+			break;
+		}
+		case SSL_CFG_IGNORERTCTIME_WAIT:{
+			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+				state++;
+			}
+			break;
+		}
+		case EXIT:
+			m_mqttConfigState = MQTT_CONFIG_FINISH;
+		default:
+			whileState = 0;
+			break;
+		}
+
+		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
+		if ((getMqttSystick() - prevtimeout) >= 1000 && retry < 3) {
+			state = 0;
+			retry++;
+		}
+		else if (retry >= 3) {
+			whileState = 0;
+			m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
+			// config module error
+		}
+		else {
+			HAL_Delay(5);
+		}
+	}
 //
 //	//Start MQTT SSL connection.
 //	AT+QMTOPEN=0,"aws url",port
@@ -363,7 +513,7 @@ uint8_t disconnectBroker(void) {
  */
 uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value) {
 	//Publish messages.
-//		AT+QMTPUB=0,1,1,0,"topic"
+//		AT+QMTPUB=0,0,0,0,"topic"
 	// > value ctrl+z(0x1A);
 	//OK
 	//+QMTPUB: 0,0,0
@@ -379,3 +529,6 @@ void MQTT_Virtual_TIM_ElapsedCallback(void *tim) {
 	mqtt_timer_cnt++;
 }
 
+void mqttControl(void){
+
+}
