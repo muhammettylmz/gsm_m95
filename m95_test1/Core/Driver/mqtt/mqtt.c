@@ -64,11 +64,11 @@ uint8_t m_mqttConfigState;
 uint8_t deleteCertKey(void);
 uint8_t writeCertKey(void);
 
-uint8_t getMQTTConfigState(void){
+uint8_t getMQTTConfigState(void) {
 	return m_mqttConfigState;
 }
 
-void setMQTTConfigState(mqttConfigState_e state){
+void setMQTTConfigState(mqttConfigState_e state) {
 	m_mqttConfigState = state;
 }
 
@@ -82,12 +82,12 @@ uint32_t getMqttSystick(void) {
  */
 void mqttInit(void) {
 
-	if(getModuleConfigState() != MODULE_CONFIG_FINISH){
+	if (getModuleConfigState() != MODULE_CONFIG_FINISH) {
 		setModuleConfigState(MODULE_CONFIG_START);
 		return;
 	}
 
-	typedef enum{
+	typedef enum {
 		MQTT_CFG,
 		MQTT_CFG_WAIT,
 		MQTT_SSL_CERT_DELETE,
@@ -107,7 +107,7 @@ void mqttInit(void) {
 		SSL_CFG_IGNORERTCTIME,
 		SSL_CFG_IGNORERTCTIME_WAIT,
 		EXIT
-	}mqttConfig_e;
+	} mqttConfig_e;
 
 	m_mqttConfigState = MQTT_CONFIG_START;
 
@@ -117,119 +117,119 @@ void mqttInit(void) {
 	uint32_t prevtimeout = getMqttSystick();
 	uint8_t retry = 0;
 
-	while(whileState){
-		switch(state){
-		case MQTT_CFG:{
+	while (whileState) {
+		switch (state) {
+		case MQTT_CFG: {
 			if (!sendATCommand(MQTT_CFG_FMT)) {
 				state++;
 			}
 			break;
 		}
-		case MQTT_CFG_WAIT:{
+		case MQTT_CFG_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
 				state++;
 			}
 			break;
 		}
-		case MQTT_SSL_CERT_DELETE:{
-			if(deleteCertKey()){
+		case MQTT_SSL_CERT_DELETE: {
+			if (deleteCertKey()) {
 				state++;
 			}
-			else{
+			else {
 				whileState = 0;
 				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
 			}
 			break;
 		}
-		case MQTT_SSL_CERT_WRITE:{
-			if(writeCertKey()){
+		case MQTT_SSL_CERT_WRITE: {
+			if (writeCertKey()) {
 				state++;
 			}
-			else{
+			else {
 				whileState = 0;
 				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
 			}
 			break;
 		}
-		case SSL_CFG_CA_KEY:{
+		case SSL_CFG_CA_KEY: {
 			if (!sendATCommand(SSLCFG_CA_FMT)) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_CA_KEY_WAIT:{
+		case SSL_CFG_CA_KEY_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_CC_KEY:{
+		case SSL_CFG_CC_KEY: {
 			if (!sendATCommand(SSLCFG_CC_FMT)) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_CC_KEY_WAIT:{
+		case SSL_CFG_CC_KEY_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_CK_KEY:{
+		case SSL_CFG_CK_KEY: {
 			if (!sendATCommand(SSLCFG_CK_FMT)) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_CK_KEY_WAIT:{
+		case SSL_CFG_CK_KEY_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_SECLEVEL:{
+		case SSL_CFG_SECLEVEL: {
 			if (!sendATCommand(SSLCFG_SECLEVL_FMT)) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_SECLEVEL_WAIT:{
+		case SSL_CFG_SECLEVEL_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_SSLVERSION:{
+		case SSL_CFG_SSLVERSION: {
 			if (!sendATCommand(SSLCFG_SSLVER_FMT)) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_SSLVERSION_WAIT:{
+		case SSL_CFG_SSLVERSION_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_CIPHERSUITE:{
+		case SSL_CFG_CIPHERSUITE: {
 			if (!sendATCommand(SSLCFG_CHIPHERSUIT_FMT)) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_CIPHERSUITE_WAIT:{
+		case SSL_CFG_CIPHERSUITE_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_IGNORERTCTIME:{
+		case SSL_CFG_IGNORERTCTIME: {
 			if (!sendATCommand(SSLCFG_IGNRRTCTIME_FMT)) {
 				state++;
 			}
 			break;
 		}
-		case SSL_CFG_IGNORERTCTIME_WAIT:{
+		case SSL_CFG_IGNORERTCTIME_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
 				state++;
 			}
@@ -239,7 +239,7 @@ void mqttInit(void) {
 			m_mqttConfigState = MQTT_CONFIG_FINISH;
 		default:
 			whileState = 0;
-			break;
+		break;
 		}
 
 		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
@@ -268,16 +268,13 @@ void mqttInit(void) {
  * @retval 0 is success, 1 is others
  */
 uint8_t deleteCertKey(void) {
-#define DEL_CACERT			0
-#define DEL_CACERT_WAIT 	1
-#define DEL_CCCERT			2
-#define DEL_CCCERT_WAIT 	3
-#define DEL_CKCERT			4
-#define DEL_CKCERT_WAIT 	5
+	typedef enum {
+		DEL_CACERT, DEL_CACERT_WAIT, DEL_CCCERT, DEL_CCCERT_WAIT, DEL_CKCERT, DEL_CKCERT_WAIT
+	} deleteCert_e;
 
 	uint8_t err = 1;
 	uint8_t whileBreak = 1;
-	uint8_t state = DEL_CACERT;
+	deleteCert_e state = DEL_CACERT;
 	uint32_t prevtimeout = getMqttSystick();
 	uint8_t retry = 0;
 	while (whileBreak) {
@@ -349,23 +346,25 @@ uint8_t deleteCertKey(void) {
  * @retval 0 is success, 1 is others
  */
 uint8_t writeCertKey(void) {
-#define WRITE_CACERT 				0 //at+qsecwrite ram
-#define WRITE_CACERT_WAIT 			1 //connect
-#define WRITE_CACERT_SEND 			2	//send cert file with uart
-#define WRITE_CACERT_SEND_WAIT 		3 //+qsecwrite ..
-#define WRITE_CCCERT 				4
-#define WRITE_CCCERT_WAIT 			5
-#define WRITE_CCCERT_SEND 			6
-#define WRITE_CCCERT_SEND_WAIT 		7
-#define WRITE_CKCERT 				8
-#define WRITE_CKCERT_WAIT 			9
-#define WRITE_CKCERT_SEND 			10
-#define WRITE_CKCERT_SEND_WAIT 		11
-#define EXIT						12
+	typedef enum {
+		WRITE_CACERT,  //at+qsecwrite ram
+		WRITE_CACERT_WAIT,  //connect
+		WRITE_CACERT_SEND,	//send cert file with uart
+		WRITE_CACERT_SEND_WAIT,  //+qsecwrite ..
+		WRITE_CCCERT,
+		WRITE_CCCERT_WAIT,
+		WRITE_CCCERT_SEND,
+		WRITE_CCCERT_SEND_WAIT,
+		WRITE_CKCERT,
+		WRITE_CKCERT_WAIT,
+		WRITE_CKCERT_SEND,
+		WRITE_CKCERT_SEND_WAIT,
+		EXIT
+	} writeCert_e;
 
 	uint8_t err = 1;
 	uint8_t whileBreak = 1;
-	uint8_t state = DEL_CACERT;
+	writeCert_e state = WRITE_CACERT;
 	uint32_t prevtimeout = getMqttSystick();
 	uint8_t retry = 0;
 
@@ -461,7 +460,7 @@ uint8_t writeCertKey(void) {
 			}
 			break;
 		}
-		//fallth
+			//fallth
 		case EXIT:
 		default:
 			whileBreak = 0;
@@ -529,6 +528,6 @@ void MQTT_Virtual_TIM_ElapsedCallback(void *tim) {
 	mqtt_timer_cnt++;
 }
 
-void mqttControl(void){
+void mqttControl(void) {
 
 }

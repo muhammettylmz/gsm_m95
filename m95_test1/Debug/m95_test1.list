@@ -31,23 +31,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
  13 .comment      00000043  00000000  00000000  0002003c  2**0
                   CONTENTS, READONLY
- 14 .debug_info   0000def1  00000000  00000000  0002007f  2**0
+ 14 .debug_info   0000df94  00000000  00000000  0002007f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_abbrev 0000220d  00000000  00000000  0002df70  2**0
+ 15 .debug_abbrev 00002234  00000000  00000000  0002e013  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_aranges 00000d90  00000000  00000000  00030180  2**3
+ 16 .debug_aranges 00000d90  00000000  00000000  00030248  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_rnglists 00000a86  00000000  00000000  00030f10  2**0
+ 17 .debug_rnglists 00000a86  00000000  00000000  00030fd8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_macro  0002144a  00000000  00000000  00031996  2**0
+ 18 .debug_macro  000213c5  00000000  00000000  00031a5e  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_line   0000feea  00000000  00000000  00052de0  2**0
+ 19 .debug_line   0000fef0  00000000  00000000  00052e23  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_str    000cb832  00000000  00000000  00062cca  2**0
+ 20 .debug_str    000cb81d  00000000  00000000  00062d13  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_frame  0000388c  00000000  00000000  0012e4fc  2**2
+ 21 .debug_frame  0000388c  00000000  00000000  0012e530  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_line_str 00000067  00000000  00000000  00131d88  2**0
+ 22 .debug_line_str 00000067  00000000  00000000  00131dbc  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1520,11 +1520,11 @@ void gsmControl(void){
 
 08000bdc <setMQTTConfigState>:
 
-uint8_t getMQTTConfigState(void){
+uint8_t getMQTTConfigState(void) {
 	return m_mqttConfigState;
 }
 
-void setMQTTConfigState(mqttConfigState_e state){
+void setMQTTConfigState(mqttConfigState_e state) {
  8000bdc:	b480      	push	{r7}
  8000bde:	b083      	sub	sp, #12
  8000be0:	af00      	add	r7, sp, #0
@@ -1569,7 +1569,7 @@ void mqttInit(void) {
  8000c16:	b082      	sub	sp, #8
  8000c18:	af00      	add	r7, sp, #0
 
-	if(getModuleConfigState() != MODULE_CONFIG_FINISH){
+	if (getModuleConfigState() != MODULE_CONFIG_FINISH) {
  8000c1a:	f7ff fc5b 	bl	80004d4 <getModuleConfigState>
  8000c1e:	4603      	mov	r3, r0
  8000c20:	2b01      	cmp	r3, #1
@@ -1582,7 +1582,7 @@ void mqttInit(void) {
 		SSL_CFG_IGNORERTCTIME,
 		SSL_CFG_IGNORERTCTIME_WAIT,
 		EXIT
-	}mqttConfig_e;
+	} mqttConfig_e;
 
 	m_mqttConfigState = MQTT_CONFIG_START;
  8000c2c:	4bb9      	ldr	r3, [pc, #740]	; (8000f14 <mqttInit+0x300>)
@@ -1603,9 +1603,9 @@ void mqttInit(void) {
  8000c40:	2300      	movs	r3, #0
  8000c42:	717b      	strb	r3, [r7, #5]
 
-	while(whileState){
+	while (whileState) {
  8000c44:	e15f      	b.n	8000f06 <mqttInit+0x2f2>
-		switch(state){
+		switch (state) {
  8000c46:	79bb      	ldrb	r3, [r7, #6]
  8000c48:	2b12      	cmp	r3, #18
  8000c4a:	f200 811d 	bhi.w	8000e88 <mqttInit+0x274>
@@ -1630,7 +1630,7 @@ void mqttInit(void) {
  8000c94:	08000e51 	.word	0x08000e51
  8000c98:	08000e65 	.word	0x08000e65
  8000c9c:	08000e83 	.word	0x08000e83
-		case MQTT_CFG:{
+		case MQTT_CFG: {
 			if (!sendATCommand(MQTT_CFG_FMT)) {
  8000ca0:	489d      	ldr	r0, [pc, #628]	; (8000f18 <mqttInit+0x304>)
  8000ca2:	f7ff febb 	bl	8000a1c <sendATCommand>
@@ -1645,7 +1645,7 @@ void mqttInit(void) {
 			break;
  8000cb4:	e0eb      	b.n	8000e8e <mqttInit+0x27a>
 		}
-		case MQTT_CFG_WAIT:{
+		case MQTT_CFG_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
  8000cb6:	f7ff fc29 	bl	800050c <getRecvCompleted>
  8000cba:	4603      	mov	r3, r0
@@ -1664,8 +1664,8 @@ void mqttInit(void) {
 			break;
  8000cd6:	e0dc      	b.n	8000e92 <mqttInit+0x27e>
 		}
-		case MQTT_SSL_CERT_DELETE:{
-			if(deleteCertKey()){
+		case MQTT_SSL_CERT_DELETE: {
+			if (deleteCertKey()) {
  8000cd8:	f000 f930 	bl	8000f3c <deleteCertKey>
  8000cdc:	4603      	mov	r3, r0
  8000cde:	2b00      	cmp	r3, #0
@@ -1675,7 +1675,7 @@ void mqttInit(void) {
  8000ce4:	3301      	adds	r3, #1
  8000ce6:	71bb      	strb	r3, [r7, #6]
 			}
-			else{
+			else {
 				whileState = 0;
 				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
 			}
@@ -1691,8 +1691,8 @@ void mqttInit(void) {
 			break;
  8000cf4:	e0ea      	b.n	8000ecc <mqttInit+0x2b8>
 		}
-		case MQTT_SSL_CERT_WRITE:{
-			if(writeCertKey()){
+		case MQTT_SSL_CERT_WRITE: {
+			if (writeCertKey()) {
  8000cf6:	f000 f9df 	bl	80010b8 <writeCertKey>
  8000cfa:	4603      	mov	r3, r0
  8000cfc:	2b00      	cmp	r3, #0
@@ -1702,7 +1702,7 @@ void mqttInit(void) {
  8000d02:	3301      	adds	r3, #1
  8000d04:	71bb      	strb	r3, [r7, #6]
 			}
-			else{
+			else {
 				whileState = 0;
 				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
 			}
@@ -1718,7 +1718,7 @@ void mqttInit(void) {
 			break;
  8000d12:	e0db      	b.n	8000ecc <mqttInit+0x2b8>
 		}
-		case SSL_CFG_CA_KEY:{
+		case SSL_CFG_CA_KEY: {
 			if (!sendATCommand(SSLCFG_CA_FMT)) {
  8000d14:	4882      	ldr	r0, [pc, #520]	; (8000f20 <mqttInit+0x30c>)
  8000d16:	f7ff fe81 	bl	8000a1c <sendATCommand>
@@ -1733,7 +1733,7 @@ void mqttInit(void) {
 			break;
  8000d28:	e0b5      	b.n	8000e96 <mqttInit+0x282>
 		}
-		case SSL_CFG_CA_KEY_WAIT:{
+		case SSL_CFG_CA_KEY_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
  8000d2a:	f7ff fbef 	bl	800050c <getRecvCompleted>
  8000d2e:	4603      	mov	r3, r0
@@ -1752,7 +1752,7 @@ void mqttInit(void) {
 			break;
  8000d4a:	e0a6      	b.n	8000e9a <mqttInit+0x286>
 		}
-		case SSL_CFG_CC_KEY:{
+		case SSL_CFG_CC_KEY: {
 			if (!sendATCommand(SSLCFG_CC_FMT)) {
  8000d4c:	4875      	ldr	r0, [pc, #468]	; (8000f24 <mqttInit+0x310>)
  8000d4e:	f7ff fe65 	bl	8000a1c <sendATCommand>
@@ -1767,7 +1767,7 @@ void mqttInit(void) {
 			break;
  8000d60:	e09d      	b.n	8000e9e <mqttInit+0x28a>
 		}
-		case SSL_CFG_CC_KEY_WAIT:{
+		case SSL_CFG_CC_KEY_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
  8000d62:	f7ff fbd3 	bl	800050c <getRecvCompleted>
  8000d66:	4603      	mov	r3, r0
@@ -1786,7 +1786,7 @@ void mqttInit(void) {
 			break;
  8000d82:	e08e      	b.n	8000ea2 <mqttInit+0x28e>
 		}
-		case SSL_CFG_CK_KEY:{
+		case SSL_CFG_CK_KEY: {
 			if (!sendATCommand(SSLCFG_CK_FMT)) {
  8000d84:	4868      	ldr	r0, [pc, #416]	; (8000f28 <mqttInit+0x314>)
  8000d86:	f7ff fe49 	bl	8000a1c <sendATCommand>
@@ -1801,7 +1801,7 @@ void mqttInit(void) {
 			break;
  8000d98:	e085      	b.n	8000ea6 <mqttInit+0x292>
 		}
-		case SSL_CFG_CK_KEY_WAIT:{
+		case SSL_CFG_CK_KEY_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
  8000d9a:	f7ff fbb7 	bl	800050c <getRecvCompleted>
  8000d9e:	4603      	mov	r3, r0
@@ -1820,7 +1820,7 @@ void mqttInit(void) {
 			break;
  8000db8:	e077      	b.n	8000eaa <mqttInit+0x296>
 		}
-		case SSL_CFG_SECLEVEL:{
+		case SSL_CFG_SECLEVEL: {
 			if (!sendATCommand(SSLCFG_SECLEVL_FMT)) {
  8000dba:	485c      	ldr	r0, [pc, #368]	; (8000f2c <mqttInit+0x318>)
  8000dbc:	f7ff fe2e 	bl	8000a1c <sendATCommand>
@@ -1835,7 +1835,7 @@ void mqttInit(void) {
 			break;
  8000dcc:	e06f      	b.n	8000eae <mqttInit+0x29a>
 		}
-		case SSL_CFG_SECLEVEL_WAIT:{
+		case SSL_CFG_SECLEVEL_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
  8000dce:	f7ff fb9d 	bl	800050c <getRecvCompleted>
  8000dd2:	4603      	mov	r3, r0
@@ -1854,7 +1854,7 @@ void mqttInit(void) {
 			break;
  8000dea:	e062      	b.n	8000eb2 <mqttInit+0x29e>
 		}
-		case SSL_CFG_SSLVERSION:{
+		case SSL_CFG_SSLVERSION: {
 			if (!sendATCommand(SSLCFG_SSLVER_FMT)) {
  8000dec:	4850      	ldr	r0, [pc, #320]	; (8000f30 <mqttInit+0x31c>)
  8000dee:	f7ff fe15 	bl	8000a1c <sendATCommand>
@@ -1869,7 +1869,7 @@ void mqttInit(void) {
 			break;
  8000dfe:	e05a      	b.n	8000eb6 <mqttInit+0x2a2>
 		}
-		case SSL_CFG_SSLVERSION_WAIT:{
+		case SSL_CFG_SSLVERSION_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
  8000e00:	f7ff fb84 	bl	800050c <getRecvCompleted>
  8000e04:	4603      	mov	r3, r0
@@ -1888,7 +1888,7 @@ void mqttInit(void) {
 			break;
  8000e1c:	e04d      	b.n	8000eba <mqttInit+0x2a6>
 		}
-		case SSL_CFG_CIPHERSUITE:{
+		case SSL_CFG_CIPHERSUITE: {
 			if (!sendATCommand(SSLCFG_CHIPHERSUIT_FMT)) {
  8000e1e:	4845      	ldr	r0, [pc, #276]	; (8000f34 <mqttInit+0x320>)
  8000e20:	f7ff fdfc 	bl	8000a1c <sendATCommand>
@@ -1903,7 +1903,7 @@ void mqttInit(void) {
 			break;
  8000e30:	e045      	b.n	8000ebe <mqttInit+0x2aa>
 		}
-		case SSL_CFG_CIPHERSUITE_WAIT:{
+		case SSL_CFG_CIPHERSUITE_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
  8000e32:	f7ff fb6b 	bl	800050c <getRecvCompleted>
  8000e36:	4603      	mov	r3, r0
@@ -1922,7 +1922,7 @@ void mqttInit(void) {
 			break;
  8000e4e:	e038      	b.n	8000ec2 <mqttInit+0x2ae>
 		}
-		case SSL_CFG_IGNORERTCTIME:{
+		case SSL_CFG_IGNORERTCTIME: {
 			if (!sendATCommand(SSLCFG_IGNRRTCTIME_FMT)) {
  8000e50:	4839      	ldr	r0, [pc, #228]	; (8000f38 <mqttInit+0x324>)
  8000e52:	f7ff fde3 	bl	8000a1c <sendATCommand>
@@ -1937,7 +1937,7 @@ void mqttInit(void) {
 			break;
  8000e62:	e030      	b.n	8000ec6 <mqttInit+0x2b2>
 		}
-		case SSL_CFG_IGNORERTCTIME_WAIT:{
+		case SSL_CFG_IGNORERTCTIME_WAIT: {
 			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
  8000e64:	f7ff fb52 	bl	800050c <getRecvCompleted>
  8000e68:	4603      	mov	r3, r0
@@ -1965,7 +1965,7 @@ void mqttInit(void) {
 			whileState = 0;
  8000e88:	2300      	movs	r3, #0
  8000e8a:	71fb      	strb	r3, [r7, #7]
-			break;
+		break;
  8000e8c:	e01e      	b.n	8000ecc <mqttInit+0x2b8>
 			break;
  8000e8e:	bf00      	nop
@@ -2054,7 +2054,7 @@ void mqttInit(void) {
 			HAL_Delay(5);
  8000f00:	2005      	movs	r0, #5
  8000f02:	f000 ff81 	bl	8001e08 <HAL_Delay>
-	while(whileState){
+	while (whileState) {
  8000f06:	79fb      	ldrb	r3, [r7, #7]
  8000f08:	2b00      	cmp	r3, #0
  8000f0a:	f47f ae9c 	bne.w	8000c46 <mqttInit+0x32>
@@ -2088,10 +2088,9 @@ uint8_t deleteCertKey(void) {
  8000f3c:	b580      	push	{r7, lr}
  8000f3e:	b082      	sub	sp, #8
  8000f40:	af00      	add	r7, sp, #0
-#define DEL_CCCERT			2
-#define DEL_CCCERT_WAIT 	3
-#define DEL_CKCERT			4
-#define DEL_CKCERT_WAIT 	5
+	typedef enum {
+		DEL_CACERT, DEL_CACERT_WAIT, DEL_CCCERT, DEL_CCCERT_WAIT, DEL_CKCERT, DEL_CKCERT_WAIT
+	} deleteCert_e;
 
 	uint8_t err = 1;
  8000f42:	2301      	movs	r3, #1
@@ -2099,7 +2098,7 @@ uint8_t deleteCertKey(void) {
 	uint8_t whileBreak = 1;
  8000f46:	2301      	movs	r3, #1
  8000f48:	71bb      	strb	r3, [r7, #6]
-	uint8_t state = DEL_CACERT;
+	deleteCert_e state = DEL_CACERT;
  8000f4a:	2300      	movs	r3, #0
  8000f4c:	717b      	strb	r3, [r7, #5]
 	uint32_t prevtimeout = getMqttSystick();
@@ -2337,10 +2336,10 @@ uint8_t writeCertKey(void) {
  80010b8:	b580      	push	{r7, lr}
  80010ba:	b082      	sub	sp, #8
  80010bc:	af00      	add	r7, sp, #0
-#define WRITE_CKCERT_WAIT 			9
-#define WRITE_CKCERT_SEND 			10
-#define WRITE_CKCERT_SEND_WAIT 		11
-#define EXIT						12
+		WRITE_CKCERT_SEND,
+		WRITE_CKCERT_SEND_WAIT,
+		EXIT
+	} writeCert_e;
 
 	uint8_t err = 1;
  80010be:	2301      	movs	r3, #1
@@ -2348,7 +2347,7 @@ uint8_t writeCertKey(void) {
 	uint8_t whileBreak = 1;
  80010c2:	2301      	movs	r3, #1
  80010c4:	71bb      	strb	r3, [r7, #6]
-	uint8_t state = DEL_CACERT;
+	writeCert_e state = WRITE_CACERT;
  80010c6:	2300      	movs	r3, #0
  80010c8:	717b      	strb	r3, [r7, #5]
 	uint32_t prevtimeout = getMqttSystick();
@@ -2651,7 +2650,7 @@ uint8_t writeCertKey(void) {
 			break;
  80012b4:	e01a      	b.n	80012ec <writeCertKey+0x234>
 		}
-		//fallth
+			//fallth
 		case EXIT:
 		default:
 			whileBreak = 0;
@@ -2809,7 +2808,7 @@ void MQTT_Virtual_TIM_ElapsedCallback(void *tim) {
 
 080013ac <mqttControl>:
 
-void mqttControl(void){
+void mqttControl(void) {
  80013ac:	b480      	push	{r7}
  80013ae:	af00      	add	r7, sp, #0
 
