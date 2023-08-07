@@ -76,6 +76,7 @@ uint32_t getMqttSystick(void) {
 	return mqtt_systick;
 }
 
+uint32_t mqttInitPrevTick = 0;
 /**
  * @brief MQTT init
  * @retval None
@@ -83,7 +84,7 @@ uint32_t getMqttSystick(void) {
 void mqttInit(void) {
 
 	if (getModuleConfigState() != MODULE_CONFIG_FINISH) {
-		setModuleConfigState(MODULE_CONFIG_START);
+		//setModuleConfigState(MODULE_CONFIG_START);
 		return;
 	}
 
@@ -111,13 +112,17 @@ void mqttInit(void) {
 
 	m_mqttConfigState = MQTT_CONFIG_START;
 
-	uint8_t whileState = 1;
-	mqttConfig_e state = MQTT_CFG;
+//	uint8_t whileState = 1;
+	static mqttConfig_e state = MQTT_CFG;
 
-	uint32_t prevtimeout = getMqttSystick();
-	uint8_t retry = 0;
+//	uint32_t prevtimeout = getMqttSystick();
+	static uint8_t retry = 0;
 
-	while (whileState) {
+	if(mqttInitPrevTick == 0){
+		mqttInitPrevTick = getMqttSystick();
+	}
+
+//	while (whileState) {
 		switch (state) {
 		case MQTT_CFG: {
 			if (!sendATCommand(MQTT_CFG_FMT)) {
@@ -136,7 +141,8 @@ void mqttInit(void) {
 				state++;
 			}
 			else {
-				whileState = 0;
+//				whileState = 0;
+				state = EXIT;
 				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
 			}
 			break;
@@ -146,7 +152,8 @@ void mqttInit(void) {
 				state++;
 			}
 			else {
-				whileState = 0;
+//				whileState = 0;
+				state = EXIT;
 				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
 			}
 			break;
@@ -236,26 +243,32 @@ void mqttInit(void) {
 			break;
 		}
 		case EXIT:
+			mqttInitPrevTick = 0;
+			retry = 0;
+			state = MQTT_CFG;
 			m_mqttConfigState = MQTT_CONFIG_FINISH;
 		default:
-			whileState = 0;
+//			whileState = 0;
 		break;
 		}
 
 		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
-		if ((getMqttSystick() - prevtimeout) >= 1000 && retry < 3) {
-			state = 0;
+		if ((getMqttSystick() - mqttInitPrevTick) >= 1000 && retry < 3) {
+			state = MQTT_CFG;
 			retry++;
 		}
 		else if (retry >= 3) {
-			whileState = 0;
+//			whileState = 0;
+			mqttInitPrevTick = 0;
+			retry = 0;
+			state = MQTT_CFG;
 			m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
 			// config module error
 		}
 		else {
 			HAL_Delay(5);
 		}
-	}
+//	}
 //
 //	//Start MQTT SSL connection.
 //	AT+QMTOPEN=0,"aws url",port
@@ -475,6 +488,7 @@ uint8_t writeCertKey(void) {
 		}
 		else if (retry >= 3) {
 			whileBreak = 0;
+			retry = 0;
 			err = 1;
 			// config module error
 		}
@@ -529,5 +543,7 @@ void MQTT_Virtual_TIM_ElapsedCallback(void *tim) {
 }
 
 void mqttControl(void) {
-
+	if(getMQTTConfigState() == MODULE_CONFIG_START){
+		mqttInit();
+	}
 }

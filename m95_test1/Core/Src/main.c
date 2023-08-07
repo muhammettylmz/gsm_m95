@@ -109,10 +109,13 @@ int main(void) {
 	powerOn();
 	HAL_Delay(2000);
 
-	// gsm module power on
-	gsmConfig();
-	mqttInit();
-
+	while(1){
+		gsmConfig();
+		mqttInit();
+		if(getMQTTConfigState() == MQTT_CONFIG_TIMEOUT || getModuleConfigState() == MODULE_CONFIG_TIMEOUT){
+			break;
+		}
+	}
 
 	/* USER CODE END 2 */
 

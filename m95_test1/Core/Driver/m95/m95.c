@@ -103,6 +103,7 @@ void powerOn(void) {
 	HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_RESET);
 }
 
+uint32_t gsmConfigPrevTick = 0;
 /**
  * @brief GSM Module configuration. Use after powerOn function.
  * @retval None
@@ -131,15 +132,19 @@ void gsmConfig(void) {
 		EXIT,
 	} module_cfg_e;
 
-	uint8_t whileState = 1;
-	module_cfg_e state = ECHO_MODE;
+//	uint8_t whileState = 1;
+	static module_cfg_e state = ECHO_MODE;
 
-	uint32_t prevtimeout = getSystickCnt();
-	uint8_t retry = 0;
+//	uint32_t prevtimeout = getSystickCnt();
+	static uint8_t retry = 0;
+
+	if(gsmConfigPrevTick == 0){
+		gsmConfigPrevTick = getSystickCnt();
+	}
 
 	m_moduleConfigState = MODULE_CONFIG_START;
 
-	while (whileState) {
+//	while (whileState) {
 		switch (state) {
 		case ECHO_MODE: {
 			//echo mode off
@@ -264,26 +269,32 @@ void gsmConfig(void) {
 		}
 		//fallt
 		case EXIT:
+			gsmConfigPrevTick = 0;
+			retry = 0;
+			state = ECHO_MODE;
 			m_moduleConfigState = MODULE_CONFIG_FINISH;
 		default:
-			whileState = 0;
+//			whileState = 0;
 		break;
 		}
 
 		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
-		if ((getSystickCnt() - prevtimeout) >= 1000 && retry < 3) {
-			state = 0;
+		if ((getSystickCnt() - gsmConfigPrevTick) >= 1000 && retry < 3) {
+			state = ECHO_MODE;
 			retry++;
 		}
 		else if (retry >= 3) {
-			whileState = 0;
+//			whileState = 0;
+			gsmConfigPrevTick = 0;
+			retry = 0;
+			state = ECHO_MODE;
 			m_moduleConfigState = MODULE_CONFIG_TIMEOUT;
 			// config module error
 		}
 		else {
 			HAL_Delay(5);
 		}
-	}  // while end
+//	}  // while end
 }
 
 /**
@@ -394,6 +405,9 @@ void GSM_Virtual_Systick(void) {
 
 void gsmControl(void){
 	monitoringPowerOff();
+	if(getMQTTConfigState() == MODULE_CONFIG_START){
+		gsmConfig();
+	}
 }
 
 /*

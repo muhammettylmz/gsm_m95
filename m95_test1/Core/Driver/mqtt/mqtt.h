@@ -27,6 +27,7 @@ typedef enum {
 extern void MQTT_Virtual_TIM_ElapsedCallback(void* tim);
 extern void MQTT_Virtual_Systick_Handler(void);
 extern void setMQTTConfigState(mqttConfigState_e state);
+extern uint8_t getMQTTConfigState(void);
 extern void mqttInit(void);
 extern void mqttControl(void);
 
