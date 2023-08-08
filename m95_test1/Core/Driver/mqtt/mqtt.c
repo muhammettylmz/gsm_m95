@@ -648,6 +648,8 @@ uint8_t disconnectBroker(void) {
 
 /**
  * @brief send message MQTT topic,value is json format
+ * value değeri json formatında hazır şekilde gelicek.
+ * topic değeri ise ilgili topic ve id si içerinsinde olacak.
  * @retval 0 is success, others errors
  */
 uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
@@ -665,7 +667,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 	if (mqttPubReqPrevtimeout == 0) {
 		mqttPubReqPrevtimeout = getMqttSystick();
 	}
-	uint8_t pubMsg[64] = { 0 };
+	uint8_t pubMsg[512] = { 0 };
 
 	switch (state) {
 	case MQTT_PUB_REQ: {
