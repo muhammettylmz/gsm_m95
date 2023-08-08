@@ -109,11 +109,14 @@ int main(void) {
 	powerOn();
 	HAL_Delay(2000);
 
-	while(1){
+	while (1) {
 		gsmConfig();
 		mqttInit();
-		if(getMQTTConfigState() == MQTT_CONFIG_TIMEOUT || getModuleConfigState() == MODULE_CONFIG_TIMEOUT){
-			break;
+
+		// init işlemi bitti veya timeout oldu
+		if (getMQTTConfigState() != MQTT_CONFIG_START
+				|| getModuleConfigState() != MODULE_CONFIG_START) {
+			break; // while crash
 		}
 	}
 
@@ -173,7 +176,8 @@ void SystemClock_Config(void) {
 
 	/** Initializes the CPU, AHB and APB buses clocks
 	 */
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1
+			| RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;

@@ -33,7 +33,7 @@ extern uint8_t sendATCommand(const uint8_t *commad);
 extern uint8_t findATCommandResp(uint8_t* resp);
 extern uint8_t getRecvCompleted(void);
 extern uint8_t sendUartData(const uint8_t* data, uint16_t len);
-extern uint8_t getModuleConfigState(void);
+extern moduleCfgState_e getModuleConfigState(void);
 extern void setModuleConfigState(moduleCfgState_e state);
 extern void gsmControl(void);
 

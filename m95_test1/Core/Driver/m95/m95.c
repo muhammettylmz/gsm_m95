@@ -24,11 +24,11 @@ uint64_t m_timerCnt;
 
 uint64_t m_uartRecvTimeoutStart;
 uint8_t m_uartRecvCompleted;
-uint8_t m_moduleConfigState;
+moduleCfgState_e m_moduleConfigState;
 
 void clearUartBuffer(void);
 
-uint8_t getModuleConfigState(void){
+moduleCfgState_e getModuleConfigState(void){
 	return m_moduleConfigState;
 }
 
@@ -405,9 +405,12 @@ void GSM_Virtual_Systick(void) {
 
 void gsmControl(void){
 	monitoringPowerOff();
-	if(getMQTTConfigState() == MODULE_CONFIG_START){
+	if(getModuleConfigState()== MODULE_CONFIG_START){
 		gsmConfig();
+		return;
 	}
+	/*
+	 * */
 }
 
 /*

@@ -22,6 +22,8 @@
 #include "mqtt.h"
 #include "main.h"
 #include "m95.h"
+#include <stdio.h>
+#include <string.h>
 
 #define GSM_TCP_IP_STACK_START_FMT 	(const uint8_t*)"AT+QIREGAPP\r\n"
 #define GPRS_ACTIVE_CTX_FMT			(const uint8_t*)"AT+QIACT\r\n"
@@ -43,15 +45,19 @@
 #define SECWRITE_CC_FMT 			(const uint8_t*)"AT+QSECWRITE=\"RAM:clientcert.pem\",1220,100\r\n"
 #define SECWRITE_CK_FMT 			(const uint8_t*)"AT+QSECWRITE=\"RAM:clientkey.pem\",1679,100\r\n"
 
-#define MQTT_OPEN_FMT				(const uint8_t*)"AT+QMTOPEN=0,\"a16f5x7vu3zfui-ats.iot.eu-central-1.amazonaws.com\",8883\r\n"
+#define MQTT_OPEN_FMT				(const char*)"AT+QMTOPEN=0,\"%s\",%d\r\n"
+//#define MQTT_OPEN_FMT				(const uint8_t*)"AT+QMTOPEN=0,\"a16f5x7vu3zfui-ats.iot.eu-central-1.amazonaws.com\",8883\r\n"
 #define MQTT_OPEN_SUCCESS_FMT       (uint8_t*)"+QMTOPEN: 0,0" //75 saniye beklemeli olabilir. datasheet e bak
+#define MQTT_OPEN_REPONSE_TIME		(75200) // unit ms
 
-#define MQTT_CLIENT_CONN_FMT		(const uint8_t*)"AT+QMTCONN=0,\"yehhep\""
+#define MQTT_CLIENT_CONN_FMT		(const char*)"AT+QMTCONN=0,\"%s\""
 #define MQTT_CL_CONN_SUCCESS_FMT 	(uint8_t*)"+QMTCONN: 0,0,0"
+#define MQTT_CONN_REPONSE_TIME		(20200) // unit ms
 
 // %s yerine sprintf ile ilgili id girilmesi lazım
-#define MQTT_PUB_ST_TOPIC_FMT		(const uint8_t*)"AT+QMTPUB=0,0,0,0,\"yehhep/%d/status\"\r\n"
+#define MQTT_PUB_ST_TOPIC_FMT		(const char*)"AT+QMTPUB=0,0,0,0,\"%s\"\r\n"
 #define MQTT_PUB_SUCCESS_FMT 		(uint8_t*)"+QMTPUB: 0,0,0"
+#define MQTT_PUB_REQ_RESPONSE_TIME  (20200) // unit ms
 
 #define PUB_MSG_JSON_FMT 			(const uint8_t*)"{\"working\":%s,\"km\":%d,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%0.6f,\"longitude\":%0.6f}}"
 
@@ -59,12 +65,20 @@ unsigned char pubMessage[512];
 
 uint32_t mqtt_systick;
 uint64_t mqtt_timer_cnt;
-uint8_t m_mqttConfigState;
+mqttConfigState_e m_mqttConfigState;
+mqttConnectState_e m_mqttConnectState = MQTT_NOT_CONNECT;
+mqttOpenState_e m_mqttOpenState = MQTT_NOT_OPEN;
+mqttPubReqState_e m_mqttPubReqState = MQTT_PUBLISH_IDLE;
+
+uint32_t mqttConnectPrevtimeout = 0;
+uint32_t mqttOpenPrevtimeout = 0;
+uint32_t mqttPubReqPrevtimeout = 0;
+uint32_t mqttInitPrevTick = 0;
 
 uint8_t deleteCertKey(void);
 uint8_t writeCertKey(void);
 
-uint8_t getMQTTConfigState(void) {
+mqttConfigState_e getMQTTConfigState(void) {
 	return m_mqttConfigState;
 }
 
@@ -76,7 +90,6 @@ uint32_t getMqttSystick(void) {
 	return mqtt_systick;
 }
 
-uint32_t mqttInitPrevTick = 0;
 /**
  * @brief MQTT init
  * @retval None
@@ -118,162 +131,158 @@ void mqttInit(void) {
 //	uint32_t prevtimeout = getMqttSystick();
 	static uint8_t retry = 0;
 
-	if(mqttInitPrevTick == 0){
+	if (mqttInitPrevTick == 0) {
 		mqttInitPrevTick = getMqttSystick();
 	}
 
 //	while (whileState) {
-		switch (state) {
-		case MQTT_CFG: {
-			if (!sendATCommand(MQTT_CFG_FMT)) {
-				state++;
-			}
-			break;
+	switch (state) {
+	case MQTT_CFG: {
+		if (!sendATCommand(MQTT_CFG_FMT)) {
+			state++;
 		}
-		case MQTT_CFG_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case MQTT_SSL_CERT_DELETE: {
-			if (deleteCertKey()) {
-				state++;
-			}
-			else {
-//				whileState = 0;
-				state = EXIT;
-				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
-			}
-			break;
-		}
-		case MQTT_SSL_CERT_WRITE: {
-			if (writeCertKey()) {
-				state++;
-			}
-			else {
-//				whileState = 0;
-				state = EXIT;
-				m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
-			}
-			break;
-		}
-		case SSL_CFG_CA_KEY: {
-			if (!sendATCommand(SSLCFG_CA_FMT)) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_CA_KEY_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_CC_KEY: {
-			if (!sendATCommand(SSLCFG_CC_FMT)) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_CC_KEY_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_CK_KEY: {
-			if (!sendATCommand(SSLCFG_CK_FMT)) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_CK_KEY_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_SECLEVEL: {
-			if (!sendATCommand(SSLCFG_SECLEVL_FMT)) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_SECLEVEL_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_SSLVERSION: {
-			if (!sendATCommand(SSLCFG_SSLVER_FMT)) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_SSLVERSION_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_CIPHERSUITE: {
-			if (!sendATCommand(SSLCFG_CHIPHERSUIT_FMT)) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_CIPHERSUITE_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_IGNORERTCTIME: {
-			if (!sendATCommand(SSLCFG_IGNRRTCTIME_FMT)) {
-				state++;
-			}
-			break;
-		}
-		case SSL_CFG_IGNORERTCTIME_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case EXIT:
-			mqttInitPrevTick = 0;
-			retry = 0;
-			state = MQTT_CFG;
-			m_mqttConfigState = MQTT_CONFIG_FINISH;
-		default:
-//			whileState = 0;
 		break;
+	}
+	case MQTT_CFG_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
 		}
-
-		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
-		if ((getMqttSystick() - mqttInitPrevTick) >= 1000 && retry < 3) {
-			state = MQTT_CFG;
-			retry++;
-		}
-		else if (retry >= 3) {
-//			whileState = 0;
-			mqttInitPrevTick = 0;
-			retry = 0;
-			state = MQTT_CFG;
-			m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
-			// config module error
+		break;
+	}
+	case MQTT_SSL_CERT_DELETE: {
+		if (!deleteCertKey()) {
+			state++;
 		}
 		else {
-			HAL_Delay(5);
+//				whileState = 0;
+			state = EXIT;
+			m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
 		}
+		break;
+	}
+	case MQTT_SSL_CERT_WRITE: {
+		if (!writeCertKey()) {
+			state++;
+		}
+		else {
+//				whileState = 0;
+			state = EXIT;
+			m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
+		}
+		break;
+	}
+	case SSL_CFG_CA_KEY: {
+		if (!sendATCommand(SSLCFG_CA_FMT)) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_CA_KEY_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_CC_KEY: {
+		if (!sendATCommand(SSLCFG_CC_FMT)) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_CC_KEY_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_CK_KEY: {
+		if (!sendATCommand(SSLCFG_CK_FMT)) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_CK_KEY_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_SECLEVEL: {
+		if (!sendATCommand(SSLCFG_SECLEVL_FMT)) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_SECLEVEL_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_SSLVERSION: {
+		if (!sendATCommand(SSLCFG_SSLVER_FMT)) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_SSLVERSION_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_CIPHERSUITE: {
+		if (!sendATCommand(SSLCFG_CHIPHERSUIT_FMT)) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_CIPHERSUITE_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_IGNORERTCTIME: {
+		if (!sendATCommand(SSLCFG_IGNRRTCTIME_FMT)) {
+			state++;
+		}
+		break;
+	}
+	case SSL_CFG_IGNORERTCTIME_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case EXIT:
+		mqttInitPrevTick = 0;
+		retry = 0;
+		state = MQTT_CFG;
+		m_mqttConfigState = MQTT_CONFIG_FINISH;
+	default:
+//			whileState = 0;
+	break;
+	}
+
+	// komutların cevabı gelmez ise kontrol mekanizması konuldu.
+	if ((getMqttSystick() - mqttInitPrevTick) >= 1000 && retry < 3) {
+		state = MQTT_CFG;
+		retry++;
+	}
+	else if (retry >= 3) {
+//			whileState = 0;
+		mqttInitPrevTick = 0;
+		retry = 0;
+		state = MQTT_CFG;
+		m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
+		// config module error
+	}
+	else {
+		HAL_Delay(5);
+	}
 //	}
 //
-//	//Start MQTT SSL connection.
-//	AT+QMTOPEN=0,"aws url",port
-	//OK
-	//+QMTOPEN: 0,0
 }
 
 /**
@@ -499,14 +508,130 @@ uint8_t writeCertKey(void) {
 	return err;
 }
 /**
- * @brief connect MQTT broker server
+ * @brief connect MQTT client
  * @retval 0 is connect, others errors
  */
-uint8_t connectBroker(uint8_t *client) {
-	//Connect to MQTT server.
-//		AT+QMTCONN=0,"client"
-	// OK
-	// +QMTCONN: 0,0,0
+uint8_t mqttConnect(uint8_t *client) {
+	typedef enum {
+		MQTT_CONNECT, MQTT_CONNECT_OK_WAIT, MQTT_CONNECT_SUCCES_WAIT, EXIT
+	} mqttConenct_e;
+
+	static mqttConenct_e state = MQTT_CONNECT;
+	m_mqttConnectState = MQTT_NOT_CONNECT;
+
+	if (mqttConnectPrevtimeout == 0) {
+		mqttConnectPrevtimeout = getMqttSystick();
+	}
+
+	uint8_t connectMsg[64] = { 0 };
+
+	switch (state) {
+	case MQTT_CONNECT: {
+		sprintf((char*) connectMsg, MQTT_CLIENT_CONN_FMT, client);
+		if (!sendATCommand(connectMsg)) {
+			state++;
+		}
+		break;
+	}
+	case MQTT_CONNECT_OK_WAIT: {
+		if (getRecvCompleted() && (findATCommandResp((uint8_t*) "OK"))) {
+			state++;
+		}
+		else {
+			state = MQTT_CONNECT;
+			mqttConnectPrevtimeout = 0;
+			m_mqttConnectState = MQTT_NOT_CONNECT;
+		}
+		break;
+	}
+	case MQTT_CONNECT_SUCCES_WAIT: {
+		if (getRecvCompleted() && (findATCommandResp(MQTT_CL_CONN_SUCCESS_FMT))) {
+			m_mqttConnectState = MQTT_CONNECTED;
+		}
+		else {
+			m_mqttConnectState = MQTT_NOT_CONNECT;
+
+		}
+		state = EXIT;
+		break;
+	}
+	case EXIT:
+	default:
+		state = MQTT_CONNECT;
+		mqttConnectPrevtimeout = 0;
+	break;
+	}
+
+	// AT komut maksimum response time
+	if ((getMqttSystick() - mqttConnectPrevtimeout) >= MQTT_CONN_REPONSE_TIME) {
+		mqttConnectPrevtimeout = 0;
+		state = MQTT_CONNECT;
+		m_mqttConnectState = MQTT_CONNECT_TIMEOUT;
+	}
+
+	return 0;
+}
+
+/**
+ * @brief Open MQTT broker
+ * @retval 0 is connect, others errors
+ */
+uint8_t mqttOpenBroker(uint8_t *endpoint, uint16_t port) {
+	typedef enum {
+		MQTT_OPEN, MQTT_OPEN_OK_WAIT, MQTT_OPEN_SUCCES_WAIT, EXIT
+	} mqttOpen_e;
+
+	static mqttOpen_e state = MQTT_OPEN;
+	m_mqttConnectState = MQTT_NOT_OPEN;
+
+	if (mqttOpenPrevtimeout == 0) {
+		mqttOpenPrevtimeout = getMqttSystick();
+	}
+	uint8_t openMsg[64] = { 0 };
+	switch (state) {
+	case MQTT_OPEN: {
+		sprintf((char*) openMsg, MQTT_OPEN_FMT, endpoint, port);
+		if (!sendATCommand(openMsg)) {
+			state++;
+		}
+		break;
+	}
+	case MQTT_OPEN_OK_WAIT: {
+		if (getRecvCompleted() && (findATCommandResp((uint8_t*) "OK"))) {
+			state++;
+		}
+		else {
+			state = MQTT_OPEN;
+			mqttOpenPrevtimeout = 0;
+			m_mqttOpenState = MQTT_NOT_OPEN;
+		}
+		break;
+	}
+	case MQTT_OPEN_SUCCES_WAIT: {
+		if (getRecvCompleted() && (findATCommandResp(MQTT_OPEN_SUCCESS_FMT))) {
+			m_mqttOpenState = MQTT_OPEN_SUCCESS;
+		}
+		else {
+			m_mqttOpenState = MQTT_NOT_OPEN;
+
+		}
+		state = EXIT;
+		break;
+	}
+	case EXIT:
+	default:
+		state = MQTT_OPEN;
+		mqttOpenPrevtimeout = 0;
+	break;
+	}
+
+	// AT komut maksimum response time
+	if ((getMqttSystick() - mqttOpenPrevtimeout) >= MQTT_OPEN_REPONSE_TIME) {
+		mqttOpenPrevtimeout = 0;
+		state = MQTT_OPEN;
+		m_mqttOpenState = MQTT_OPEN_TIMEOUT;
+	}
+
 	return 0;
 }
 
@@ -524,12 +649,90 @@ uint8_t disconnectBroker(void) {
  * @brief send message MQTT topic,value is json format
  * @retval 0 is success, others errors
  */
-uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value) {
-	//Publish messages.
-//		AT+QMTPUB=0,0,0,0,"topic"
-	// > value ctrl+z(0x1A);
-	//OK
-	//+QMTPUB: 0,0,0
+uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
+	typedef enum {
+		MQTT_PUB_REQ, MQTT_PUB_REQ_WAIT,  // recv > value
+		MQTT_PUB_SEND,		//json data send
+		MQTT_PUB_SEND_OK_WAIT,  // OK response
+		MQTT_PUB_SEND_SUCCESS_WAIT,  //recv +QMTPUB: 0,0,0
+		EXIT
+	} mqttPubReq_e;
+
+	static mqttPubReq_e state = MQTT_PUB_REQ;
+	m_mqttPubReqState = MQTT_PUBLISH_IDLE;
+
+	if (mqttPubReqPrevtimeout == 0) {
+		mqttPubReqPrevtimeout = getMqttSystick();
+	}
+	uint8_t pubMsg[64] = { 0 };
+
+	switch (state) {
+	case MQTT_PUB_REQ: {
+		sprintf((char*) pubMsg, MQTT_PUB_ST_TOPIC_FMT, topic);
+		if (!sendATCommand(pubMsg)) {
+			state++;
+		}
+		break;
+	}
+	case MQTT_PUB_REQ_WAIT: {
+		if (getRecvCompleted() && (findATCommandResp((uint8_t*) ">"))) {
+			state++;
+		}
+		else {
+			state = MQTT_PUB_REQ;
+			mqttPubReqPrevtimeout = getMqttSystick();
+			m_mqttPubReqState = MQTT_PUBLISH_IDLE;
+		}
+		break;
+	}
+	case MQTT_PUB_SEND: {
+		//The maximum length of the data is 1548 bytes and the data beyond 1548 bytes will be omitted.
+		value[len] = 0x1A;  // After inputting data, tap Ctrl+Z to send.
+		if (sendUartData(value, len)) {
+			state++;
+		}
+		else {
+			state = MQTT_PUB_REQ;
+			mqttPubReqPrevtimeout = getMqttSystick();
+			m_mqttPubReqState = MQTT_PUBLISH_IDLE;
+		}
+		break;
+	}
+	case MQTT_PUB_SEND_OK_WAIT: {
+		if (getRecvCompleted() && (findATCommandResp((uint8_t*) "OK"))) {
+			state++;
+		}
+		else {
+			state = MQTT_PUB_REQ;
+			mqttPubReqPrevtimeout = 0;
+			m_mqttPubReqState = MQTT_PUBLISH_IDLE;
+		}
+		break;
+	}
+	case MQTT_PUB_SEND_SUCCESS_WAIT: {
+		if (getRecvCompleted() && (findATCommandResp(MQTT_PUB_SUCCESS_FMT))) {
+			m_mqttPubReqState = MQTT_PUBLISH_SUCCESS;
+		}
+		else {
+			m_mqttPubReqState = MQTT_PUBLISH_IDLE;
+		}
+		state = EXIT;
+		break;
+	}
+	case EXIT:
+	default:
+		state = MQTT_PUB_REQ;
+		mqttPubReqPrevtimeout = 0;
+	break;
+	}
+
+	// AT komut maksimum response time
+	if ((getMqttSystick() - mqttPubReqPrevtimeout) >= MQTT_PUB_REQ_RESPONSE_TIME) {
+		mqttPubReqPrevtimeout = 0;
+		state = MQTT_PUB_REQ;
+		m_mqttPubReqState = MQTT_PUBLISH_TIMEOUT;
+	}
+
 	return 0;
 }
 
@@ -543,7 +746,11 @@ void MQTT_Virtual_TIM_ElapsedCallback(void *tim) {
 }
 
 void mqttControl(void) {
-	if(getMQTTConfigState() == MODULE_CONFIG_START){
+	if (getMQTTConfigState() == MQTT_CONFIG_START) {
 		mqttInit();
+		return;
 	}
+
+	/*
+	 * */
 }
