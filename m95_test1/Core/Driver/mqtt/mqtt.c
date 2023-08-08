@@ -57,6 +57,7 @@
 // %s yerine sprintf ile ilgili id girilmesi lazım
 #define MQTT_PUB_ST_TOPIC_FMT		(const char*)"AT+QMTPUB=0,0,0,0,\"%s\"\r\n"
 #define MQTT_PUB_SUCCESS_FMT 		(uint8_t*)"+QMTPUB: 0,0,0"
+#define MQTT_PUB_SEND_CTRL_Z		0x1A // ascii table ctrl+z decimal 26,
 #define MQTT_PUB_REQ_RESPONSE_TIME  (20200) // unit ms
 
 #define PUB_MSG_JSON_FMT 			(const uint8_t*)"{\"working\":%s,\"km\":%d,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%0.6f,\"longitude\":%0.6f}}"
@@ -687,7 +688,8 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 	}
 	case MQTT_PUB_SEND: {
 		//The maximum length of the data is 1548 bytes and the data beyond 1548 bytes will be omitted.
-		value[len] = 0x1A;  // After inputting data, tap Ctrl+Z to send.
+		value[len] = MQTT_PUB_SEND_CTRL_Z;  // After inputting data, tap Ctrl+Z to send.
+		value[len+1] = '\0'; // for strlen;
 		if (sendUartData(value, len)) {
 			state++;
 		}
