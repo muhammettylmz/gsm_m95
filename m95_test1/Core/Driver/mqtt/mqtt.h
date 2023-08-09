@@ -41,11 +41,17 @@ typedef enum{
 	MQTT_PUBLISH_TIMEOUT
 }mqttPubReqState_e;
 
+typedef enum{
+	PUBLISH_FINISH,
+	PUBLISH_READY
+}mqttPublishReady_e;
+
 
 extern void MQTT_Virtual_TIM_ElapsedCallback(void* tim);
 extern void MQTT_Virtual_Systick_Handler(void);
 extern void setMQTTConfigState(mqttConfigState_e state);
 extern mqttConfigState_e getMQTTConfigState(void);
+extern void setMQTTPublishReadyState(mqttPublishReady_e state);
 extern void mqttInit(void);
 extern void mqttControl(void);
 

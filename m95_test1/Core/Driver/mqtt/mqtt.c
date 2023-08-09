@@ -19,11 +19,12 @@
  *      veriye bir kimlik atayarak gönderir. Bu kimlik sayesinde verinin birde fazla kopyalanıp
  *      kopyalanmadığı öğrenmiş olur.
  */
+#include <stdio.h>
+#include <string.h>
 #include "mqtt.h"
 #include "main.h"
 #include "m95.h"
-#include <stdio.h>
-#include <string.h>
+#include "uart_debug.h"
 
 #define GSM_TCP_IP_STACK_START_FMT 	(const uint8_t*)"AT+QIREGAPP\r\n"
 #define GPRS_ACTIVE_CTX_FMT			(const uint8_t*)"AT+QIACT\r\n"
@@ -60,7 +61,7 @@
 #define MQTT_PUB_SEND_CTRL_Z		0x1A // ascii table ctrl+z decimal 26,
 #define MQTT_PUB_REQ_RESPONSE_TIME  (20200) // unit ms
 
-#define PUB_MSG_JSON_FMT 			(const uint8_t*)"{\"working\":%s,\"km\":%d,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%0.6f,\"longitude\":%0.6f}}"
+#define PUB_MSG_JSON_FMT 			(const char*)"{\"working\":%s,\"km\":%d,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%0.6f,\"longitude\":%0.6f}}"
 
 unsigned char pubMessage[512];
 
@@ -70,14 +71,36 @@ mqttConfigState_e m_mqttConfigState;
 mqttConnectState_e m_mqttConnectState = MQTT_NOT_CONNECT;
 mqttOpenState_e m_mqttOpenState = MQTT_NOT_OPEN;
 mqttPubReqState_e m_mqttPubReqState = MQTT_PUBLISH_IDLE;
+mqttPublishReady_e m_publishReady = PUBLISH_FINISH;
 
 uint32_t mqttConnectPrevtimeout = 0;
 uint32_t mqttOpenPrevtimeout = 0;
 uint32_t mqttPubReqPrevtimeout = 0;
 uint32_t mqttInitPrevTick = 0;
 
+
 uint8_t deleteCertKey(void);
 uint8_t writeCertKey(void);
+
+void setMQTTPublishReadyState(mqttPublishReady_e state){
+	m_publishReady = state;
+}
+
+mqttPublishReady_e getMQTTPublishReadyState(void){
+	return m_publishReady;
+}
+
+void setMQTTOpenState(mqttOpenState_e state){
+	m_mqttOpenState = state;
+}
+
+mqttOpenState_e getMQTTOpenState(void){
+	return m_mqttOpenState;
+}
+
+mqttConnectState_e getMQTTConnectState(void){
+	return m_mqttConnectState;
+}
 
 mqttConfigState_e getMQTTConfigState(void) {
 	return m_mqttConfigState;
@@ -261,6 +284,7 @@ void mqttInit(void) {
 		retry = 0;
 		state = MQTT_CFG;
 		m_mqttConfigState = MQTT_CONFIG_FINISH;
+		customDebugMsg("MQTT Init SUCCESS... \r\n");
 	default:
 //			whileState = 0;
 	break;
@@ -270,6 +294,7 @@ void mqttInit(void) {
 	if ((getMqttSystick() - mqttInitPrevTick) >= 1000 && retry < 3) {
 		state = MQTT_CFG;
 		retry++;
+		mqttInitPrevTick = getMqttSystick();
 	}
 	else if (retry >= 3) {
 //			whileState = 0;
@@ -277,6 +302,7 @@ void mqttInit(void) {
 		retry = 0;
 		state = MQTT_CFG;
 		m_mqttConfigState = MQTT_CONFIG_TIMEOUT;
+		customDebugMsg("MQTT Init TIMEOUT... \r\n");
 		// config module error
 	}
 	else {
@@ -344,6 +370,7 @@ uint8_t deleteCertKey(void) {
 		default:
 			whileBreak = 0;
 			err = 0;
+			customDebugMsg("Delete SSL Cert and Key SUCCES... \r\n");
 		break;
 		}
 
@@ -351,11 +378,13 @@ uint8_t deleteCertKey(void) {
 		if ((getMqttSystick() - prevtimeout) >= 400 && retry < 3) {
 			state = 0;
 			retry++;
+			prevtimeout = getMqttSystick();
 		}
 		else if (retry >= 3) {
 			whileBreak = 0;
 			err = 1;
 			// config module error
+			customDebugMsg("Delete SSL Cert and Key TIMEOUT... \r\n");
 		}
 		else {
 			HAL_Delay(5);
@@ -488,6 +517,7 @@ uint8_t writeCertKey(void) {
 		default:
 			whileBreak = 0;
 			err = 0;
+			customDebugMsg("Write SSL Cert and Key SUCCESS... \r\n");
 		break;
 		}
 
@@ -495,12 +525,14 @@ uint8_t writeCertKey(void) {
 		if ((getMqttSystick() - prevtimeout) >= 400 && retry < 3) {
 			state = 0;
 			retry++;
+			prevtimeout = getMqttSystick();
 		}
 		else if (retry >= 3) {
 			whileBreak = 0;
 			retry = 0;
 			err = 1;
 			// config module error
+			customDebugMsg("Write SSL Cert and Key TIMEOUT... \r\n");
 		}
 		else {
 			HAL_Delay(5);
@@ -548,6 +580,7 @@ uint8_t mqttConnect(uint8_t *client) {
 	case MQTT_CONNECT_SUCCES_WAIT: {
 		if (getRecvCompleted() && (findATCommandResp(MQTT_CL_CONN_SUCCESS_FMT))) {
 			m_mqttConnectState = MQTT_CONNECTED;
+			customDebugMsg("MQTT Client Connect SUCCESS... \r\n");
 		}
 		else {
 			m_mqttConnectState = MQTT_NOT_CONNECT;
@@ -568,6 +601,7 @@ uint8_t mqttConnect(uint8_t *client) {
 		mqttConnectPrevtimeout = 0;
 		state = MQTT_CONNECT;
 		m_mqttConnectState = MQTT_CONNECT_TIMEOUT;
+		customDebugMsg("MQTT Client Connect TIMEOUT... \r\n");
 	}
 
 	return 0;
@@ -611,6 +645,7 @@ uint8_t mqttOpenBroker(uint8_t *endpoint, uint16_t port) {
 	case MQTT_OPEN_SUCCES_WAIT: {
 		if (getRecvCompleted() && (findATCommandResp(MQTT_OPEN_SUCCESS_FMT))) {
 			m_mqttOpenState = MQTT_OPEN_SUCCESS;
+			customDebugMsg("MQTT Broker open SUCCESS... \r\n");
 		}
 		else {
 			m_mqttOpenState = MQTT_NOT_OPEN;
@@ -631,6 +666,7 @@ uint8_t mqttOpenBroker(uint8_t *endpoint, uint16_t port) {
 		mqttOpenPrevtimeout = 0;
 		state = MQTT_OPEN;
 		m_mqttOpenState = MQTT_OPEN_TIMEOUT;
+		customDebugMsg("MQTT Broker open TIMEOUT... \r\n");
 	}
 
 	return 0;
@@ -667,7 +703,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 	if (mqttPubReqPrevtimeout == 0) {
 		mqttPubReqPrevtimeout = getMqttSystick();
 	}
-	uint8_t pubMsg[512] = { 0 };
+	uint8_t pubMsg[128] = { 0 };
 
 	switch (state) {
 	case MQTT_PUB_REQ: {
@@ -694,6 +730,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 		value[len+1] = '\0'; // for strlen;
 		if (sendUartData(value, len)) {
 			state++;
+			customDebugMsg("MQTT Publish send Data over UART is SUCCESS...\r\n");
 		}
 		else {
 			state = MQTT_PUB_REQ;
@@ -705,6 +742,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 	case MQTT_PUB_SEND_OK_WAIT: {
 		if (getRecvCompleted() && (findATCommandResp((uint8_t*) "OK"))) {
 			state++;
+			customDebugMsg("MQTT Publish send OK response ... \r\n");
 		}
 		else {
 			state = MQTT_PUB_REQ;
@@ -716,6 +754,8 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 	case MQTT_PUB_SEND_SUCCESS_WAIT: {
 		if (getRecvCompleted() && (findATCommandResp(MQTT_PUB_SUCCESS_FMT))) {
 			m_mqttPubReqState = MQTT_PUBLISH_SUCCESS;
+			setMQTTPublishReadyState(PUBLISH_FINISH);
+			customDebugMsg("MQTT Publish send SUCCESS... \r\n");
 		}
 		else {
 			m_mqttPubReqState = MQTT_PUBLISH_IDLE;
@@ -735,6 +775,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 		mqttPubReqPrevtimeout = 0;
 		state = MQTT_PUB_REQ;
 		m_mqttPubReqState = MQTT_PUBLISH_TIMEOUT;
+		customDebugMsg("MQTT Publish send TIMEOUT... \r\n");
 	}
 
 	return 0;
@@ -749,12 +790,67 @@ void MQTT_Virtual_TIM_ElapsedCallback(void *tim) {
 	mqtt_timer_cnt++;
 }
 
+uint8_t test_topic[64];
+uint16_t test_id = 333;
+uint8_t test_json_value[512];
+uint8_t test_working[5] = "true\0";
+uint16_t test_km = 10;
+uint16_t test_speed = 0;
+uint16_t test_fuel = 5000;
+float test_longitude = 42.12;
+float test_latitude = 29.12;
+
+uint8_t rawData[128];
 void mqttControl(void) {
 	if (getMQTTConfigState() == MQTT_CONFIG_START) {
 		mqttInit();
 		return;
 	}
+	//check mqtt open closed. +QMTSTAT: 0,1
+	if(getRecvCompleted()){
+		if(findATCommandResp((uint8_t*)"+QMTSTAT:")){
+			getRxGSMRawData(rawData);
+			// Quectel_GSM_MQTT_Application_Note_V1.3.pdf
+			// 4.1 +QMTSTAT Indicate State Change in MQTT Link Layer
+			if(rawData[12] != '0'){
+				setMQTTOpenState(MQTT_NOT_OPEN);
+			}
+		}
+	}
 
+	if(getMQTTOpenState() != MQTT_OPEN_SUCCESS){
+		mqttOpenBroker(MQTT_AWS_URL, MQTT_AWS_PORT);
+		return;
+	}
+
+	if(getMQTTConnectState() != MQTT_CONNECTED){
+		mqttConnect(MQTT_CLIENT);
+		return;
+	}
+
+	if(getMQTTConnectState() == MQTT_CONNECTED && m_publishReady == PUBLISH_READY){
+		sprintf((char*)test_topic, MQTT_AWS_TOPIC , test_id);
+		sprintf((char*) test_json_value, PUB_MSG_JSON_FMT,
+				test_working,
+				test_km,
+				test_speed,
+				test_fuel,
+				test_latitude,
+				test_longitude);
+		mqttPubMessage(test_topic, test_json_value , (strlen((char*)test_json_value)+2));
+	}
+
+	if(getMqttSystick() % 1000 == 0){
+		test_km++;
+		test_speed++;
+		test_fuel--;
+		test_longitude = test_longitude + 0.00022;
+		test_latitude = test_latitude + 0.0002;
+		customDebugMsg("Test json variable: working:%s\r\n"
+				"km: %d\r\nspeed: %d\r\nfuel: %d\r\n"
+				"latitude: %0.6f\r\nlongitude: %0.6f\r\n",
+				test_working,test_km,test_speed,test_fuel,test_latitude,test_longitude);
+	}
 	/*
 	 * */
 }

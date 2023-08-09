@@ -9,6 +9,7 @@
 #include "main.h"
 #include <string.h>
 #include "mqtt.h"
+#include "uart_debug.h"
 
 /*timer cnt ~100us de bir artacak şekilde ayarlandı*/
 #define TIMER_TIMEOUT_UNIT100US(x)		(x*100)
@@ -273,6 +274,7 @@ void gsmConfig(void) {
 			retry = 0;
 			state = ECHO_MODE;
 			m_moduleConfigState = MODULE_CONFIG_FINISH;
+			customDebugMsg("GSM Config SUCCESS... \r\n");
 		default:
 //			whileState = 0;
 		break;
@@ -282,6 +284,8 @@ void gsmConfig(void) {
 		if ((getSystickCnt() - gsmConfigPrevTick) >= 1000 && retry < 3) {
 			state = ECHO_MODE;
 			retry++;
+			gsmConfigPrevTick = getSystickCnt();
+			//customDebugMsg("getSystickCnt():%d gsmConfigPrevTick:%d--- ... \r\n",getSystickCnt(),gsmConfigPrevTick);
 		}
 		else if (retry >= 3) {
 //			whileState = 0;
@@ -289,6 +293,7 @@ void gsmConfig(void) {
 			retry = 0;
 			state = ECHO_MODE;
 			m_moduleConfigState = MODULE_CONFIG_TIMEOUT;
+			customDebugMsg("GSM Config TIMEOUT... \r\n");
 			// config module error
 		}
 		else {
@@ -401,6 +406,10 @@ void GSM_Virtual_TIM_ElapsedCallback(void *tim) {
  */
 void GSM_Virtual_Systick(void) {
 	m_systick++;
+}
+
+void getRxGSMRawData(uint8_t* data){
+	memcpy(data , rxGSMRaw , rxBufferCnt);
 }
 
 void gsmControl(void){
