@@ -27,7 +27,7 @@ const unsigned char awsRootCA1[1188] = "-----BEGIN CERTIFICATE-----\n"
 		"rqXRfboQnoZsG4q5WTP468SQvvG5\n"
 		"-----END CERTIFICATE-----\n";
 
-const unsigned char clientCert[1220] = "-----BEGIN CERTIFICATE-----\n"
+const unsigned char clientCert[1219] = "-----BEGIN CERTIFICATE-----\n"
 		"MIIDWTCCAkGgAwIBAgIUVXMAXc1bjoUryAlPK0gySkmD9igwDQYJKoZIhvcNAQEL\n"
 		"BQAwTTFLMEkGA1UECwxCQW1hem9uIFdlYiBTZXJ2aWNlcyBPPUFtYXpvbi5jb20g\n"
 		"SW5jLiBMPVNlYXR0bGUgU1Q9V2FzaGluZ3RvbiBDPVVTMB4XDTIzMDgwMTE5NTUy\n"
@@ -46,7 +46,7 @@ const unsigned char clientCert[1220] = "-----BEGIN CERTIFICATE-----\n"
 		"ab/nmQQlBpQL0v25U2kMEy3q2xB0R44KEOPaatQKxXDe5o2dFZ91i2QPWs66QxBU\n"
 		"e10AM5yFjQbabgOacGXyS+GN6KQVjqChYkyJfm7zOEri5b0u2+C1BGnLkO8wvI9b\n"
 		"r2+cna/rfkDziqOKQGpKUtG8BJfB/wrxr1+rwi/F1zocIsWd0a1fi5or1oR9\n"
-		"-----END CERTIFICATE-----\n";
+		"-----END CERTIFICATE-----";
 
 const unsigned char clientPrivateKey[1679] = "-----BEGIN RSA PRIVATE KEY-----\n"
 		"MIIEpgIBAAKCAQEAuqB9ebwOYG3lADN31LAd95MHCgfLvWnNjNCSV1FEiugwvEdJ\n"

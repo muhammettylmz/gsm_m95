@@ -1,0 +1,2 @@
+../Core/Driver/uart_debug/uart_debug.c:16:6:copyUart	1
+../Core/Driver/uart_debug/uart_debug.c:20:5:customDebugMsg	1

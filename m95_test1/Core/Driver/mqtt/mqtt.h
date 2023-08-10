@@ -15,7 +15,7 @@
 #define MQTT_AWS_URL  	(uint8_t*)"a16f5x7vu3zfui-ats.iot.eu-central-1.amazonaws.com"
 #define MQTT_AWS_PORT 	8883
 #define MQTT_CLIENT		(uint8_t*)"yehhep"
-#define MQTT_AWS_TOPIC	(const char*)"yehhep/%d/status/"
+#define MQTT_AWS_TOPIC	(const char*)"yehhep/%d/status"
 
 typedef enum {
 	MQTT_CONFIG_START,

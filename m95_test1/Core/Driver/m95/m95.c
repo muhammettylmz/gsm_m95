@@ -14,6 +14,7 @@
 /*timer cnt ~100us de bir artacak şekilde ayarlandı*/
 #define TIMER_TIMEOUT_UNIT100US(x)		(x*100)
 #define TIMER_TIMEOUT_UNIT1MS(x)	    (x*10)
+#define _10MS							TIMER_TIMEOUT_UNIT1MS(10)
 #define _5MS							TIMER_TIMEOUT_UNIT1MS(5)
 
 UART_HandleTypeDef *m_uart;
@@ -29,11 +30,11 @@ moduleCfgState_e m_moduleConfigState;
 
 void clearUartBuffer(void);
 
-moduleCfgState_e getModuleConfigState(void){
+moduleCfgState_e getModuleConfigState(void) {
 	return m_moduleConfigState;
 }
 
-void setModuleConfigState(moduleCfgState_e state){
+void setModuleConfigState(moduleCfgState_e state) {
 	m_moduleConfigState = state;
 }
 
@@ -54,7 +55,7 @@ uint64_t getTimerCnt(void) {
 }
 
 void startRecvTimeout(void) {
-	m_uartRecvTimeoutStart = getTimerCnt();
+	m_uartRecvTimeoutStart = getSystickCnt();
 }
 
 void stopRecvTimeout(void) {
@@ -62,7 +63,7 @@ void stopRecvTimeout(void) {
 }
 
 uint8_t checkRecvTimeout(void) {
-	if ((getTimerCnt() - getRecvTimeoutCnt()) >= _5MS) {
+	if ((getSystickCnt() - getRecvTimeoutCnt()) >= 10) {
 		m_uartRecvCompleted = 1;
 		stopRecvTimeout();
 		return 1;  // timeout
@@ -100,13 +101,26 @@ void powerOn(void) {
 	// wait until state pin high level
 	while (HAL_GPIO_ReadPin(STAT_M95_GPIO_Port, STAT_M95_Pin) != GPIO_PIN_SET) {
 		HAL_Delay(1);
-		if((getSystickCnt() - prevtimeout) >= 800){
+		if ((getSystickCnt() - prevtimeout) >= 800) {
 			customDebugMsg("GSM Power on Timeout...\r\n");
 			break;
 		}
 	}
+	customDebugMsg("GSM Module power on\r\n");
 	//state pin high level, pwrkey pin low level
 	HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_RESET);
+	HAL_Delay(1000);
+}
+
+/**
+ * @brief GSM Module power off. (quectel M95 click module)
+ * @retval None
+ */
+void powerOff(void){
+	if(!sendATCommand((const uint8_t*)"AT+QPOWD=0\r\n")){
+		customDebugMsg("GSM Module Power off...\r\n");
+		HAL_Delay(500);
+	}
 }
 
 uint32_t gsmConfigPrevTick = 0;
@@ -138,182 +152,189 @@ void gsmConfig(void) {
 		EXIT,
 	} module_cfg_e;
 
-//	uint8_t whileState = 1;
 	static module_cfg_e state = ECHO_MODE;
-
-//	uint32_t prevtimeout = getSystickCnt();
 	static uint8_t retry = 0;
 
-	if(gsmConfigPrevTick == 0){
+	if (gsmConfigPrevTick == 0) {
 		gsmConfigPrevTick = getSystickCnt();
 	}
 
 	m_moduleConfigState = MODULE_CONFIG_START;
 
-//	while (whileState) {
-		switch (state) {
-		case ECHO_MODE: {
-			//echo mode off
-			if (!sendATCommand((const uint8_t*) "ATE0\r\n")) {
+	switch (state) {
+	case ECHO_MODE: {
+		//echo mode off
+		if (!sendATCommand((const uint8_t*) "ATE0\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
+		}
+		break;
+	}
+	case ECHO_MODE_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case STRING_TYPE: {
+		// string error type
+		if (!sendATCommand((const uint8_t*) "AT+CMEE=2\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
+		}
+		break;
+	}
+	case STRING_TYPE_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state++;
+		}
+		break;
+	}
+	case CPIN_READ: {
+		if (!sendATCommand((const uint8_t*) "AT+CPIN?\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
+		}
+		break;
+	}
+	case CPIN_READ_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "READY")) {
+			state++;
+		}
+		break;
+	}
+	case CREG_READ: {
+		if (!sendATCommand((const uint8_t*) "AT+CREG?\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
+		}
+		break;
+	}
+	case CREG_READ_WAIT: {
+		if (getRecvCompleted()) {
+			if (findATCommandResp((uint8_t*) "+CREG: 0,1")
+					|| findATCommandResp((uint8_t*) "+CREG: 0,5")) {
 				state++;
-				gsmConfigPrevTick = getSystickCnt();
 			}
-			break;
-		}
-		case ECHO_MODE_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
+			else {
+				state = CREG_ACTIVE;
 			}
-			break;
 		}
-		case STRING_TYPE: {
-			// string error type
-			if (!sendATCommand((const uint8_t*) "AT+CMEE=2\r\n")) {
-				state++;
-				gsmConfigPrevTick = getSystickCnt();
-			}
-			break;
+		break;
+	}
+	case CREG_ACTIVE: {
+		if (!sendATCommand((const uint8_t*) "AT+CREG=1\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
 		}
-		case STRING_TYPE_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state++;
-			}
-			break;
-		}
-		case CPIN_READ: {
-			if (!sendATCommand((const uint8_t*) "AT+CPIN?\r\n")) {
-				state++;
-				gsmConfigPrevTick = getSystickCnt();
-			}
-			break;
-		}
-		case CPIN_READ_WAIT: {
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "READY")) {
-				state++;
-			}
-			break;
-		}
-		case CREG_READ: {
-			if (!sendATCommand((const uint8_t*) "AT+CREG?\r\n")) {
-				state++;
-				gsmConfigPrevTick = getSystickCnt();
-			}
-			break;
-		}
-		case CREG_READ_WAIT: {
-			if (getRecvCompleted()) {
-				if (findATCommandResp((uint8_t*) "+CREG: 0,1")
-						|| findATCommandResp((uint8_t*) "+CREG: 0,5")) {
-					state++;
-				}
-				else{
-					state = CREG_ACTIVE;
-				}
-			}
-			break;
-		}
-		case CREG_ACTIVE:{
-			if (!sendATCommand((const uint8_t*) "AT+CREG=1\r\n")) {
-				state++;
-				gsmConfigPrevTick = getSystickCnt();
-			}
-			break;
-		}
-		case CREG_ACTIVE_WAIT:{
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "+CREG: 1")) {
+		break;
+	}
+	case CREG_ACTIVE_WAIT: {
+		if (getRecvCompleted()) {
+			if (findATCommandResp((uint8_t*) "OK")) {
 				state = CGATT_READ;
 			}
-			break;
 		}
-		case CGATT_READ:{
-			if (!sendATCommand((const uint8_t*) "AT+CGATT?\r\n")) {
-				state++;
-				gsmConfigPrevTick = getSystickCnt();
-			}
-			break;
+		break;
+	}
+	case CGATT_READ: {
+		if (!sendATCommand((const uint8_t*) "AT+CGATT?\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
 		}
-		case CGATT_READ_WAIT:{
-			if (getRecvCompleted()) {
-				if (findATCommandResp((uint8_t*) "+CGATT: 1")){
-					state++;
-				}
-				else {
-					state = CGATT_ATTACH;
-				}
-			}
-			break;
-		}
-		case CGATT_ATTACH:{
-			if (!sendATCommand((const uint8_t*) "AT+CGATT=1\r\n")) {
-				state++;
-				gsmConfigPrevTick = getSystickCnt();
-			}
-			break;
-		}
-		case CGATT_ATTACH_WAIT:{
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
-				state = REGISTER_TCP_IP;
-			}
-			break;
-		}
-		case REGISTER_TCP_IP:{
-			if (!sendATCommand((const uint8_t*) "AT+QIREGAPP\r\n")) {
-				state++;
-				gsmConfigPrevTick = getSystickCnt();
-			}
-			break;
-		}
-		case REGISTER_TCP_IP_WAIT:{
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+		break;
+	}
+	case CGATT_READ_WAIT: {
+		if (getRecvCompleted()) {
+			if (findATCommandResp((uint8_t*) "+CGATT: 1")) {
 				state++;
 			}
-			break;
-		}
-		case ACTIVE_GPRS:{
-			if (!sendATCommand((const uint8_t*) "AT+QIACT\r\n")) {
-				state++;
-				gsmConfigPrevTick = getSystickCnt();
+			else {
+				state = CGATT_ATTACH;
 			}
-			break;
 		}
-		case ACTIVE_GPRS_WAIT:{
-			if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+		break;
+	}
+	case CGATT_ATTACH: {
+		if (!sendATCommand((const uint8_t*) "AT+CGATT=1\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
+		}
+		break;
+	}
+	case CGATT_ATTACH_WAIT: {
+		if (getRecvCompleted() && findATCommandResp((uint8_t*) "OK")) {
+			state = REGISTER_TCP_IP;
+		}
+		break;
+	}
+	case REGISTER_TCP_IP: {
+		if (!sendATCommand((const uint8_t*) "AT+QIREGAPP\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
+		}
+		break;
+	}
+	case REGISTER_TCP_IP_WAIT: {
+		if (getRecvCompleted()) {
+			if (findATCommandResp((uint8_t*) "OK")) {
+
+				state++;
+			}
+			else {  //error;
+				state++;
+			}
+		}
+		break;
+	}
+	case ACTIVE_GPRS: {
+		if (!sendATCommand((const uint8_t*) "AT+QIACT\r\n")) {
+			state++;
+			gsmConfigPrevTick = getSystickCnt();
+		}
+		break;
+	}
+	case ACTIVE_GPRS_WAIT: {
+		if (getRecvCompleted()) {
+			if (findATCommandResp((uint8_t*) "OK")) {
+
 				state = EXIT;
 			}
-			break;
-		}
-		//fallt
-		case EXIT:
-			gsmConfigPrevTick = 0;
-			retry = 0;
-			state = ECHO_MODE;
-			m_moduleConfigState = MODULE_CONFIG_FINISH;
-			customDebugMsg("GSM Config SUCCESS... \r\n");
-		default:
-//			whileState = 0;
-		break;
+			else {
+				state = EXIT;
+			}
 		}
 
-		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
-		if ((getSystickCnt() - gsmConfigPrevTick) >= 500 && retry < 3) {
-			state = ECHO_MODE;
-			retry++;
-			gsmConfigPrevTick = getSystickCnt();
-			//customDebugMsg("getSystickCnt():%d gsmConfigPrevTick:%d--- ... \r\n",getSystickCnt(),gsmConfigPrevTick);
-		}
-		else if (retry >= 3) {
-//			whileState = 0;
-			gsmConfigPrevTick = 0;
-			retry = 0;
-			state = ECHO_MODE;
-			m_moduleConfigState = MODULE_CONFIG_TIMEOUT;
-			customDebugMsg("GSM Config TIMEOUT... \r\n");
-			// config module error
-		}
-		else {
-			HAL_Delay(5);
-		}
-//	}  // while end
+		break;
+	}
+		//fallt
+	case EXIT:
+	default:
+		gsmConfigPrevTick = 0;
+		retry = 0;
+		state = ECHO_MODE;
+		m_moduleConfigState = MODULE_CONFIG_FINISH;
+		customDebugMsg("GSM Config SUCCESS... \r\n");
+	break;
+	}
+
+	// komutların cevabı gelmez ise kontrol mekanizması konuldu.
+	if ((getSystickCnt() - gsmConfigPrevTick) >= 500 && retry < 3) {
+		state = ECHO_MODE;
+		retry++;
+		gsmConfigPrevTick = getSystickCnt();
+	}
+	else if (retry >= 3) {
+		gsmConfigPrevTick = 0;
+		retry = 0;
+		state = ECHO_MODE;
+		m_moduleConfigState = MODULE_CONFIG_TIMEOUT;
+		customDebugMsg("GSM Config TIMEOUT... \r\n");
+		// config module error
+	}
+	else {
+		HAL_Delay(5);
+	}
 }
 
 /**
@@ -409,9 +430,6 @@ uint8_t sendUartData(const uint8_t *data, uint16_t len) {
 void GSM_Virtual_TIM_ElapsedCallback(void *tim) {
 	(void) tim;
 	m_timerCnt++;
-	if (getRecvTimeoutState()) {
-		checkRecvTimeout();
-	}
 }
 
 /**
@@ -420,15 +438,18 @@ void GSM_Virtual_TIM_ElapsedCallback(void *tim) {
  */
 void GSM_Virtual_Systick(void) {
 	m_systick++;
+	if (getRecvTimeoutState()) {
+		checkRecvTimeout();
+	}
 }
 
-void getRxGSMRawData(uint8_t* data){
-	memcpy(data , rxGSMRaw , rxBufferCnt);
+void getRxGSMRawData(uint8_t *data) {
+	memcpy(data, rxGSMRaw, rxBufferCnt);
 }
 
-void gsmControl(void){
+void gsmControl(void) {
 	monitoringPowerOff();
-	if(getModuleConfigState()== MODULE_CONFIG_START){
+	if (getModuleConfigState() == MODULE_CONFIG_START) {
 		gsmConfig();
 		return;
 	}

@@ -27,6 +27,7 @@ extern void GSM_Virtual_TIM_ElapsedCallback(void* tim);
 extern void moveUart(void *uart);
 extern void* getGSMUart(void);
 extern void powerOn(void);
+extern void powerOff(void);
 extern void gsmConfig(void);
 extern void monitoringPowerOff(void);
 extern uint8_t sendATCommand(const uint8_t *commad);

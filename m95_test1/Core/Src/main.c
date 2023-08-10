@@ -114,16 +114,20 @@ int main(void) {
 
 	moveUart(&huart3);
 	GSM_Virtual_Rx_IT();
+	powerOff();
 	powerOn();
-	HAL_Delay(2000);
-	customDebugMsg("GSM Module power on\r\n");
+
 	while (1) {
-		gsmConfig();
-		mqttInit();
+		if(getModuleConfigState() != MODULE_CONFIG_FINISH){
+			gsmConfig();
+		}
+		if(getMQTTConfigState() != MQTT_CONFIG_FINISH){
+			mqttInit();
+		}
 
 		// init işlemi bitti veya timeout oldu
 		if (getMQTTConfigState() != MQTT_CONFIG_START
-				|| getModuleConfigState() != MODULE_CONFIG_START) {
+				&& getModuleConfigState() != MODULE_CONFIG_START) {
 			customDebugMsg("Config and init error. gsm error: %d , mqtt error: %d\r\n",
 					getModuleConfigState(), getMQTTConfigState());
 			break;  // while crash
