@@ -164,6 +164,7 @@ void mqttInit(void) {
 	case MQTT_CFG: {
 		if (!sendATCommand(MQTT_CFG_FMT)) {
 			state++;
+			mqttInitPrevTick = getMqttSystick();
 		}
 		break;
 	}
@@ -198,6 +199,7 @@ void mqttInit(void) {
 	case SSL_CFG_CA_KEY: {
 		if (!sendATCommand(SSLCFG_CA_FMT)) {
 			state++;
+			mqttInitPrevTick = getMqttSystick();
 		}
 		break;
 	}
@@ -210,6 +212,7 @@ void mqttInit(void) {
 	case SSL_CFG_CC_KEY: {
 		if (!sendATCommand(SSLCFG_CC_FMT)) {
 			state++;
+			mqttInitPrevTick = getMqttSystick();
 		}
 		break;
 	}
@@ -222,6 +225,7 @@ void mqttInit(void) {
 	case SSL_CFG_CK_KEY: {
 		if (!sendATCommand(SSLCFG_CK_FMT)) {
 			state++;
+			mqttInitPrevTick = getMqttSystick();
 		}
 		break;
 	}
@@ -234,6 +238,7 @@ void mqttInit(void) {
 	case SSL_CFG_SECLEVEL: {
 		if (!sendATCommand(SSLCFG_SECLEVL_FMT)) {
 			state++;
+			mqttInitPrevTick = getMqttSystick();
 		}
 		break;
 	}
@@ -246,6 +251,7 @@ void mqttInit(void) {
 	case SSL_CFG_SSLVERSION: {
 		if (!sendATCommand(SSLCFG_SSLVER_FMT)) {
 			state++;
+			mqttInitPrevTick = getMqttSystick();
 		}
 		break;
 	}
@@ -258,6 +264,7 @@ void mqttInit(void) {
 	case SSL_CFG_CIPHERSUITE: {
 		if (!sendATCommand(SSLCFG_CHIPHERSUIT_FMT)) {
 			state++;
+			mqttInitPrevTick = getMqttSystick();
 		}
 		break;
 	}
@@ -270,6 +277,7 @@ void mqttInit(void) {
 	case SSL_CFG_IGNORERTCTIME: {
 		if (!sendATCommand(SSLCFG_IGNRRTCTIME_FMT)) {
 			state++;
+			mqttInitPrevTick = getMqttSystick();
 		}
 		break;
 	}
@@ -291,7 +299,7 @@ void mqttInit(void) {
 	}
 
 	// komutların cevabı gelmez ise kontrol mekanizması konuldu.
-	if ((getMqttSystick() - mqttInitPrevTick) >= 1000 && retry < 3) {
+	if ((getMqttSystick() - mqttInitPrevTick) >= 500 && retry < 3) {
 		state = MQTT_CFG;
 		retry++;
 		mqttInitPrevTick = getMqttSystick();
@@ -331,6 +339,7 @@ uint8_t deleteCertKey(void) {
 		case DEL_CACERT: {
 			if (!sendATCommand(SECDEL_CA_FMT)) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -344,6 +353,7 @@ uint8_t deleteCertKey(void) {
 		case DEL_CCCERT: {
 			if (!sendATCommand(SECDEL_CC_FMT)) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -357,6 +367,7 @@ uint8_t deleteCertKey(void) {
 		case DEL_CKCERT: {
 			if (!sendATCommand(SECDEL_CK_FMT)) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -425,6 +436,7 @@ uint8_t writeCertKey(void) {
 		case WRITE_CACERT: {
 			if (!sendATCommand(SECWRITE_CA_FMT)) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -443,6 +455,7 @@ uint8_t writeCertKey(void) {
 		case WRITE_CACERT_SEND: {
 			if (!sendUartData(awsRootCA1, sizeof(awsRootCA1))) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -455,6 +468,7 @@ uint8_t writeCertKey(void) {
 		case WRITE_CCCERT: {
 			if (!sendATCommand(SECWRITE_CC_FMT)) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -473,6 +487,7 @@ uint8_t writeCertKey(void) {
 		case WRITE_CCCERT_SEND: {
 			if (!sendUartData(clientCert, sizeof(clientCert))) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -485,6 +500,7 @@ uint8_t writeCertKey(void) {
 		case WRITE_CKCERT: {
 			if (!sendATCommand(SECWRITE_CK_FMT)) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -503,6 +519,7 @@ uint8_t writeCertKey(void) {
 		case WRITE_CKCERT_SEND: {
 			if (!sendUartData(clientPrivateKey, sizeof(clientPrivateKey))) {
 				state++;
+				prevtimeout = getMqttSystick();
 			}
 			break;
 		}
@@ -569,6 +586,7 @@ uint8_t mqttConnect(uint8_t *client) {
 	case MQTT_CONNECT_OK_WAIT: {
 		if (getRecvCompleted() && (findATCommandResp((uint8_t*) "OK"))) {
 			state++;
+			mqttConnectPrevtimeout = getMqttSystick();
 		}
 		else {
 			state = MQTT_CONNECT;
@@ -634,6 +652,7 @@ uint8_t mqttOpenBroker(uint8_t *endpoint, uint16_t port) {
 	case MQTT_OPEN_OK_WAIT: {
 		if (getRecvCompleted() && (findATCommandResp((uint8_t*) "OK"))) {
 			state++;
+			mqttOpenPrevtimeout = getMqttSystick();
 		}
 		else {
 			state = MQTT_OPEN;
@@ -730,6 +749,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 		value[len+1] = '\0'; // for strlen;
 		if (sendUartData(value, len)) {
 			state++;
+			mqttPubReqPrevtimeout = getMqttSystick();
 			customDebugMsg("MQTT Publish send Data over UART is SUCCESS...\r\n");
 		}
 		else {
@@ -742,6 +762,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 	case MQTT_PUB_SEND_OK_WAIT: {
 		if (getRecvCompleted() && (findATCommandResp((uint8_t*) "OK"))) {
 			state++;
+			mqttPubReqPrevtimeout = getMqttSystick();
 			customDebugMsg("MQTT Publish send OK response ... \r\n");
 		}
 		else {
