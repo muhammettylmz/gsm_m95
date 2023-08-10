@@ -96,9 +96,14 @@ void* getGSMUart(void) {
  */
 void powerOn(void) {
 	HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_SET);
+	uint32_t prevtimeout = getSystickCnt();
 	// wait until state pin high level
 	while (HAL_GPIO_ReadPin(STAT_M95_GPIO_Port, STAT_M95_Pin) != GPIO_PIN_SET) {
 		HAL_Delay(1);
+		if((getSystickCnt() - prevtimeout) >= 800){
+			customDebugMsg("GSM Power on Timeout...\r\n");
+			break;
+		}
 	}
 	//state pin high level, pwrkey pin low level
 	HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_RESET);
