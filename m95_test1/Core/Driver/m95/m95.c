@@ -151,6 +151,7 @@ void gsmConfig(void) {
 			//echo mode off
 			if (!sendATCommand((const uint8_t*) "ATE0\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -164,6 +165,7 @@ void gsmConfig(void) {
 			// string error type
 			if (!sendATCommand((const uint8_t*) "AT+CMEE=2\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -176,6 +178,7 @@ void gsmConfig(void) {
 		case CPIN_READ: {
 			if (!sendATCommand((const uint8_t*) "AT+CPIN?\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -188,6 +191,7 @@ void gsmConfig(void) {
 		case CREG_READ: {
 			if (!sendATCommand((const uint8_t*) "AT+CREG?\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -206,6 +210,7 @@ void gsmConfig(void) {
 		case CREG_ACTIVE:{
 			if (!sendATCommand((const uint8_t*) "AT+CREG=1\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -218,6 +223,7 @@ void gsmConfig(void) {
 		case CGATT_READ:{
 			if (!sendATCommand((const uint8_t*) "AT+CGATT?\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -235,6 +241,7 @@ void gsmConfig(void) {
 		case CGATT_ATTACH:{
 			if (!sendATCommand((const uint8_t*) "AT+CGATT=1\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -247,6 +254,7 @@ void gsmConfig(void) {
 		case REGISTER_TCP_IP:{
 			if (!sendATCommand((const uint8_t*) "AT+QIREGAPP\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -259,6 +267,7 @@ void gsmConfig(void) {
 		case ACTIVE_GPRS:{
 			if (!sendATCommand((const uint8_t*) "AT+QIACT\r\n")) {
 				state++;
+				gsmConfigPrevTick = getSystickCnt();
 			}
 			break;
 		}
@@ -281,7 +290,7 @@ void gsmConfig(void) {
 		}
 
 		// komutların cevabı gelmez ise kontrol mekanizması konuldu.
-		if ((getSystickCnt() - gsmConfigPrevTick) >= 1000 && retry < 3) {
+		if ((getSystickCnt() - gsmConfigPrevTick) >= 500 && retry < 3) {
 			state = ECHO_MODE;
 			retry++;
 			gsmConfigPrevTick = getSystickCnt();
