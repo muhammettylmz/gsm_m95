@@ -102,6 +102,7 @@ void powerOn(void) {
 		HAL_Delay(1);
 		if((getSystickCnt() - prevtimeout) >= 800){
 			customDebugMsg("GSM Power on Timeout...\r\n");
+			break;
 		}
 	}
 	//state pin high level, pwrkey pin low level
