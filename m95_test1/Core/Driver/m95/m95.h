@@ -24,8 +24,8 @@ extern void GSM_Virtual_Systick(void);
 extern void GSM_Virtual_Rx_IT(void);
 extern void GSM_Virtual_UART_RxCpltCallback(void *uart);
 extern void GSM_Virtual_TIM_ElapsedCallback(void* tim);
+
 extern void moveUart(void *uart);
-extern void* getGSMUart(void);
 extern void powerOn(void);
 extern void powerOff(void);
 extern void gsmConfig(void);
@@ -38,5 +38,6 @@ extern void getRxGSMRawData(uint8_t* data);
 extern moduleCfgState_e getModuleConfigState(void);
 extern void setModuleConfigState(moduleCfgState_e state);
 extern void gsmControl(void);
+
 
 #endif /* DRIVER_M95_M95_H_ */

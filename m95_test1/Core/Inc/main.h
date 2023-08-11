@@ -130,6 +130,9 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 extern UART_HandleTypeDef huart3;
+static __inline__ void* getGSMUART(void){
+	return &huart3;
+}
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

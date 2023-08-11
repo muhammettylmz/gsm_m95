@@ -19,6 +19,7 @@ void copyUart(void* uart){
 
 int customDebugMsg(const char* format , ...)
 {
+#ifdef CUSTOM_DEBUG
 	char tmpBuf[STDOUT_BUFFER_SIZE] = {0};
 	va_list arg = {};
 	va_start(arg,format);
@@ -28,6 +29,9 @@ int customDebugMsg(const char* format , ...)
 	va_end(arg);
 
 	return lenght;
+#else
+	return 0;
+#endif
 }
 
 

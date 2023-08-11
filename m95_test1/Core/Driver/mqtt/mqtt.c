@@ -97,6 +97,10 @@ mqttOpenState_e getMQTTOpenState(void) {
 	return m_mqttOpenState;
 }
 
+void setMQTTConnectState(mqttConnectState_e state){
+	m_mqttConnectState = state;
+}
+
 mqttConnectState_e getMQTTConnectState(void) {
 	return m_mqttConnectState;
 }
@@ -120,7 +124,7 @@ uint32_t getMqttSystick(void) {
 void mqttInit(void) {
 
 	if (getModuleConfigState() != MODULE_CONFIG_FINISH) {
-		//setModuleConfigState(MODULE_CONFIG_START);
+		setModuleConfigState(MODULE_CONFIG_START);
 		return;
 	}
 
@@ -848,7 +852,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 		m_mqttPubReqState = MQTT_PUBLISH_TIMEOUT;
 		customDebugMsg("MQTT Publish send TIMEOUT... \r\n");
 	}
-	HAL_Delay(1000);
+	//HAL_Delay(1000);
 	return 0;
 }
 
@@ -918,7 +922,6 @@ void mqttControl(void) {
 		sprintf((char*) test_json_value, PUB_MSG_JSON_FMT, test_working, test_km, test_speed,
 				test_fuel, test_latitude, test_longitude);
 		mqttPubMessage(test_topic, test_json_value, (strlen((char*) test_json_value) + 2));
-		//setMQTTPublishReadyState(PUBLISH_FINISH);
 	}
 
 

@@ -146,14 +146,13 @@ int main(void) {
 		gsmControl();
 		mqttControl();
 
-//		monitoringPowerOff();
 		checkButton(&btnState, &isRls);
 		if (btnState && isRls) {
 			customDebugMsg("Button is pressed...\r\nSend MQTT Publish message\r\n");
 			setMQTTPublishReadyState(PUBLISH_READY);
 			isRls = 0;
 		}
-		HAL_Delay(50);
+		HAL_Delay(10);
 	}
 	/* USER CODE END 3 */
 }

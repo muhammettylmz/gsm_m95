@@ -84,14 +84,6 @@ void moveUart(void *uart) {
 }
 
 /**
- * @brief get UART handle pointer
- * @retval UART_HandleTypeDef void pointer.
- */
-void* getGSMUart(void) {
-	return m_uart;
-}
-
-/**
  * @brief GSM Module power on. (quectel M95 click module)
  * @retval None
  */
@@ -346,6 +338,8 @@ void monitoringPowerOff(void) {
 		HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_SET);
 		setModuleConfigState(MODULE_CONFIG_START);
 		setMQTTConfigState(MQTT_CONFIG_START);
+		setMQTTOpenState(MQTT_NOT_OPEN);
+		setMQTTConnectState(MQTT_NOT_CONNECT);
 	}
 	else {
 		HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_RESET);

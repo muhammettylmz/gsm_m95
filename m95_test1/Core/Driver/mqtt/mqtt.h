@@ -51,6 +51,8 @@ extern void MQTT_Virtual_TIM_ElapsedCallback(void* tim);
 extern void MQTT_Virtual_Systick_Handler(void);
 extern void setMQTTConfigState(mqttConfigState_e state);
 extern mqttConfigState_e getMQTTConfigState(void);
+extern void setMQTTOpenState(mqttOpenState_e state);
+extern void setMQTTConnectState(mqttConnectState_e state);
 extern void setMQTTPublishReadyState(mqttPublishReady_e state);
 extern void mqttInit(void);
 extern void mqttControl(void);
