@@ -23,6 +23,7 @@ uint8_t rxGSMByte;
 uint16_t rxBufferCnt;
 uint32_t m_systick;
 uint64_t m_timerCnt;
+HAL_StatusTypeDef m_gsmRecvITError;
 
 uint64_t m_uartRecvTimeoutStart;
 uint8_t m_uartRecvCompleted;
@@ -381,7 +382,7 @@ uint8_t findATCommandResp(uint8_t *resp) {
  * @retval None
  */
 void GSM_Virtual_Rx_IT(void) {
-	HAL_UART_Receive_IT(m_uart, &rxGSMByte, 1);
+	m_gsmRecvITError = HAL_UART_Receive_IT(m_uart, &rxGSMByte, 1);
 }
 
 /**
@@ -446,6 +447,10 @@ void gsmControl(void) {
 	if (getModuleConfigState() == MODULE_CONFIG_START) {
 		gsmConfig();
 		return;
+	}
+
+	if(m_gsmRecvITError != HAL_OK){
+		GSM_Virtual_Rx_IT();
 	}
 	/*
 	 * */
