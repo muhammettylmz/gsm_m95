@@ -24,6 +24,7 @@
 #include "m95.h"
 #include "mqtt.h"
 #include "uart_debug.h"
+#include "gps.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,8 +120,11 @@ int main(void)
 
 	HAL_TIM_Base_Start_IT(&htim6);
 
+	gpsInit(&huart4);
+
 	moveUart(&huart3);
 	GSM_Virtual_Rx_IT();
+
 	powerOff();
 	powerOn();
 

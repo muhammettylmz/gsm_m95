@@ -12,4 +12,7 @@ extern void GPS_Virtual_Systick(void);
 extern void GPS_Virtual_Rx_IT(void);
 extern void GPS_Virtual_UART_RxCpltCallback(void *uart);
 
+extern void gpsControl(void);
+extern void gpsInit(void* uart);
+
 #endif /* DRIVER_GPS_GPS_H_ */

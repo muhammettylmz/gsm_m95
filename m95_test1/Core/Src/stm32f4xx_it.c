@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "m95.h"
 #include "mqtt.h"
+#include "gps.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
