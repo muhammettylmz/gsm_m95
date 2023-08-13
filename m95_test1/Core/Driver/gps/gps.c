@@ -327,10 +327,14 @@ void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
  * @retval none
  */
 void parseNmeaGGAandRMCMsg(void) {
+	setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_IDLE);
 	if (checkNMEAMsgValid(searchNMEABuff, searchNMEABuffCnt)) {
 		// set flags
+		setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_FINISH);
 		return;
 	}
+
+	setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCHING);
 
 	ggatoken = (char*) searchNMEABuff;
 	rmctoken = (char*) searchNMEABuff;
@@ -341,6 +345,7 @@ void parseNmeaGGAandRMCMsg(void) {
 	else if (strstr((char*) searchNMEABuff, NMEA_RMC_MSG_HEADER) != NULL) {
 		convertRMCMsg(rmctoken, &rmcMsg);
 	}
+	setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_FINISH);
 }
 
 void gpsControl(void) {

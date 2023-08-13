@@ -1,0 +1,2 @@
+../Core/Driver/uart_debug/uart_debug.c:17:6:uartDebugInit	1
+../Core/Driver/uart_debug/uart_debug.c:21:5:customDebugMsg	1
