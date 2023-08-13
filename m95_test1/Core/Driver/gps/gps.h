@@ -15,4 +15,7 @@ extern void GPS_Virtual_UART_RxCpltCallback(void *uart);
 extern void gpsControl(void);
 extern void gpsInit(void* uart);
 
+extern void getRMCLatLongValue(double* _lat, double* _long);
+extern void getGGALatLongValue(double* _lat, double* _long);
+
 #endif /* DRIVER_GPS_GPS_H_ */

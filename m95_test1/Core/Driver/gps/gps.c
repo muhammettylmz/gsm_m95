@@ -84,6 +84,26 @@ uint32_t getGPSSystick(void) {
 	return m_gpsSystick;
 }
 
+void getGGALatLongValue(double* _lat, double* _long){
+	if(ggaMsg.numberOfSatellites > 3 && ggaMsg.quality > 0){
+		*_lat = ggaMsg.latitude;
+		*_long = ggaMsg.longitude;
+	}else{
+		*_lat = 0;
+		*_long = 0;
+	}
+}
+
+void getRMCLatLongValue(double* _lat, double* _long){
+	if(rmcMsg.status == 'V'){
+		*_lat = rmcMsg.latitude;
+		*_long = rmcMsg.longitude;
+	}else{
+		*_lat = 0;
+		*_long = 0;
+	}
+}
+
 /**
  * @brief GPS init move UART_HandleTypeDef
  * @retval

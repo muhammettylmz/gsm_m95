@@ -24,6 +24,7 @@
 #include "mqtt.h"
 #include "main.h"
 #include "m95.h"
+#include "gps.h"
 #include "uart_debug.h"
 
 #define GSM_TCP_IP_STACK_START_FMT 	(const uint8_t*)"AT+QIREGAPP\r\n"
@@ -872,8 +873,8 @@ uint8_t test_working[5] = "true\0";
 uint16_t test_km = 10;
 uint16_t test_speed = 0;
 uint16_t test_fuel = 5000;
-float test_longitude = 42.12;
-float test_latitude = 29.12;
+double test_longitude = 42.12;
+double test_latitude = 29.12;
 uint32_t test_prevtimeout = 0;
 
 uint8_t rawData[128];
@@ -918,9 +919,13 @@ void mqttControl(void) {
 	}
 
 	if (getMQTTConnectState() == MQTT_CONNECTED && m_publishReady == PUBLISH_READY) {
+
+		getGGALatLongValue(&test_latitude, &test_longitude);
+
 		sprintf((char*) test_topic, MQTT_AWS_TOPIC, test_id);
 		sprintf((char*) test_json_value, PUB_MSG_JSON_FMT, test_working, test_km, test_speed,
 				test_fuel, test_latitude, test_longitude);
+
 		mqttPubMessage(test_topic, test_json_value, (strlen((char*) test_json_value) + 2));
 	}
 
