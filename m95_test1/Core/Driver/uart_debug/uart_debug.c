@@ -13,7 +13,8 @@
 #define STDOUT_BUFFER_SIZE   512
 
 UART_HandleTypeDef *m_debugUart;
-void copyUart(void* uart){
+
+void uartDebugInit(void* uart){
 	m_debugUart = (UART_HandleTypeDef*)uart;
 }
 

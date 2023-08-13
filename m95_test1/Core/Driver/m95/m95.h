@@ -25,7 +25,7 @@ extern void GSM_Virtual_Rx_IT(void);
 extern void GSM_Virtual_UART_RxCpltCallback(void *uart);
 extern void GSM_Virtual_TIM_ElapsedCallback(void* tim);
 
-extern void moveUart(void *uart);
+extern void gsmInit(void* uart);
 extern void powerOn(void);
 extern void powerOff(void);
 extern void gsmConfig(void);

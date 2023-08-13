@@ -64,10 +64,7 @@ extern UART_HandleTypeDef huart5;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
-extern unsigned char rxRaw[128];
-extern unsigned char rxData;
-extern uint8_t rxCnt;
-extern uint8_t buttonPressed;
+//extern uint8_t buttonPressed;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -84,6 +81,7 @@ void NMI_Handler(void)
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
   while (1)
   {
+	  __NVIC_SystemReset();
   }
   /* USER CODE END NonMaskableInt_IRQn 1 */
 }
@@ -99,6 +97,7 @@ void HardFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
+	  __NVIC_SystemReset();
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
@@ -114,6 +113,7 @@ void MemManage_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
+	  //__NVIC_SystemReset();
     /* USER CODE END W1_MemoryManagement_IRQn 0 */
   }
 }
@@ -129,6 +129,7 @@ void BusFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_BusFault_IRQn 0 */
+	  __NVIC_SystemReset();
     /* USER CODE END W1_BusFault_IRQn 0 */
   }
 }
@@ -144,6 +145,7 @@ void UsageFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
+	  __NVIC_SystemReset();
     /* USER CODE END W1_UsageFault_IRQn 0 */
   }
 }
@@ -284,26 +286,17 @@ void TIM6_DAC_IRQHandler(void)
 /* USER CODE BEGIN 1 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  if(huart->Instance == huart2.Instance){
-	  rxRaw[rxCnt++] = rxData;
-	  HAL_UART_Receive_IT(&huart2, &rxData, 1);
-  }
-
   GSM_Virtual_UART_RxCpltCallback(huart);
   GPS_Virtual_UART_RxCpltCallback(huart);
-//  else if(huart->Instance == huart3.Instance){
-//	  rxGSMBuffer[bufferCnt++] = rxGSMData;
-//	  HAL_UART_Receive_IT(&huart3, &rxGSMData, 1);
-//  }
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if(GPIO_Pin == B1_Pin){
-		buttonPressed = 1;
-	}
+//	if(GPIO_Pin == B1_Pin){
+//		buttonPressed = 1;
+//	}
 }
-// 25MHz clock, prescaler = 1, counter period = 2500
+// 64MHz clock, prescaler = 1, counter period = 6400
 // ~100us = prescaler * counterperiod / Clock
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	GSM_Virtual_TIM_ElapsedCallback(htim);

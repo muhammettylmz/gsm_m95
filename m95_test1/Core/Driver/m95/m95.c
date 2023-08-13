@@ -77,11 +77,14 @@ uint8_t getRecvTimeoutState(void) {
 }
 
 /**
- * @brief Copy pointer GSM Module uart handle
+ * @brief GSM init copy UART handle
  * @retval None
  */
-void moveUart(void *uart) {
+void gsmInit(void* uart){
 	m_uart = (UART_HandleTypeDef*) uart;
+	GSM_Virtual_Rx_IT();
+	powerOff();
+	powerOn();
 }
 
 /**
@@ -444,14 +447,15 @@ void getRxGSMRawData(uint8_t *data) {
 
 void gsmControl(void) {
 	monitoringPowerOff();
-	if (getModuleConfigState() == MODULE_CONFIG_START) {
+	if(m_gsmRecvITError != HAL_OK){
+		GSM_Virtual_Rx_IT();
+	}
+	if (getModuleConfigState() != MODULE_CONFIG_FINISH) {
 		gsmConfig();
 		return;
 	}
 
-	if(m_gsmRecvITError != HAL_OK){
-		GSM_Virtual_Rx_IT();
-	}
+
 	/*
 	 * */
 }
