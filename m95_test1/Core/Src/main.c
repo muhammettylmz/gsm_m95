@@ -156,22 +156,6 @@ int main(void)
 	gpsInit(&huart4);
 	gsmInit(&huart3);
 
-//	while (1) {
-//		if (getModuleConfigState() != MODULE_CONFIG_FINISH) {
-//			gsmConfig();
-//		}
-//		if (getMQTTConfigState() != MQTT_CONFIG_FINISH) {
-//			mqttInit();
-//		}
-//
-//		// init işlemi bitti veya timeout oldu
-//		if (getMQTTConfigState() != MQTT_CONFIG_START
-//				&& getModuleConfigState() != MODULE_CONFIG_START) {
-//			customDebugMsg("Config and init error. gsm error: %d , mqtt error: %d\r\n",
-//					getModuleConfigState(), getMQTTConfigState());
-//			break;  // while crash
-//		}
-//	}
 
 	customDebugMsg("Enter infinite While loop... \r\n");
   /* USER CODE END 2 */

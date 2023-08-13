@@ -333,9 +333,9 @@ void mqttInit(void) {
 		customDebugMsg("MQTT Init TIMEOUT... \r\n");
 		// config module error
 	}
-	else {
-		HAL_Delay(2);
-	}
+//	else {
+//		HAL_Delay(2);
+//	}
 }
 
 /**

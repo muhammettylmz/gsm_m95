@@ -328,9 +328,9 @@ void gsmConfig(void) {
 		customDebugMsg("GSM Config TIMEOUT... \r\n");
 		// config module error
 	}
-	else {
-		HAL_Delay(5);
-	}
+//	else {
+//		HAL_Delay(5);
+//	}
 }
 
 /**
