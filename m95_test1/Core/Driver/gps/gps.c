@@ -13,8 +13,8 @@
 #include <math.h>
 
 #define NMEA_DELIMETER_STRCHR	','
-#define NMEA_GGA_MSG_HEADER		(char*)"GPGGA"
-#define NMEA_RMC_MSG_HEADER		(char*)"GPRMC"
+#define NMEA_GGA_MSG_HEADER		(char*)"$GPGGA"
+#define NMEA_RMC_MSG_HEADER		(char*)"$GPRMC"
 #define NMEA_RMC_FIELD_SIZE		15
 #define NMEA_GGA_FIELD_SIZE 	17
 #define GPS_UART_BUFF_COUNT		10
@@ -57,8 +57,6 @@ typedef struct {
 
 gpsNmeaGGAType_t ggaMsg;
 gpsNmeaRMCType_t rmcMsg;
-char *ggatoken;
-char *rmctoken;
 
 UART_HandleTypeDef *m_gpsUart;
 HAL_StatusTypeDef m_gpsRecvITError;
@@ -80,13 +78,6 @@ void setGPSNmeaMsgSearchState(gpsNmeaSearchState_e state) {
 
 gpsNmeaSearchState_e getGPSNmeaMsgSearchState(void) {
 	return m_gpsNmeaMsgSearchState;
-}
-
-void copyGPSUartBuffForNMEA(uint8_t indis) {
-	if (getGPSNmeaMsgSearchState() == GPS_NMEA_MSG_SEARCH_FINISH) {
-		searchNMEABuffCnt = m_gpsUartBuff[indis].uartBuffCnt;
-		memcpy(searchNMEABuff, m_gpsUartBuff[indis].uartBuff, m_gpsUartBuff[indis].uartBuffCnt);
-	}
 }
 
 uint32_t getGPSSystick(void) {
@@ -272,17 +263,13 @@ void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
  * @retval none
  */
 void parseNmeaGGAandRMCMsg(void) {
-
-//	static uint8_t queIndis = 0;
 	for (uint8_t queIndis = 0; queIndis < GPS_UART_BUFF_COUNT; queIndis++) {
 		if (m_gpsUartBuff[queIndis].recvCompleted) {
-			copyGPSUartBuffForNMEA(queIndis);
 
 			setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_IDLE);
 
-			if (checkNMEAMsgValid(searchNMEABuff, searchNMEABuffCnt)) {
+			if (checkNMEAMsgValid(m_gpsUartBuff[queIndis].uartBuff, m_gpsUartBuff[queIndis].uartBuffCnt)) {
 				// set flags
-				setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_FINISH);
 				m_gpsUartBuff[queIndis].recvCompleted = 0;
 				m_gpsUartBuff[queIndis].uartBuffCnt = 0;
 				return;
@@ -290,13 +277,11 @@ void parseNmeaGGAandRMCMsg(void) {
 
 			setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCHING);
 
-			if (strstr((char*) searchNMEABuff, NMEA_GGA_MSG_HEADER) != NULL) {
-				ggatoken = (char*) searchNMEABuff;
-				convertGGAMsg(ggatoken, &ggaMsg);
+			if (strstr((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_GGA_MSG_HEADER) != NULL) {
+				convertGGAMsg((char*)m_gpsUartBuff[queIndis].uartBuff, &ggaMsg);
 			}
-			else if (strstr((char*) searchNMEABuff, NMEA_RMC_MSG_HEADER) != NULL) {
-				rmctoken = (char*) searchNMEABuff;
-				convertRMCMsg(rmctoken, &rmcMsg);
+			else if (strstr((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_RMC_MSG_HEADER) != NULL) {
+				convertRMCMsg((char*)m_gpsUartBuff[queIndis].uartBuff, &rmcMsg);
 			}
 
 			setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_FINISH);
@@ -305,9 +290,6 @@ void parseNmeaGGAandRMCMsg(void) {
 			m_gpsUartBuff[queIndis].uartBuffCnt = 0;
 		}
 	}
-//	if (queIndis == GPS_UART_BUFF_COUNT) {
-//		queIndis = 0;
-//	}
 }
 
 void gpsControl(void) {
