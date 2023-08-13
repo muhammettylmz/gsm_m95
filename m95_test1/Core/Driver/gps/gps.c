@@ -9,10 +9,12 @@
 #include "uart_debug.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
-#define NMEA_DELIMETER			(const char*)","
-#define NMEA_GGA_MSG_ID			(char*)"GPGGA"
-#define NMEA_RMC_MSG_ID			(char*)"GPRMC"
+#define NMEA_DELIMETER_STRCHR	','
+#define NMEA_GGA_MSG_HEADER		(char*)"GPGGA"
+#define NMEA_RMC_MSG_HEADER		(char*)"GPRMC"
 #define NMEA_RMC_FIELD_SIZE		15
 #define NMEA_GGA_FIELD_SIZE 	17
 
@@ -32,6 +34,34 @@ typedef enum {
 	GPS_NMEA_MSG_SEARCH_IDLE, GPS_NMEA_MSG_SEARCHING, GPS_NMEA_MSG_SEARCH_FINISH
 } gpsNmeaSearchState_e;
 
+typedef struct {
+	uint32_t time;  //hhmmss
+	double latitude;
+	char ns;
+	double longitude;
+	char ew;
+	float altitude;
+	uint8_t quality;
+	uint8_t numberOfSatellites;
+	float hdop;
+} gpsNmeaGGAType_t;
+
+typedef struct {
+	uint32_t time;  //hhmmss
+	char status;
+	double latitude;
+	char ns;
+	double longitude;
+	char ew;
+	float speedKnots;
+	float cog;
+} gpsNmeaRMCType_t;
+
+gpsNmeaGGAType_t ggaMsg;
+gpsNmeaRMCType_t rmcMsg;
+char *ggatoken;
+char *rmctoken;
+
 UART_HandleTypeDef *m_gpsUart;
 HAL_StatusTypeDef m_gpsRecvITError;
 uint8_t m_gpsRawBuf[255];
@@ -50,10 +80,6 @@ gpsUartTimeoutState_e m_gpsUartTimeout;
 
 gpsNmeaSearchState_e m_gpsNmeaMsgSearchState = GPS_NMEA_MSG_SEARCH_FINISH;
 
-char *ggatoken;
-char *rmctoken;
-char *fieldTokenGGA[NMEA_GGA_FIELD_SIZE];
-char *fieldTokenRMC[NMEA_RMC_FIELD_SIZE];
 
 void parseNmeaGGAandRMCMsg(void);
 
@@ -113,10 +139,14 @@ void checkGPSUartTimeoutCnt(void) {
 void gpsInit(void *uart) {
 	m_gpsUart = (UART_HandleTypeDef*) uart;
 	GPS_Virtual_Rx_IT();
+//	memcpy(searchNMEABuff,
+//			(uint8_t*) "$GPGGA,092725.00,4717.11399,N,00833.91590,E,1,08,1.01,499.6,M,48.0,M,,*5B",
+//			73);
+	//	searchNMEABuffCnt = 73;
 	memcpy(searchNMEABuff,
-			(uint8_t*) "$GPGGA,092725.00,4717.11399,N,00833.91590,E,1,08,1.01,499.6,M,48.0,M,,*5B",
-			73);
-	searchNMEABuffCnt = 73;
+			(uint8_t*) "$GPRMC,083559.00,A,4717.11437,N,00833.91522,E,0.004,77.52,091202,,,A*57",
+			71);
+	searchNMEABuffCnt = 71;
 
 	parseNmeaGGAandRMCMsg();
 }
@@ -178,18 +208,6 @@ void GPS_Virtual_UART_RxCpltCallback(void *uart) {
 	}
 }
 
-typedef struct {
-	uint32_t time;  //hhmmss
-	float latitude;
-	float longitude;
-	uint32_t altitude;
-	uint8_t quality;
-	uint8_t numberOfSatellites;
-	float hdop;
-} gpsNmeaGGAType_t;
-
-gpsNmeaGGAType_t ggaMsg;
-
 /**
  * @brief Calculate NMEA msg checksum
  * @retval 0 is succes, others 1
@@ -211,6 +229,100 @@ uint8_t checkNMEAMsgValid(uint8_t *nmeaMsg, uint8_t len) {
 	return 0;
 }
 
+double convertNMEAtoDegree(double nmeaVal, char indicator) {
+
+	double value;
+	value = (double) (fmod(nmeaVal, 100.0) / 60.0) + (double) ((uint8_t) (nmeaVal / 100));
+
+	if (indicator == 'W' || indicator == 'S') {
+		value *= -1;
+	}
+	return value;
+}
+
+void convertRMCMsg(char *msg, gpsNmeaRMCType_t *rmc) {
+	char *temprmc;
+	// time
+	temprmc = strchr(msg, NMEA_DELIMETER_STRCHR);
+	rmc->time = atol(temprmc + 1);
+	//
+	temprmc = strchr(temprmc + 1, NMEA_DELIMETER_STRCHR);
+	rmc->status = temprmc[1];  // V is recv warnig or A is  data valid
+
+	//latitude
+	temprmc = strchr(temprmc + 1, NMEA_DELIMETER_STRCHR);
+	rmc->latitude = atof(temprmc + 1);
+
+	//latitude N/S Indicator
+	temprmc = strchr(temprmc + 1, NMEA_DELIMETER_STRCHR);
+	rmc->ns = temprmc[1] == ',' ? '?' : temprmc[1];
+
+	rmc->latitude = convertNMEAtoDegree(rmc->latitude, rmc->ns);
+
+	//longitude
+	temprmc = strchr(temprmc + 1, NMEA_DELIMETER_STRCHR);
+	rmc->longitude = atoff(temprmc + 1);
+
+	//longitude E/W Indicator
+	temprmc = strchr(temprmc + 1, NMEA_DELIMETER_STRCHR);
+	rmc->ew = temprmc[1] == ',' ? '?' : temprmc[1];
+
+	rmc->longitude = convertNMEAtoDegree(rmc->longitude, rmc->ew);
+
+	// speed over ground
+	temprmc = strchr(temprmc + 1, NMEA_DELIMETER_STRCHR);
+	rmc->speedKnots = atoff(temprmc + 1);
+
+	// Course over grond
+	temprmc = strchr(temprmc + 1, NMEA_DELIMETER_STRCHR);
+	rmc->cog = atoff(temprmc + 1);
+
+}
+
+void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
+	char *tempgga;
+	// time
+	tempgga = strchr(msg, NMEA_DELIMETER_STRCHR);
+	gga->time = atol(tempgga + 1);
+
+	//latitude
+	tempgga = strchr(tempgga + 1, NMEA_DELIMETER_STRCHR);
+	gga->latitude = atof(tempgga + 1);
+
+	//latitude N/S Indicator
+	tempgga = strchr(tempgga + 1, NMEA_DELIMETER_STRCHR);
+	gga->ns = tempgga[1] == ',' ? '?' : tempgga[1];
+
+	gga->latitude = convertNMEAtoDegree(gga->latitude, gga->ns);
+
+	//longitude
+	tempgga = strchr(tempgga + 1, NMEA_DELIMETER_STRCHR);
+	gga->longitude = atoff(tempgga + 1);
+
+	//longitude E/W Indicator
+	tempgga = strchr(tempgga + 1, NMEA_DELIMETER_STRCHR);
+	gga->ew = tempgga[1] == ',' ? '?' : tempgga[1];
+
+	gga->longitude = convertNMEAtoDegree(gga->longitude, gga->ew);
+
+	//
+	tempgga = strchr(tempgga + 1, NMEA_DELIMETER_STRCHR);
+	gga->quality = atoi(tempgga + 1);
+
+	//
+	tempgga = strchr(tempgga + 1, NMEA_DELIMETER_STRCHR);
+	gga->numberOfSatellites = atoi(tempgga + 1);
+
+	//
+	tempgga = strchr(tempgga + 1, NMEA_DELIMETER_STRCHR);
+	gga->hdop = atoff(tempgga + 1);
+
+	//
+	tempgga = strchr(tempgga + 1, NMEA_DELIMETER_STRCHR);
+	gga->altitude = atoff(tempgga + 1);
+
+}
+
 void parseNmeaGGAandRMCMsg(void) {
 	if (checkNMEAMsgValid(searchNMEABuff, searchNMEABuffCnt)) {
 		// set flags
@@ -220,19 +332,11 @@ void parseNmeaGGAandRMCMsg(void) {
 	ggatoken = (char*) searchNMEABuff;
 	rmctoken = (char*) searchNMEABuff;
 
-	if (strstr((char*) searchNMEABuff, NMEA_GGA_MSG_ID) != NULL) {
-
-		//fieldTokenGGA[0] = strtok(ggatoken, NMEA_DELIMETER);
-		for (uint8_t u8 = 0; u8 < NMEA_GGA_FIELD_SIZE; u8++) {
-			fieldTokenGGA[u8] = strtok_r(ggatoken, NMEA_DELIMETER, &ggatoken);
-			customDebugMsg("fieldTokenGGA[%d] : %s\r\n", u8, fieldTokenGGA[u8]);
-		}
+	if (strstr((char*) searchNMEABuff, NMEA_GGA_MSG_HEADER) != NULL) {
+		convertGGAMsg(ggatoken, &ggaMsg);
 	}
-	else if (strstr((char*) searchNMEABuff, NMEA_RMC_MSG_ID) != NULL) {
-		for (uint8_t u8 = 0; u8 < NMEA_RMC_FIELD_SIZE; u8++) {
-			fieldTokenRMC[u8] = strtok_r(rmctoken, NMEA_DELIMETER, &rmctoken);
-			customDebugMsg("fieldTokenRMC[%d] : %s\r\n", u8, fieldTokenRMC[u8]);
-		}
+	else if (strstr((char*) searchNMEABuff, NMEA_RMC_MSG_HEADER) != NULL) {
+		convertRMCMsg(rmctoken, &rmcMsg);
 	}
 }
 

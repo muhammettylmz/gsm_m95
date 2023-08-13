@@ -61,7 +61,7 @@
 #define MQTT_PUB_SEND_CTRL_Z		0x1A // ascii table ctrl+z decimal 26,
 #define MQTT_PUB_REQ_RESPONSE_TIME  (20200) // unit ms
 
-#define PUB_MSG_JSON_FMT 			(const char*)"{\"working\":%s,\"km\":%d,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%.6f,\"longitude\":%.6f}}"
+#define PUB_MSG_JSON_FMT 			(const char*)"{\"working\":%s,\"km\":%d,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%.8f,\"longitude\":%.8f}}"
 
 unsigned char pubMessage[512];
 
