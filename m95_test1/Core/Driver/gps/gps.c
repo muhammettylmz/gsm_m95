@@ -80,9 +80,6 @@ gpsUartTimeoutState_e m_gpsUartTimeout;
 
 gpsNmeaSearchState_e m_gpsNmeaMsgSearchState = GPS_NMEA_MSG_SEARCH_FINISH;
 
-
-void parseNmeaGGAandRMCMsg(void);
-
 void setGPSNmeaMsgSearchState(gpsNmeaSearchState_e state) {
 	m_gpsNmeaMsgSearchState = state;
 }
@@ -139,16 +136,6 @@ void checkGPSUartTimeoutCnt(void) {
 void gpsInit(void *uart) {
 	m_gpsUart = (UART_HandleTypeDef*) uart;
 	GPS_Virtual_Rx_IT();
-//	memcpy(searchNMEABuff,
-//			(uint8_t*) "$GPGGA,092725.00,4717.11399,N,00833.91590,E,1,08,1.01,499.6,M,48.0,M,,*5B",
-//			73);
-	//	searchNMEABuffCnt = 73;
-	memcpy(searchNMEABuff,
-			(uint8_t*) "$GPRMC,083559.00,A,4717.11437,N,00833.91522,E,0.004,77.52,091202,,,A*57",
-			71);
-	searchNMEABuffCnt = 71;
-
-	parseNmeaGGAandRMCMsg();
 }
 
 /**
@@ -229,6 +216,10 @@ uint8_t checkNMEAMsgValid(uint8_t *nmeaMsg, uint8_t len) {
 	return 0;
 }
 
+/**
+ * @brief Calculate NMEA msg to lat long degree
+ * @retval double degree
+ */
 double convertNMEAtoDegree(double nmeaVal, char indicator) {
 
 	double value;
@@ -240,6 +231,10 @@ double convertNMEAtoDegree(double nmeaVal, char indicator) {
 	return value;
 }
 
+/**
+ * @brief find rmc field value in NMEA msg
+ * @retval none
+ */
 void convertRMCMsg(char *msg, gpsNmeaRMCType_t *rmc) {
 	char *temprmc;
 	// time
@@ -279,6 +274,10 @@ void convertRMCMsg(char *msg, gpsNmeaRMCType_t *rmc) {
 
 }
 
+/**
+ * @brief find gga field value in NMEA msg
+ * @retval none
+ */
 void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
 	char *tempgga;
 	// time
@@ -323,6 +322,10 @@ void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
 
 }
 
+/**
+ * @brief NMEA msg parser
+ * @retval none
+ */
 void parseNmeaGGAandRMCMsg(void) {
 	if (checkNMEAMsgValid(searchNMEABuff, searchNMEABuffCnt)) {
 		// set flags
