@@ -150,7 +150,7 @@ void gpsUartParser(uint8_t chr) {
 			m_gpsParserState = GPS_PARSER_VALUE;
 			setGPSMsgFoundState(GPS_MSG_NOT_FOUND);
 		}
-		break;
+		return;
 	}
 	case GPS_PARSER_VALUE: {
 		if (chr == '\r') {
@@ -159,7 +159,7 @@ void gpsUartParser(uint8_t chr) {
 		else {
 			m_gpsRawBuf[m_gpsRawCnt++] = chr;  // not include '\r' and '\n'
 		}
-		break;
+		return;
 	}
 	case GPS_PARSER_FOUND_CR: {
 		if (chr == '\n') {
@@ -168,12 +168,12 @@ void gpsUartParser(uint8_t chr) {
 		else {
 			m_gpsParserState = GPS_PARSER_START_CHR;
 		}
-		break;
+		return;
 	}
 	default:
 		// not found
 		m_gpsParserState = GPS_PARSER_START_CHR;
-	break;
+		return;
 	}
 
 }
@@ -191,7 +191,7 @@ void GPS_Virtual_UART_RxCpltCallback(void *uart) {
 	if (m_gpsUart->Instance == ((UART_HandleTypeDef*) uart)->Instance) {
 		GPS_Virtual_Rx_IT();
 		gpsUartParser(m_gpsRxData);
-		startGPsUartTimeoutCnt();
+		//startGPsUartTimeoutCnt();
 	}
 }
 
@@ -204,7 +204,7 @@ uint8_t checkNMEAMsgValid(uint8_t *nmeaMsg, uint8_t len) {
 	uint8_t cs = 0;
 
 	//without $(0.index) and *(3. to last) not include \r\n
-	for (uint8_t u8 = 1; u8 < (len - 3); u8++) {
+	for (uint8_t u8 = 0; u8 < (len - 3); u8++) {
 		cs = cs ^ nmeaMsg[u8];
 	}
 
@@ -336,13 +336,12 @@ void parseNmeaGGAandRMCMsg(void) {
 
 	setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCHING);
 
-	ggatoken = (char*) searchNMEABuff;
-	rmctoken = (char*) searchNMEABuff;
-
 	if (strstr((char*) searchNMEABuff, NMEA_GGA_MSG_HEADER) != NULL) {
+		ggatoken = (char*) searchNMEABuff;
 		convertGGAMsg(ggatoken, &ggaMsg);
 	}
 	else if (strstr((char*) searchNMEABuff, NMEA_RMC_MSG_HEADER) != NULL) {
+		rmctoken = (char*) searchNMEABuff;
 		convertRMCMsg(rmctoken, &rmcMsg);
 	}
 	setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_FINISH);

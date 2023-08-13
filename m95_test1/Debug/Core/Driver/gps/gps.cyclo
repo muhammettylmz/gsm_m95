@@ -19,4 +19,4 @@
 ../Core/Driver/gps/gps.c:238:6:convertRMCMsg	3
 ../Core/Driver/gps/gps.c:281:6:convertGGAMsg	3
 ../Core/Driver/gps/gps.c:329:6:parseNmeaGGAandRMCMsg	4
-../Core/Driver/gps/gps.c:351:6:gpsControl	3
+../Core/Driver/gps/gps.c:350:6:gpsControl	3

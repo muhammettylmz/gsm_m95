@@ -19,4 +19,4 @@
 ../Core/Driver/gps/gps.c:238:6:convertRMCMsg	24	static
 ../Core/Driver/gps/gps.c:281:6:convertGGAMsg	24	static
 ../Core/Driver/gps/gps.c:329:6:parseNmeaGGAandRMCMsg	8	static
-../Core/Driver/gps/gps.c:351:6:gpsControl	8	static
+../Core/Driver/gps/gps.c:350:6:gpsControl	8	static
