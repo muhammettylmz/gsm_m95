@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "m95.h"
 
 #define NMEA_DELIMETER_STRCHR	','
 #define NMEA_GGA_MSG_HEADER		(char*)"$GPGGA"
@@ -278,11 +279,16 @@ void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
 
 }
 
+
+uint64_t startTime;
+uint64_t stopTime;
+uint64_t diffTime;
 /**
  * @brief NMEA msg parser
  * @retval none
  */
 void parseNmeaGGAandRMCMsg(void) {
+	startTime = getTimerCnt();
 	for (uint8_t queIndis = 0; queIndis < GPS_UART_BUFF_COUNT; queIndis++) {
 		if (m_gpsUartBuff[queIndis].recvCompleted) {
 
@@ -310,6 +316,9 @@ void parseNmeaGGAandRMCMsg(void) {
 			m_gpsUartBuff[queIndis].uartBuffCnt = 0;
 		}
 	}
+	stopTime = getTimerCnt();
+	diffTime = stopTime - startTime;
+	customDebugMsg("parseNmeaGGAandRMCMsg execute time: %d",diffTime);
 }
 
 void gpsControl(void) {

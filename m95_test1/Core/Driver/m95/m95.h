@@ -39,5 +39,7 @@ extern moduleCfgState_e getModuleConfigState(void);
 extern void setModuleConfigState(moduleCfgState_e state);
 extern void gsmControl(void);
 
+extern uint64_t getTimerCnt(void);
+
 
 #endif /* DRIVER_M95_M95_H_ */

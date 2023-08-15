@@ -25,6 +25,7 @@
 #include "m95.h"
 #include "mqtt.h"
 #include "gps.h"
+#include "MY_LIS3DSH.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,11 +59,13 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern SPI_HandleTypeDef hspi1;
 extern TIM_HandleTypeDef htim6;
 extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart5;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
 //extern uint8_t buttonPressed;
 /* USER CODE END EV */
@@ -202,6 +205,7 @@ void SysTick_Handler(void)
   GSM_Virtual_Systick();
   GPS_Virtual_Systick();
   MQTT_Virtual_Systick_Handler();
+  MEMS_Virtual_Systick_Handler();
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -211,6 +215,20 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles SPI1 global interrupt.
+  */
+void SPI1_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI1_IRQn 0 */
+
+  /* USER CODE END SPI1_IRQn 0 */
+  HAL_SPI_IRQHandler(&hspi1);
+  /* USER CODE BEGIN SPI1_IRQn 1 */
+
+  /* USER CODE END SPI1_IRQn 1 */
+}
 
 /**
   * @brief This function handles USART2 global interrupt.
@@ -283,6 +301,20 @@ void TIM6_DAC_IRQHandler(void)
   /* USER CODE END TIM6_DAC_IRQn 1 */
 }
 
+/**
+  * @brief This function handles USART6 global interrupt.
+  */
+void USART6_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART6_IRQn 0 */
+
+  /* USER CODE END USART6_IRQn 0 */
+  HAL_UART_IRQHandler(&huart6);
+  /* USER CODE BEGIN USART6_IRQn 1 */
+
+  /* USER CODE END USART6_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -292,9 +324,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-//	if(GPIO_Pin == B1_Pin){
-//		buttonPressed = 1;
-//	}
+	if(GPIO_Pin == MEMS_INT2_Pin){
+		MEMS_Virtual_GPIO_EXTI();
+	}
 }
 // 64MHz clock, prescaler = 1, counter period = 6400
 // ~100us = prescaler * counterperiod / Clock
