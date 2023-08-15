@@ -318,7 +318,7 @@ void parseNmeaGGAandRMCMsg(void) {
 	}
 	stopTime = getTimerCnt();
 	diffTime = stopTime - startTime;
-	customDebugMsg("parseNmeaGGAandRMCMsg execute time: %d",diffTime);
+	//customDebugMsg("parseNmeaGGAandRMCMsg start: %ld\r\nstop: %ld\r\nexecute time: %ld\r\n",startTime,stopTime,diffTime);
 }
 
 void gpsControl(void) {

@@ -35,4 +35,14 @@ int customDebugMsg(const char* format , ...)
 #endif
 }
 
+void memsDebugAcc(const char* format , ...){
+	char tmpBuf[STDOUT_BUFFER_SIZE] = {0};
+	va_list arg = {};
+	va_start(arg,format);
+
+	int lenght = vsnprintf(tmpBuf,STDOUT_BUFFER_SIZE,format,arg);
+	HAL_UART_Transmit(m_debugUart, (uint8_t*)tmpBuf, (uint16_t)lenght, 100);
+	va_end(arg);
+}
+
 

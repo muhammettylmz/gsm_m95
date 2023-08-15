@@ -1,5 +1,7 @@
 //Header files
 #include "MY_LIS3DSH.h"
+#include "main.h"
+#include "uart_debug.h"
 
 //SPI Chip Select
 #define _LIS3DHS_CS_ENBALE		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_RESET);
@@ -183,17 +185,17 @@ uint8_t m_accDataCnt = 0;
 LIS3DSH_InitTypeDef m_accConfigDef;
 uint32_t m_memsSystick;
 
-uint32_t getMEMsSystick(void){
+uint32_t getMEMsSystick(void) {
 	return m_memsSystick;
 }
 
-void memsInit(void* spi) {
+void memsInit(void *spi) {
 	m_accConfigDef.dataRate = LIS3DSH_DATARATE_25;
 	m_accConfigDef.fullScale = LIS3DSH_FULLSCALE_2;
 	m_accConfigDef.antiAliasingBW = LIS3DSH_FILTER_BW_50;
 	m_accConfigDef.enableAxes = LIS3DSH_XYZ_ENABLE;
 	m_accConfigDef.interruptEnable = true;
-	LIS3DSH_Init((SPI_HandleTypeDef*)spi, &m_accConfigDef);
+	LIS3DSH_Init((SPI_HandleTypeDef*) spi, &m_accConfigDef);
 
 	LIS3DSH_X_calibrate(-1000.0, 980.0);
 	LIS3DSH_Y_calibrate(-1020.0, 1040.0);
@@ -202,29 +204,29 @@ void memsInit(void* spi) {
 
 void memsControl(void) {
 
-	if(getMEMsSystick() % 11 != 1){
-		return;
-	}
+//	if(getMEMsSystick() % 11 != 1){
+//		return;
+//	}
 
 	LIS3DSH_ReadIO(LIS3DSH_STATUS_ADDR, &m_accStatus, 1);
-	if (m_accStatus & LIS3DSH_STATUS_ADDR){
-//		m_drdyFlag = 1;
-//	}
-//
-//	if (m_drdyFlag) {
-//		m_drdyFlag = 0;
-		m_accData[m_accDataCnt++] = LIS3DSH_GetDataScaled();
-		if(m_accDataCnt >= ACC_DATA_BUFF_CNT){
+	if (m_accStatus & LIS3DSH_STATUS_ADDR) {
+
+		m_accData[m_accDataCnt] = LIS3DSH_GetDataScaled();
+		memsDebugAcc("%.6f\t%.6f\t%.6f\r\n", m_accData[m_accDataCnt].x,
+				m_accData[m_accDataCnt].y, m_accData[m_accDataCnt].z);
+		m_accDataCnt++;
+		if (m_accDataCnt >= ACC_DATA_BUFF_CNT) {
 			m_accDataCnt = 0;
 		}
+
 	}
 }
 
 void MEMS_Virtual_GPIO_EXTI(void) {
-	m_drdyFlag = 1;
+	//m_drdyFlag = 1;
 }
 
-void MEMS_Virtual_Systick_Handler(void){
+void MEMS_Virtual_Systick_Handler(void) {
 	m_memsSystick++;
 }
 

@@ -14,7 +14,7 @@
 #define LIS3DSH_CTRL_REG4_ADDR               0x20
 #define LIS3DSH_CTRL_REG1_ADDR               0x21
 #define LIS3DSH_CTRL_REG2_ADDR               0x22
-#define LIS3DSH_CTRL_REG3_ADDR               0x23              
+#define LIS3DSH_CTRL_REG3_ADDR               0x23
 #define LIS3DSH_CTRL_REG5_ADDR               0x24
 #define LIS3DSH_CTRL_REG6_ADDR               0x25
 
