@@ -417,9 +417,9 @@ uint8_t deleteCertKey(void) {
 			// config module error
 			customDebugMsg("Delete SSL Cert and Key TIMEOUT... \r\n");
 		}
-		else {
-			HAL_Delay(5);
-		}
+//		else {
+//			HAL_Delay(5);
+//		}
 	}
 	return err;
 }
@@ -571,9 +571,9 @@ uint8_t writeCertKey(void) {
 			// config module error
 			customDebugMsg("Write SSL Cert and Key TIMEOUT... \r\n");
 		}
-		else {
-			HAL_Delay(5);
-		}
+//		else {
+//			HAL_Delay(5);
+//		}
 	}
 	return err;
 }

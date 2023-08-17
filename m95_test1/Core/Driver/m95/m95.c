@@ -428,6 +428,9 @@ uint8_t sendUartData(const uint8_t *data, uint16_t len) {
 void GSM_Virtual_TIM_ElapsedCallback(void *tim) {
 	(void) tim;
 	m_timerCnt++;
+//#ifdef CUSTOM_DEBUG
+	HAL_GPIO_TogglePin(TIM6_LOGIC_ANALIZOR_GPIO_Port, TIM6_LOGIC_ANALIZOR_Pin);
+//#endif
 }
 
 /**
@@ -436,6 +439,7 @@ void GSM_Virtual_TIM_ElapsedCallback(void *tim) {
  */
 void GSM_Virtual_Systick(void) {
 	m_systick++;
+//	HAL_GPIO_TogglePin(TIM6_LOGIC_ANALIZOR_GPIO_Port, TIM6_LOGIC_ANALIZOR_Pin);
 	if (getRecvTimeoutState()) {
 		checkRecvTimeout();
 	}
