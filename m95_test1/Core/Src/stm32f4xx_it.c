@@ -26,6 +26,7 @@
 #include "mqtt.h"
 #include "gps.h"
 #include "MY_LIS3DSH.h"
+#include "bluetooth.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -206,6 +207,7 @@ void SysTick_Handler(void)
   GPS_Virtual_Systick();
   MQTT_Virtual_Systick_Handler();
   MEMS_Virtual_Systick_Handler();
+  BT_Virtual_Systick();
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -320,6 +322,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   GSM_Virtual_UART_RxCpltCallback(huart);
   GPS_Virtual_UART_RxCpltCallback(huart);
+  BT_Virtual_UART_RxCpltCallback(huart);
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)

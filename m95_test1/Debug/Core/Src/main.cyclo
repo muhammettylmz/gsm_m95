@@ -1,0 +1,12 @@
+../Core/Src/main.c:485:13:MX_GPIO_Init	1
+../Core/Src/main.c:80:6:checkButton	9
+../Core/Src/main.c:621:6:Error_Handler	1
+../Core/Src/main.c:386:13:MX_USART2_UART_Init	1
+../Core/Src/main.c:419:13:MX_USART3_UART_Init	1
+../Core/Src/main.c:282:13:MX_TIM6_Init	1
+../Core/Src/main.c:452:13:MX_USART6_UART_Init	1
+../Core/Src/main.c:320:13:MX_UART4_Init	1
+../Core/Src/main.c:353:13:MX_UART5_Init	1
+../Core/Src/main.c:244:13:MX_SPI1_Init	1
+../Core/Src/main.c:197:6:SystemClock_Config	1
+../Core/Src/main.c:125:5:main	3

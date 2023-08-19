@@ -1,0 +1,10 @@
+../Core/Driver/bluetooth/bluetooth.c:28:10:getBTSystick	1
+../Core/Driver/bluetooth/bluetooth.c:32:14:getBTRecvCompleted	1
+../Core/Driver/bluetooth/bluetooth.c:36:6:setRecvCompleted	1
+../Core/Driver/bluetooth/bluetooth.c:40:6:checkBTRxTimeoutCompleted	2
+../Core/Driver/bluetooth/bluetooth.c:46:6:startBTRxTimeout	1
+../Core/Driver/bluetooth/bluetooth.c:51:6:BT_Virtual_Systick	1
+../Core/Driver/bluetooth/bluetooth.c:55:6:BT_Virtual_Rx_IT	1
+../Core/Driver/bluetooth/bluetooth.c:59:6:BT_Virtual_UART_RxCpltCallback	2
+../Core/Driver/bluetooth/bluetooth.c:66:6:btInit	1
+../Core/Driver/bluetooth/bluetooth.c:70:6:btControl	2

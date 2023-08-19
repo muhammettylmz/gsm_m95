@@ -135,10 +135,12 @@ LIS3DSH_DataScaled LIS3DSH_GetDataScaled(void) {
 	;
 	//Scale data and return 
 	LIS3DSH_DataScaled tempScaledData;
-	tempScaledData.x = (tempRawData.x * lis3dsh_Sensitivity * __X_Scale) + 0.0f - __X_Bias;
-	tempScaledData.y = (tempRawData.y * lis3dsh_Sensitivity * __Y_Scale) + 0.0f - __Y_Bias;
-	tempScaledData.z = (tempRawData.z * lis3dsh_Sensitivity * __Z_Scale) + 0.0f - __Z_Bias;
-
+//	tempScaledData.x = (tempRawData.x * lis3dsh_Sensitivity * __X_Scale) + 0.0f - __X_Bias;
+//	tempScaledData.y = (tempRawData.y * lis3dsh_Sensitivity * __Y_Scale) + 0.0f - __Y_Bias;
+//	tempScaledData.z = (tempRawData.z * lis3dsh_Sensitivity * __Z_Scale) + 0.0f - __Z_Bias;
+	tempScaledData.x = tempRawData.x * lis3dsh_Sensitivity;
+	tempScaledData.y = tempRawData.y * lis3dsh_Sensitivity;
+	tempScaledData.z = tempRawData.z * lis3dsh_Sensitivity;
 	return tempScaledData;
 }
 //4. Poll for Data Ready

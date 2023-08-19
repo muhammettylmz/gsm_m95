@@ -26,6 +26,7 @@
 #include "uart_debug.h"
 #include "gps.h"
 #include "MY_LIS3DSH.h"
+#include "bluetooth.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -161,6 +162,7 @@ int main(void)
 	memsInit(&hspi1);
 	gpsInit(&huart4);
 	gsmInit(&huart3);
+	btInit(&huart5);
 
 	customDebugMsg("Enter infinite While loop... \r\n");
   /* USER CODE END 2 */
@@ -175,6 +177,7 @@ int main(void)
 		mqttControl();
 		gpsControl();
 		memsControl();
+		btControl();
 
 		checkButton(&btnState, &isRls);
 		if (btnState && isRls) {
