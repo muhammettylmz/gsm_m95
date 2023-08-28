@@ -13,19 +13,27 @@
 #include <math.h>
 #include "m95.h"
 
-#define NMEA_DELIMETER_STRCHR	','
-#define NMEA_GGA_MSG_HEADER		(char*)"$GPGGA"
-#define NMEA_RMC_MSG_HEADER		(char*)"$GPRMC"
-#define NMEA_RMC_FIELD_SIZE		15
-#define NMEA_GGA_FIELD_SIZE 	17
-#define GPS_UART_BUFF_COUNT		10
+#define GPS_MPH_PER_KNOT 			1.15077945
+#define GPS_MPS_PER_KNOT 			0.51444444
+#define GPS_KMPH_PER_KNOT 			1.852
+#define GPS_MILES_PER_METER 		0.00062137112
+#define GPS_KM_PER_METER 			0.001
+#define GPS_FEET_PER_METER 			3.2808399
+
+#define NMEA_DELIMETER_STRCHR		','
+#define NMEA_GGA_MSG_HEADER			(char*)"$GPGGA"
+#define NMEA_RMC_MSG_HEADER			(char*)"$GPRMC"
+#define NMEA_GSA_MSG_HEADER			(char*)"$GPGSA"
+#define NMEA_RMC_FIELD_SIZE			15
+#define NMEA_GGA_FIELD_SIZE 		17
+#define GPS_UART_BUFF_COUNT			10
+#define GPS_UART_BUFF_SIZE			100
 
 typedef struct {
-	uint8_t uartBuff[255];
+	uint8_t uartBuff[GPS_UART_BUFF_SIZE];
 	uint8_t uartBuffCnt;
 	uint8_t recvCompleted;
 } gpsUartBuff_t;
-
 
 typedef enum {
 	GPS_NMEA_MSG_SEARCH_IDLE, GPS_NMEA_MSG_SEARCHING, GPS_NMEA_MSG_SEARCH_FINISH
@@ -56,8 +64,19 @@ typedef struct {
 	uint64_t recvData;
 } gpsNmeaRMCType_t;
 
+typedef struct {
+	char sMode;  // M: Manual - forced to operate in 2D or 3D mode
+				 // A: Allowed to automatically switch 2D/3D mode
+	uint8_t fixStatus;
+	float pdop;
+	float hdop;
+	float vdop;
+	uint64_t recvData;
+} gpsNmeaGSAType_t;
+
 gpsNmeaGGAType_t ggaMsg;
 gpsNmeaRMCType_t rmcMsg;
+gpsNmeaGSAType_t gsaMsg;
 
 UART_HandleTypeDef *m_gpsUart;
 HAL_StatusTypeDef m_gpsRecvITError;
@@ -85,21 +104,23 @@ uint32_t getGPSSystick(void) {
 	return m_gpsSystick;
 }
 
-void getGGALatLongValue(double* _lat, double* _long){
-	if(ggaMsg.numberOfSatellites > 3 && ggaMsg.quality > 0){
+void getGGALatLongValue(double *_lat, double *_long) {
+	if (ggaMsg.numberOfSatellites > 3 && ggaMsg.quality > 0) {
 		*_lat = ggaMsg.latitude;
 		*_long = ggaMsg.longitude;
-	}else{
+	}
+	else {
 		*_lat = 0;
 		*_long = 0;
 	}
 }
 
-void getRMCLatLongValue(double* _lat, double* _long){
-	if(rmcMsg.status == 'V'){
+void getRMCLatLongValue(double *_lat, double *_long) {
+	if (rmcMsg.status == 'V') {
 		*_lat = rmcMsg.latitude;
 		*_long = rmcMsg.longitude;
-	}else{
+	}
+	else {
 		*_lat = 0;
 		*_long = 0;
 	}
@@ -130,6 +151,10 @@ void GPS_Virtual_UART_RxCpltCallback(void *uart) {
 		GPS_Virtual_Rx_IT();
 		m_gpsUartBuff[m_gpsUartBuffIndis].uartBuff[m_gpsUartBuff[m_gpsUartBuffIndis].uartBuffCnt++] =
 				m_gpsRxData;
+
+		if (m_gpsUartBuff[m_gpsUartBuffIndis].uartBuffCnt >= GPS_UART_BUFF_SIZE) {
+			m_gpsUartBuff[m_gpsUartBuffIndis].uartBuffCnt = 0;
+		}
 
 		if (m_gpsRxData == '\r') {
 			fcr = 1;
@@ -279,6 +304,37 @@ void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
 
 }
 
+/**
+ * @brief find GSA field value in NMEA msg
+ * @retval none
+ */
+void convertGSAMsg(char *msg, gpsNmeaGSAType_t *gsa) {
+
+	char *tempgsa;
+	// sMode
+	tempgsa = strchr(msg, NMEA_DELIMETER_STRCHR);
+	gsa->sMode = tempgsa[1];
+
+	//fix status
+	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	gsa->fixStatus = atoi(tempgsa + 1);
+
+	for (uint8_t u8 = 0; u8 < 12; u8++) {
+		tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	}
+
+	//pdop
+	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	gsa->pdop = atoff(tempgsa + 1);
+	//hdop
+	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	gsa->hdop = atoff(tempgsa + 1);
+	//vdop
+	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	gsa->vdop = atoff(tempgsa + 1);
+
+	gsa->recvData++;
+}
 
 uint64_t startTime;
 uint64_t stopTime;
@@ -294,26 +350,38 @@ void parseNmeaGGAandRMCMsg(void) {
 
 			setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_IDLE);
 
-			if (checkNMEAMsgValid(m_gpsUartBuff[queIndis].uartBuff, m_gpsUartBuff[queIndis].uartBuffCnt)) {
+			if (checkNMEAMsgValid(m_gpsUartBuff[queIndis].uartBuff,
+					m_gpsUartBuff[queIndis].uartBuffCnt)) {
 				// set flags
 				m_gpsUartBuff[queIndis].recvCompleted = 0;
 				m_gpsUartBuff[queIndis].uartBuffCnt = 0;
+//				memset(m_gpsUartBuff[queIndis].uartBuff, 0,
+//						sizeof(m_gpsUartBuff[queIndis].uartBuff));
 				return;
 			}
+			memset(&m_gpsUartBuff[queIndis].uartBuff[m_gpsUartBuff[queIndis].uartBuffCnt], 0,
+					sizeof(m_gpsUartBuff[queIndis].uartBuff) - m_gpsUartBuff[queIndis].uartBuffCnt);
 
 			setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCHING);
 
-			if (strstr((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_GGA_MSG_HEADER) != NULL) {
-				convertGGAMsg((char*)m_gpsUartBuff[queIndis].uartBuff, &ggaMsg);
+//			if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_GSA_MSG_HEADER, 6) == 0) {
+//				convertGSAMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &gsaMsg);
+//			}
+//			else
+				if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_GGA_MSG_HEADER, 6)
+					== 0) {
+				convertGGAMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &ggaMsg);
 			}
-			else if (strstr((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_RMC_MSG_HEADER) != NULL) {
-				convertRMCMsg((char*)m_gpsUartBuff[queIndis].uartBuff, &rmcMsg);
+			else if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_RMC_MSG_HEADER, 6)
+					== 0) {
+				convertRMCMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &rmcMsg);
 			}
 
 			setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_FINISH);
 
 			m_gpsUartBuff[queIndis].recvCompleted = 0;
 			m_gpsUartBuff[queIndis].uartBuffCnt = 0;
+//			memset(m_gpsUartBuff[queIndis].uartBuff, 0, sizeof(m_gpsUartBuff[queIndis].uartBuff));
 		}
 	}
 	stopTime = getTimerCnt();
