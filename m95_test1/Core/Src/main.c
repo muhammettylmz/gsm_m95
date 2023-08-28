@@ -17,16 +17,11 @@
  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <vehicleTrackingSystem.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "m95.h"
-#include "mqtt.h"
-#include "uart_debug.h"
-#include "gps.h"
-#include "MY_LIS3DSH.h"
-#include "bluetooth.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,9 +41,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
-
 TIM_HandleTypeDef htim6;
-
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart2;
@@ -56,7 +49,6 @@ UART_HandleTypeDef huart3;
 UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
-//uint8_t buttonPressed;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,51 +62,10 @@ static void MX_UART4_Init(void);
 static void MX_UART5_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
-
-void checkButton(uint8_t *btn, uint8_t *rls);
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void checkButton(uint8_t *btn, uint8_t *rls) {
-	GPIO_PinState state = GPIO_PIN_RESET;
-	//btn pressed
-	state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-	if (state == GPIO_PIN_SET) {
-		HAL_Delay(5);
-		state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-		if (state == GPIO_PIN_SET) {
-			HAL_Delay(7);
-			state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-			if (state == GPIO_PIN_SET) {
-				if (*btn == 0) {
-					*rls = 1;
-				}
-				*btn = 1;
-				return;
-			}
-		}
-	}
-
-	//btn realesed
-	if (state == GPIO_PIN_RESET) {
-		HAL_Delay(5);
-		state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-		if (state == GPIO_PIN_RESET) {
-			HAL_Delay(7);
-			state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-			if (state == GPIO_PIN_RESET) {
-				if (*btn == 1) {
-					*rls = 0;
-				}
-				*btn = 0;
-				return;
-			}
-		}
-	}
-}
-
 
 /* USER CODE END 0 */
 
@@ -125,8 +76,6 @@ void checkButton(uint8_t *btn, uint8_t *rls) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t btnState;
-	uint8_t isRls = 1;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -155,16 +104,10 @@ int main(void)
   MX_UART5_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-	uartDebugInit(&huart6);
-	customDebugMsg("Start STM32F407 disco : %d , %s%d.%d\r\n", 12, "Vecihle Tracking V", 1, 2);
 
-	HAL_TIM_Base_Start_IT(&htim6);
-	memsInit(&hspi1);
-	gpsInit(&huart4);
-	gsmInit(&huart3);
-	btInit(&huart5);
+  VTSInit();
+  VTSControl();
 
-	customDebugMsg("Enter infinite While loop... \r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -173,19 +116,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		gsmControl();
-		mqttControl();
-		gpsControl();
-		memsControl();
-		btControl();
-
-		checkButton(&btnState, &isRls);
-		if (btnState && isRls) {
-			customDebugMsg("Button is pressed...\r\nPreparing Send MQTT Publish message\r\n");
-			setMQTTPublishReadyState(PUBLISH_READY);
-			isRls = 0;
-		}
-		HAL_Delay(2);
 	}
   /* USER CODE END 3 */
 }
