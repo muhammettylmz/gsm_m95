@@ -23,6 +23,8 @@ extern UART_HandleTypeDef huart5;
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
 
+uint32_t m_vtsButtonPressedCnt;
+uint32_t m_vtsButtonReleaseCnt;
 
 uint8_t btnState = 0;
 uint8_t isRls = 1;
@@ -32,40 +34,36 @@ uint8_t isRls = 1;
  * @retval None
  */
 void checkButton(uint8_t *btn, uint8_t *rls) {
-	GPIO_PinState state = GPIO_PIN_RESET;
-	//btn pressed
-	state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-	if (state == GPIO_PIN_SET) {
-		HAL_Delay(5);
-		state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-		if (state == GPIO_PIN_SET) {
-			HAL_Delay(7);
-			state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-			if (state == GPIO_PIN_SET) {
-				if (*btn == 0) {
-					*rls = 1;
-				}
-				*btn = 1;
-				return;
-			}
-		}
+	static uint16_t pinSetCnt = 0;
+	static uint16_t pinResetCnt = 0;
+
+	//debounce cnt
+	if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_SET) {
+		pinSetCnt++;
+		pinResetCnt = 0;
+	}
+	else {
+		pinSetCnt = 0;
+		pinResetCnt++;
 	}
 
-	//btn realesed
-	if (state == GPIO_PIN_RESET) {
-		HAL_Delay(5);
-		state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-		if (state == GPIO_PIN_RESET) {
-			HAL_Delay(7);
-			state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-			if (state == GPIO_PIN_RESET) {
-				if (*btn == 1) {
-					*rls = 0;
-				}
-				*btn = 0;
-				return;
-			}
+	// button pressed
+	if (pinSetCnt >= TIMER_TIMEOUT_UNIT1MS(15)) {
+		pinSetCnt = 0;
+		if (*btn == 0) {
+			*rls = 1;
+			m_vtsButtonPressedCnt++;
 		}
+		*btn = 1;
+	}
+	//button released
+	else if (pinResetCnt >= TIMER_TIMEOUT_UNIT1MS(25)) {
+		pinResetCnt = 0;
+		if (*btn == 1) {
+			*rls = 0;
+			m_vtsButtonReleaseCnt++;
+		}
+		*btn = 0;
 	}
 }
 
@@ -100,13 +98,12 @@ void VTSControl(void) {
 		memsControl();
 		btControl();
 
-		checkButton(&btnState, &isRls);
-		if (btnState && isRls) {
-			customDebugMsg("Button is pressed...\r\nPreparing Send MQTT Publish message\r\n");
-			setMQTTPublishReadyState(PUBLISH_READY);
-			isRls = 0;
-		}
-		HAL_Delay(2);
+//		if (btnState && isRls) {
+//			customDebugMsg("Button is pressed...\r\nPreparing Send MQTT Publish message\r\n");
+//			setMQTTPublishReadyState(PUBLISH_READY);
+//			isRls = 0;
+//		}
+		//HAL_Delay(2);
 	}
 }
 
@@ -133,12 +130,13 @@ void VTS_Virtual_UART_RxCpltCallback(void *huart) {
 }
 
 /**
- * @brief Virtual TIM Period Elapsed Callback
+ * @brief Virtual TIM Period Elapsed Callback ~100us
  * @retval None
  */
 void VTS_Virtual_TIM_PeriodElapsedCallback(void *htim) {
 	GSM_Virtual_TIM_ElapsedCallback(htim);
 	MQTT_Virtual_TIM_ElapsedCallback(htim);
+	checkButton(&btnState, &isRls);
 }
 
 /**

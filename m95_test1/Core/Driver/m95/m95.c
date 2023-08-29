@@ -11,12 +11,6 @@
 #include "mqtt.h"
 #include "uart_debug.h"
 
-/*timer cnt ~100us de bir artacak şekilde ayarlandı*/
-#define TIMER_TIMEOUT_UNIT100US(x)		(x*100)
-#define TIMER_TIMEOUT_UNIT1MS(x)	    (x*10)
-#define _10MS							TIMER_TIMEOUT_UNIT1MS(10)
-#define _5MS							TIMER_TIMEOUT_UNIT1MS(5)
-
 UART_HandleTypeDef *m_uart;
 uint8_t rxGSMRaw[512];
 uint8_t rxGSMByte;

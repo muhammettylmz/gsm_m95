@@ -10,6 +10,12 @@
 
 #include <stdint.h>
 
+/*timer cnt ~100us de bir artacak şekilde ayarlandı*/
+#define TIMER_TIMEOUT_UNIT100US(x)		(x)
+#define TIMER_TIMEOUT_UNIT1MS(x)	    (x*10)
+#define _10MS							TIMER_TIMEOUT_UNIT1MS(10)
+#define _5MS							TIMER_TIMEOUT_UNIT1MS(5)
+
 typedef enum {
 	MODULE_CONFIG_START,
 	MODULE_CONFIG_FINISH,
