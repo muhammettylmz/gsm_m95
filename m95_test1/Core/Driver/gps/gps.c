@@ -73,9 +73,12 @@ typedef struct {
 	uint64_t recvData;
 } gpsNmeaGSAType_t;
 
+gpsNmeaGGAType_t lastValidGgaMsg;
 gpsNmeaGGAType_t ggaMsg;
 gpsNmeaRMCType_t rmcMsg;
+gpsNmeaRMCType_t lastValidRmcMsg;
 gpsNmeaGSAType_t gsaMsg;
+gpsNmeaGSAType_t lastValidGsaMsg;
 
 UART_HandleTypeDef *m_gpsUart;
 HAL_StatusTypeDef m_gpsRecvITError;
@@ -245,6 +248,11 @@ void convertRMCMsg(char *msg, gpsNmeaRMCType_t *rmc) {
 	rmc->cog = atoff(temprmc + 1);
 
 	rmc->recvData++;
+
+	if(rmc->status == 'A'){
+		lastValidRmcMsg = *rmc;
+		//memcpy(&lastValidRmcMsg, rmc , sizeof(lastValidRmcMsg));
+	}
 }
 
 /**
@@ -295,6 +303,11 @@ void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
 
 	gga->recvData++;
 
+	if(gga->quality > 0){
+		lastValidGgaMsg = *gga;
+//		memcpy(&lastValidGgaMsg ,gga , sizeof(lastValidGgaMsg));
+	}
+
 }
 
 /**
@@ -327,6 +340,10 @@ void convertGSAMsg(char *msg, gpsNmeaGSAType_t *gsa) {
 	gsa->vdop = atoff(tempgsa + 1);
 
 	gsa->recvData++;
+	if(gsa->fixStatus > 1){
+		lastValidGsaMsg = *gsa;
+//		memcpy(&lastValidGsaMsg ,gsa , sizeof(lastValidGsaMsg));
+	}
 }
 
 /**
