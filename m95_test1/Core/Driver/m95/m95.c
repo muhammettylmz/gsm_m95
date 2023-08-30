@@ -17,6 +17,7 @@ uint8_t rxGSMByte;
 uint16_t rxBufferCnt;
 uint32_t m_systick;
 uint64_t m_timerCnt;
+GPIO_PinState m_gsmState;
 HAL_StatusTypeDef m_gsmRecvITError;
 
 uint64_t m_uartRecvTimeoutStart;
@@ -322,9 +323,6 @@ void gsmConfig(void) {
 		customDebugMsg("GSM Config TIMEOUT... \r\n");
 		// config module error
 	}
-//	else {
-//		HAL_Delay(5);
-//	}
 }
 
 /**
@@ -332,7 +330,7 @@ void gsmConfig(void) {
  * @retval None
  */
 void monitoringPowerOff(void) {
-	if (HAL_GPIO_ReadPin(STAT_M95_GPIO_Port, STAT_M95_Pin) != GPIO_PIN_SET) {
+	if (m_gsmState != GPIO_PIN_SET) {
 		HAL_GPIO_WritePin(PWRKEY_GPIO_Port, PWRKEY_Pin, GPIO_PIN_SET);
 		setModuleConfigState(MODULE_CONFIG_START);
 		setMQTTConfigState(MQTT_CONFIG_START);
@@ -421,8 +419,26 @@ uint8_t sendUartData(const uint8_t *data, uint16_t len) {
  */
 void GSM_Virtual_TIM_ElapsedCallback(void *tim) {
 	(void) tim;
+	static uint16_t setCnt = 0;
+	static uint16_t resetCnt = 0;
 	m_timerCnt++;
-	//HAL_GPIO_TogglePin(TIM6_LOGIC_ANALIZOR_GPIO_Port, TIM6_LOGIC_ANALIZOR_Pin);
+
+	//M95 STATE pin debounce
+	if(HAL_GPIO_ReadPin(STAT_M95_GPIO_Port, STAT_M95_Pin) == GPIO_PIN_SET){
+		setCnt++;
+		resetCnt = 0;
+	}else{
+		resetCnt++;
+		setCnt = 0;
+	}
+
+	if(resetCnt > TIMER_TIMEOUT_UNIT1MS(15)){
+		resetCnt = 0;
+		m_gsmState = GPIO_PIN_RESET;
+	}else if(setCnt > TIMER_TIMEOUT_UNIT1MS(15)){
+		setCnt = 0;
+		m_gsmState = GPIO_PIN_SET;
+	}
 }
 
 /**

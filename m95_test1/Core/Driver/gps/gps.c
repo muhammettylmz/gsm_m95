@@ -82,11 +82,13 @@ UART_HandleTypeDef *m_gpsUart;
 HAL_StatusTypeDef m_gpsRecvITError;
 
 gpsUartBuff_t m_gpsUartBuff[GPS_UART_BUFF_COUNT];
+
 uint8_t m_gpsUartBuffIndis;
 uint8_t m_gpsRxData;
 
 uint8_t searchNMEABuff[255];
 uint8_t searchNMEABuffCnt;
+
 
 uint32_t m_gpsSystick;
 
@@ -105,7 +107,7 @@ uint32_t getGPSSystick(void) {
 }
 
 void getGGALatLongValue(double *_lat, double *_long) {
-	if (ggaMsg.numberOfSatellites > 3 && ggaMsg.quality > 0) {
+	if (ggaMsg.numberOfSatellites > 2 && ggaMsg.quality > 0) {
 		*_lat = ggaMsg.latitude;
 		*_long = ggaMsg.longitude;
 	}
@@ -390,5 +392,4 @@ void gpsControl(void) {
 
 	//found msg
 	parseNmeaGGAandRMCMsg();
-
 }
