@@ -45,4 +45,10 @@ void memsDebugAcc(const char* format , ...){
 	va_end(arg);
 }
 
+void nmeaDebugUart(uint8_t data){
+	static uint8_t write = 0;
+	write = data;
+	HAL_UART_Transmit(m_debugUart, &write, 1, 1);
+}
+
 

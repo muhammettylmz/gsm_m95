@@ -214,8 +214,8 @@ void memsControl(void) {
 	if (m_accStatus & LIS3DSH_STATUS_ADDR) {
 
 		m_accData[m_accDataCnt] = LIS3DSH_GetDataScaled();
-		memsDebugAcc("%.6f\t%.6f\t%.6f\r\n", m_accData[m_accDataCnt].x,
-				m_accData[m_accDataCnt].y, m_accData[m_accDataCnt].z);
+//		memsDebugAcc("%.6f\t%.6f\t%.6f\r\n", m_accData[m_accDataCnt].x,
+//				m_accData[m_accDataCnt].y, m_accData[m_accDataCnt].z);
 		m_accDataCnt++;
 		if (m_accDataCnt >= ACC_DATA_BUFF_CNT) {
 			m_accDataCnt = 0;

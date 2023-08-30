@@ -26,7 +26,8 @@
 #define NMEA_GSA_MSG_HEADER			(char*)"$GPGSA"
 #define NMEA_RMC_FIELD_SIZE			15
 #define NMEA_GGA_FIELD_SIZE 		17
-#define GPS_UART_BUFF_COUNT			10
+#define NMEA_GSA_FIELD_SIZE 		20
+#define GPS_UART_BUFF_COUNT			15
 #define GPS_UART_BUFF_SIZE			100
 
 typedef struct {
@@ -89,7 +90,6 @@ uint8_t m_gpsRxData;
 uint8_t searchNMEABuff[255];
 uint8_t searchNMEABuffCnt;
 
-
 uint32_t m_gpsSystick;
 
 gpsNmeaSearchState_e m_gpsNmeaMsgSearchState = GPS_NMEA_MSG_SEARCH_FINISH;
@@ -118,7 +118,7 @@ void getGGALatLongValue(double *_lat, double *_long) {
 }
 
 void getRMCLatLongValue(double *_lat, double *_long) {
-	if (rmcMsg.status == 'V') {
+	if (rmcMsg.status == 'A') {
 		*_lat = rmcMsg.latitude;
 		*_long = rmcMsg.longitude;
 	}
@@ -168,6 +168,7 @@ void GPS_Virtual_UART_RxCpltCallback(void *uart) {
 		}
 
 		GPS_Virtual_Rx_IT();
+//		nmeaDebugUart(m_gpsRxData);
 	}
 }
 
@@ -180,13 +181,15 @@ uint8_t checkNMEAMsgValid(uint8_t *nmeaMsg, uint8_t len) {
 	uint8_t cs = 0;
 
 	//without $(0.index) and *(3. to last) not include \r\n
-	for (uint8_t u8 = 1; u8 < (len - 5); u8++) {
+//	for (uint8_t u8 = 1; u8 < (len - 5); u8++) { // with \r\n
+	for (uint8_t u8 = 1; u8 < (len - 3); u8++) {  // without \r\n
 		cs = cs ^ nmeaMsg[u8];
 	}
 
-	sprintf(strCrc, "%X", cs);
+	sprintf(strCrc, "%.2X", cs);
 
-	if (strCrc[0] != nmeaMsg[len - 4] || strCrc[1] != nmeaMsg[len - 3]) {
+//	if (strCrc[0] != nmeaMsg[len - 4] || strCrc[1] != nmeaMsg[len - 3]) { // with \r\n
+	if (strCrc[0] != nmeaMsg[len - 2] || strCrc[1] != nmeaMsg[len - 1]) {  // without \r\n
 		return 1;
 	}
 	return 0;
@@ -307,28 +310,28 @@ void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
  */
 void convertGSAMsg(char *msg, gpsNmeaGSAType_t *gsa) {
 
-//	char *tempgsa;
-//	// sMode
-//	tempgsa = strchr(msg, NMEA_DELIMETER_STRCHR);
-//	gsa->sMode = tempgsa[1];
-//
-//	//fix status
-//	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
-//	gsa->fixStatus = atoi(tempgsa + 1);
-//
-//	for (uint8_t u8 = 0; u8 < 12; u8++) {
-//		tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
-//	}
-//
-//	//pdop
-//	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
-//	gsa->pdop = atoff(tempgsa + 1);
-//	//hdop
-//	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
-//	gsa->hdop = atoff(tempgsa + 1);
-//	//vdop
-//	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
-//	gsa->vdop = atoff(tempgsa + 1);
+	char *tempgsa;
+	// sMode
+	tempgsa = strchr(msg, NMEA_DELIMETER_STRCHR);
+	gsa->sMode = tempgsa[1];
+
+	//fix status
+	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	gsa->fixStatus = atoi(tempgsa + 1);
+
+	for (uint8_t u8 = 0; u8 < 12; u8++) {
+		tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	}
+
+	//pdop
+	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	gsa->pdop = atoff(tempgsa + 1);
+	//hdop
+	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	gsa->hdop = atoff(tempgsa + 1);
+	//vdop
+	tempgsa = strchr(tempgsa + 1, NMEA_DELIMETER_STRCHR);
+	gsa->vdop = atoff(tempgsa + 1);
 
 	gsa->recvData++;
 }
@@ -336,6 +339,7 @@ void convertGSAMsg(char *msg, gpsNmeaGSAType_t *gsa) {
 uint64_t startTime;
 uint64_t stopTime;
 uint64_t diffTime;
+char* token;
 /**
  * @brief NMEA msg parser
  * @retval none
@@ -347,11 +351,10 @@ void parseNmeaGGAandRMCMsg(void) {
 
 			setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_IDLE);
 
-			memset(&m_gpsUartBuff[queIndis].uartBuff[m_gpsUartBuff[queIndis].uartBuffCnt], 0,
-					sizeof(m_gpsUartBuff[queIndis].uartBuff) - m_gpsUartBuff[queIndis].uartBuffCnt);
 
-			if (checkNMEAMsgValid(m_gpsUartBuff[queIndis].uartBuff,
-					m_gpsUartBuff[queIndis].uartBuffCnt)) {
+			token = strtok((char*) m_gpsUartBuff[queIndis].uartBuff, "\r\n");
+
+			if (checkNMEAMsgValid((uint8_t*) token, strlen(token))) {
 				// set flags
 				m_gpsUartBuff[queIndis].recvCompleted = 0;
 				m_gpsUartBuff[queIndis].uartBuffCnt = 0;
@@ -360,17 +363,20 @@ void parseNmeaGGAandRMCMsg(void) {
 
 				setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCHING);
 
-				if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_GSA_MSG_HEADER, 6)
-						== 0) {
-					convertGSAMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &gsaMsg);
+//				if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_GSA_MSG_HEADER, 6) == 0){
+				if (strncmp(token, NMEA_GSA_MSG_HEADER, 6) == 0) {
+//					convertGSAMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &gsaMsg);
+					convertGSAMsg(token, &gsaMsg);
 				}
-				else if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff,
-				NMEA_GGA_MSG_HEADER, 6) == 0) {
-					convertGGAMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &ggaMsg);
+//				else if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_GGA_MSG_HEADER, 6) == 0) {
+				else if (strncmp(token, NMEA_GGA_MSG_HEADER, 6) == 0) {
+//					convertGGAMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &ggaMsg);
+					convertGGAMsg(token, &ggaMsg);
 				}
-				else if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff,
-				NMEA_RMC_MSG_HEADER, 6) == 0) {
-					convertRMCMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &rmcMsg);
+//				else if (strncmp((char*) m_gpsUartBuff[queIndis].uartBuff, NMEA_RMC_MSG_HEADER, 6) == 0) {
+				else if (strncmp(token, NMEA_RMC_MSG_HEADER, 6) == 0) {
+//					convertRMCMsg((char*) m_gpsUartBuff[queIndis].uartBuff, &rmcMsg);
+					convertRMCMsg(token, &rmcMsg);
 				}
 
 				setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_FINISH);

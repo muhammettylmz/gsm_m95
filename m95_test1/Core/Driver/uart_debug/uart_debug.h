@@ -11,5 +11,6 @@
 extern void uartDebugInit(void* uart);
 extern int customDebugMsg(const char* format , ...);
 extern void memsDebugAcc(const char* format , ...);
+extern void nmeaDebugUart(uint8_t data);
 
 #endif /* DRIVER_UART_DEBUG_UART_DEBUG_H_ */
