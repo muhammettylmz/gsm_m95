@@ -6,20 +6,26 @@
  */
 #include "main.h"
 #include "uart_debug.h"
+#include "bluetooth.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
 #define STDOUT_BUFFER_SIZE   512
 
-UART_HandleTypeDef *m_debugUart;
+void DEBUG_Virtual_Rx_IT(void);
 
-void uartDebugInit(void* uart){
-	m_debugUart = (UART_HandleTypeDef*)uart;
+UART_HandleTypeDef *m_debugUart;
+uint8_t uartDebugRxdata;
+uint8_t debug[64];
+uint8_t debugcnt;
+
+void uartDebugInit(void *uart) {
+	m_debugUart = (UART_HandleTypeDef*) uart;
+	DEBUG_Virtual_Rx_IT();
 }
 
-int customDebugMsg(const char* format , ...)
-{
+int customDebugMsg(const char *format, ...) {
 #ifdef CUSTOM_DEBUG
 	char tmpBuf[STDOUT_BUFFER_SIZE] = {0};
 	va_list arg = {};
@@ -35,20 +41,39 @@ int customDebugMsg(const char* format , ...)
 #endif
 }
 
-void memsDebugAcc(const char* format , ...){
-	char tmpBuf[STDOUT_BUFFER_SIZE] = {0};
-	va_list arg = {};
-	va_start(arg,format);
+void memsDebugAcc(const char *format, ...) {
+	char tmpBuf[STDOUT_BUFFER_SIZE] = { 0 };
+	va_list arg = { };
+	va_start(arg, format);
 
-	int lenght = vsnprintf(tmpBuf,STDOUT_BUFFER_SIZE,format,arg);
-	HAL_UART_Transmit(m_debugUart, (uint8_t*)tmpBuf, (uint16_t)lenght, 100);
+	int lenght = vsnprintf(tmpBuf, STDOUT_BUFFER_SIZE, format, arg);
+	HAL_UART_Transmit(m_debugUart, (uint8_t*) tmpBuf, (uint16_t) lenght, 100);
 	va_end(arg);
 }
 
-void nmeaDebugUart(uint8_t data){
+void nmeaDebugUart(uint8_t data) {
 	static uint8_t write = 0;
 	write = data;
 	HAL_UART_Transmit(m_debugUart, &write, 1, 1);
 }
 
+void obd2DebugUart(uint8_t data) {
+	static uint8_t btwrite = 0;
+	btwrite = data;
+	HAL_UART_Transmit(m_debugUart, &btwrite, 1, 1);
+}
+void DEBUG_Virtual_Rx_IT(void) {
+	HAL_UART_Receive_IT(m_debugUart, &uartDebugRxdata, 1);
+}
+void DEBUG_Virtual_UART_RxCpltCallback(void *uart) {
+	if (m_debugUart->Instance == ((UART_HandleTypeDef*) uart)->Instance) {
+		DEBUG_Virtual_Rx_IT();
 
+		debug[debugcnt++] = uartDebugRxdata;
+
+		if(uartDebugRxdata == '\n'){
+			sendBtUartData(debug, debugcnt);
+			debugcnt = 0;
+		}
+	}
+}

@@ -17,11 +17,11 @@
  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <vehicleTrackingSystem.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "vehicleTrackingSystem.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,7 +41,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
+
 TIM_HandleTypeDef htim6;
+
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart2;
@@ -394,10 +396,10 @@ static void MX_USART6_UART_Init(void)
   huart6.Init.WordLength = UART_WORDLENGTH_8B;
   huart6.Init.StopBits = UART_STOPBITS_1;
   huart6.Init.Parity = UART_PARITY_NONE;
-  huart6.Init.Mode = UART_MODE_TX;
+  huart6.Init.Mode = UART_MODE_TX_RX;
   huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart6.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_HalfDuplex_Init(&huart6) != HAL_OK)
+  if (HAL_UART_Init(&huart6) != HAL_OK)
   {
     Error_Handler();
   }
@@ -460,11 +462,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(STAT_M95_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PC13 PC0 PC2 PC3
-                           PC4 PC5 PC7 PC8
-                           PC9 */
+                           PC4 PC5 PC8 PC9 */
   GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_0|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7|GPIO_PIN_8
-                          |GPIO_PIN_9;
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_8|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);

@@ -127,6 +127,7 @@ void VTS_Virtual_UART_RxCpltCallback(void *huart) {
 	GSM_Virtual_UART_RxCpltCallback(huart);
 	GPS_Virtual_UART_RxCpltCallback(huart);
 	BT_Virtual_UART_RxCpltCallback(huart);
+	DEBUG_Virtual_UART_RxCpltCallback(huart);
 }
 
 /**
