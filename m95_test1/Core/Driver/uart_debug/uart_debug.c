@@ -57,14 +57,17 @@ void nmeaDebugUart(uint8_t data) {
 	HAL_UART_Transmit(m_debugUart, &write, 1, 1);
 }
 
-void obd2DebugUart(uint8_t data) {
-	static uint8_t btwrite = 0;
-	btwrite = data;
-	HAL_UART_Transmit(m_debugUart, &btwrite, 1, 1);
+void obd2DebugUart(uint8_t* data, uint8_t len) {
+//	static uint8_t btwrite = 0;
+//	btwrite = data;
+	HAL_UART_Transmit(m_debugUart, data, len, 1);
 }
+HAL_StatusTypeDef recvIterror;
+
 void DEBUG_Virtual_Rx_IT(void) {
-	HAL_UART_Receive_IT(m_debugUart, &uartDebugRxdata, 1);
+	recvIterror = HAL_UART_Receive_IT(m_debugUart, &uartDebugRxdata, 1);
 }
+
 void DEBUG_Virtual_UART_RxCpltCallback(void *uart) {
 	if (m_debugUart->Instance == ((UART_HandleTypeDef*) uart)->Instance) {
 		DEBUG_Virtual_Rx_IT();

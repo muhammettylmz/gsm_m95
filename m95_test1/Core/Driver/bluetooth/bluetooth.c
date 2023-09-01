@@ -38,6 +38,7 @@ btRecvComp_e m_btRecvCompleted = BT_RECV_COMPLETED_IDLE;
 btUartBuff_t m_btUartRaw[BT_UART_BUFF_SIZE];
 uint16_t m_btUartBuffIndis;
 uint8_t btRxData;
+uint8_t tempBuff[64];
 char *m_btToken;
 
 uint32_t getBTSystick(void) {
@@ -92,8 +93,14 @@ void BT_Virtual_UART_RxCpltCallback(void *uart) {
 //		}
 
 		BT_Virtual_Rx_IT();
-		startBTRxTimeout();
-		obd2DebugUart(btRxData);
+		//startBTRxTimeout();
+		static uint8_t cnt = 0;
+		tempBuff[cnt++] = btRxData;
+		if (btRxData == '\n') {
+			obd2DebugUart(tempBuff, cnt);
+			cnt = 0;
+		}
+
 	}
 }
 
@@ -102,7 +109,7 @@ void btInit(void *uart) {
 	BT_Virtual_Rx_IT();
 }
 
-void sendBtUartData(uint8_t* data, uint16_t len){
+void sendBtUartData(uint8_t *data, uint16_t len) {
 //	static uint8_t btTxdata = 0;
 //	btTxdata = data;
 	HAL_UART_Transmit(m_btUart, data, len, 5);
