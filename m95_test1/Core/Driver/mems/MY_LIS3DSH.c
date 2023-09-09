@@ -2,6 +2,7 @@
 #include "MY_LIS3DSH.h"
 #include "main.h"
 #include "uart_debug.h"
+#include <math.h>
 
 //SPI Chip Select
 #define _LIS3DHS_CS_ENBALE		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_RESET);
@@ -179,13 +180,28 @@ void LIS3DSH_Z_calibrate(float z_min, float z_max) {
 }
 
 #define ACC_DATA_BUFF_CNT	100
+#define ACC_X_AXES_SHAKE_TH	90.0f
+#define ACC_Y_AXES_SHAKE_TH	90.0f
+#define ACC_Z_AXES_SHAKE_TH	100.0f
+
+typedef struct {
+	uint16_t xAxesShakeCnt;
+	uint16_t yAxesShakeCnt;
+	uint16_t zAxesShakeCnt;
+	uint8_t xAxesShakeDetect;
+	uint8_t yAxesShakeDetect;
+	uint8_t zAxesShakeDetect;
+} accShakeDetect_t;
 
 LIS3DSH_DataScaled m_accData[ACC_DATA_BUFF_CNT];
 volatile uint8_t m_drdyFlag = 0;
 uint8_t m_accStatus;
 uint8_t m_accDataCnt = 0;
+//uint64_t m_accBuffCircualCnt = 1;
 LIS3DSH_InitTypeDef m_accConfigDef;
 uint32_t m_memsSystick;
+
+accShakeDetect_t m_accShakeDetect;
 
 uint32_t getMEMsSystick(void) {
 	return m_memsSystick;
@@ -203,6 +219,25 @@ void memsInit(void *spi) {
 	LIS3DSH_Y_calibrate(-1020.0, 1040.0);
 	LIS3DSH_Z_calibrate(-920.0, 1040.0);
 }
+double xabs;
+double yabs;
+double zabs;
+void checkShakeDetectAxes(LIS3DSH_DataScaled *axesData, uint8_t lastIndis, accShakeDetect_t *detect) {
+	xabs = fabs(fabs(axesData[lastIndis].x) - fabs(axesData[lastIndis - 1].x));
+	if (xabs > ACC_X_AXES_SHAKE_TH) {
+		detect->xAxesShakeCnt++;
+	}
+	yabs = fabs(fabs(axesData[lastIndis].y) - fabs(axesData[lastIndis - 1].y));
+	if (yabs > ACC_Y_AXES_SHAKE_TH) {
+		detect->yAxesShakeCnt++;
+	}
+	zabs = fabs(fabs(axesData[lastIndis].z) - fabs(axesData[lastIndis - 1].z));
+	if (zabs > ACC_Z_AXES_SHAKE_TH) {
+		detect->zAxesShakeCnt++;
+	}
+
+	//memsDebugAcc("%.6f\t%.6f\t%.6f\r\n", xabs, yabs, zabs);
+}
 
 void memsControl(void) {
 
@@ -216,16 +251,21 @@ void memsControl(void) {
 		m_accData[m_accDataCnt] = LIS3DSH_GetDataScaled();
 //		memsDebugAcc("%.6f\t%.6f\t%.6f\r\n", m_accData[m_accDataCnt].x,
 //				m_accData[m_accDataCnt].y, m_accData[m_accDataCnt].z);
+		if (m_accDataCnt > 1 /*|| m_accBuffCircualCnt != 0*/) {
+			checkShakeDetectAxes(m_accData, m_accDataCnt, &m_accShakeDetect);
+		}
+
 		m_accDataCnt++;
 		if (m_accDataCnt >= ACC_DATA_BUFF_CNT) {
 			m_accDataCnt = 0;
+//			m_accBuffCircualCnt++;
 		}
-
 	}
+
 }
 
 void MEMS_Virtual_GPIO_EXTI(void) {
-	//m_drdyFlag = 1;
+//m_drdyFlag = 1;
 }
 
 void MEMS_Virtual_Systick_Handler(void) {
