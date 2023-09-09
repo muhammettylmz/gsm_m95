@@ -136,12 +136,12 @@ LIS3DSH_DataScaled LIS3DSH_GetDataScaled(void) {
 	;
 	//Scale data and return 
 	LIS3DSH_DataScaled tempScaledData;
-//	tempScaledData.x = (tempRawData.x * lis3dsh_Sensitivity * __X_Scale) + 0.0f - __X_Bias;
-//	tempScaledData.y = (tempRawData.y * lis3dsh_Sensitivity * __Y_Scale) + 0.0f - __Y_Bias;
-//	tempScaledData.z = (tempRawData.z * lis3dsh_Sensitivity * __Z_Scale) + 0.0f - __Z_Bias;
-	tempScaledData.x = tempRawData.x * lis3dsh_Sensitivity;
-	tempScaledData.y = tempRawData.y * lis3dsh_Sensitivity;
-	tempScaledData.z = tempRawData.z * lis3dsh_Sensitivity;
+	tempScaledData.x = (tempRawData.x * lis3dsh_Sensitivity * __X_Scale) + 0.0f - __X_Bias;
+	tempScaledData.y = (tempRawData.y * lis3dsh_Sensitivity * __Y_Scale) + 0.0f - __Y_Bias;
+	tempScaledData.z = (tempRawData.z * lis3dsh_Sensitivity * __Z_Scale) + 0.0f - __Z_Bias;
+//	tempScaledData.x = tempRawData.x * lis3dsh_Sensitivity;
+//	tempScaledData.y = tempRawData.y * lis3dsh_Sensitivity;
+//	tempScaledData.z = tempRawData.z * lis3dsh_Sensitivity;
 	return tempScaledData;
 }
 //4. Poll for Data Ready
@@ -179,10 +179,17 @@ void LIS3DSH_Z_calibrate(float z_min, float z_max) {
 	__Z_Scale = (2 * 1000) / (z_max - z_min);
 }
 
-#define ACC_DATA_BUFF_CNT	100
-#define ACC_X_AXES_SHAKE_TH	90.0f
-#define ACC_Y_AXES_SHAKE_TH	90.0f
-#define ACC_Z_AXES_SHAKE_TH	100.0f
+#define ACC_DATA_BUFF_CNT					50
+#define ACC_X_AXES_SHAKE_TH					40.0f
+#define ACC_Y_AXES_SHAKE_TH					40.0f
+#define ACC_Z_AXES_SHAKE_TH					50.0f
+#define ACC_X_AXES_SHAKE_CNT_TH 			10
+#define ACC_Y_AXES_SHAKE_CNT_TH 			10
+#define ACC_Z_AXES_SHAKE_CNT_TH 			10
+#define ACC_CIRCULER_BUFF_SHAKE_DETECT_TH 	2
+
+#define STATUS_REG_ZYXDA_INDIS				3
+#define ACC_XYZ_NEW_DATA_AVAILABLE(reg)		(reg & (1 << STATUS_REG_ZYXDA_INDIS))
 
 typedef struct {
 	uint16_t xAxesShakeCnt;
@@ -197,19 +204,20 @@ LIS3DSH_DataScaled m_accData[ACC_DATA_BUFF_CNT];
 volatile uint8_t m_drdyFlag = 0;
 uint8_t m_accStatus;
 uint8_t m_accDataCnt = 0;
-//uint64_t m_accBuffCircualCnt = 1;
 LIS3DSH_InitTypeDef m_accConfigDef;
-uint32_t m_memsSystick;
-
 accShakeDetect_t m_accShakeDetect;
+uint32_t m_memsSystick;
+double xabs;
+double yabs;
+double zabs;
 
 uint32_t getMEMsSystick(void) {
 	return m_memsSystick;
 }
 
 void memsInit(void *spi) {
-	m_accConfigDef.dataRate = LIS3DSH_DATARATE_25;
-	m_accConfigDef.fullScale = LIS3DSH_FULLSCALE_2;
+	m_accConfigDef.dataRate = LIS3DSH_DATARATE_100;
+	m_accConfigDef.fullScale = LIS3DSH_FULLSCALE_16;
 	m_accConfigDef.antiAliasingBW = LIS3DSH_FILTER_BW_50;
 	m_accConfigDef.enableAxes = LIS3DSH_XYZ_ENABLE;
 	m_accConfigDef.interruptEnable = true;
@@ -219,24 +227,40 @@ void memsInit(void *spi) {
 	LIS3DSH_Y_calibrate(-1020.0, 1040.0);
 	LIS3DSH_Z_calibrate(-920.0, 1040.0);
 }
-double xabs;
-double yabs;
-double zabs;
-void checkShakeDetectAxes(LIS3DSH_DataScaled *axesData, uint8_t lastIndis, accShakeDetect_t *detect) {
+
+void checkShakeAxesCnt(LIS3DSH_DataScaled *axesData, uint8_t lastIndis, accShakeDetect_t *cnt) {
 	xabs = fabs(fabs(axesData[lastIndis].x) - fabs(axesData[lastIndis - 1].x));
 	if (xabs > ACC_X_AXES_SHAKE_TH) {
-		detect->xAxesShakeCnt++;
+		cnt->xAxesShakeCnt++;
 	}
 	yabs = fabs(fabs(axesData[lastIndis].y) - fabs(axesData[lastIndis - 1].y));
 	if (yabs > ACC_Y_AXES_SHAKE_TH) {
-		detect->yAxesShakeCnt++;
+		cnt->yAxesShakeCnt++;
 	}
 	zabs = fabs(fabs(axesData[lastIndis].z) - fabs(axesData[lastIndis - 1].z));
 	if (zabs > ACC_Z_AXES_SHAKE_TH) {
-		detect->zAxesShakeCnt++;
+		cnt->zAxesShakeCnt++;
 	}
+}
 
-	//memsDebugAcc("%.6f\t%.6f\t%.6f\r\n", xabs, yabs, zabs);
+void checkAxesShakeDetect(accShakeDetect_t *detect) {
+	if (detect->xAxesShakeCnt > ACC_X_AXES_SHAKE_CNT_TH) {
+		detect->xAxesShakeCnt = 0;
+		detect->xAxesShakeDetect++;
+	}
+	if (detect->yAxesShakeCnt > ACC_Y_AXES_SHAKE_CNT_TH) {
+		detect->yAxesShakeCnt = 0;
+		detect->yAxesShakeDetect++;
+	}
+	if (detect->zAxesShakeCnt > ACC_Z_AXES_SHAKE_CNT_TH) {
+		detect->zAxesShakeCnt = 0;
+		detect->zAxesShakeDetect++;
+	}
+}
+void clearAxesShakeCnt(accShakeDetect_t *axes) {
+	axes->xAxesShakeCnt = 0;
+	axes->yAxesShakeCnt = 0;
+	axes->zAxesShakeCnt = 0;
 }
 
 void memsControl(void) {
@@ -244,21 +268,26 @@ void memsControl(void) {
 //	if(getMEMsSystick() % 11 != 1){
 //		return;
 //	}
-
+	static uint8_t circulerBuffCnt = 0;
 	LIS3DSH_ReadIO(LIS3DSH_STATUS_ADDR, &m_accStatus, 1);
-	if (m_accStatus & LIS3DSH_STATUS_ADDR) {
+	if (ACC_XYZ_NEW_DATA_AVAILABLE(m_accStatus)) {
 
 		m_accData[m_accDataCnt] = LIS3DSH_GetDataScaled();
 //		memsDebugAcc("%.6f\t%.6f\t%.6f\r\n", m_accData[m_accDataCnt].x,
 //				m_accData[m_accDataCnt].y, m_accData[m_accDataCnt].z);
-		if (m_accDataCnt > 1 /*|| m_accBuffCircualCnt != 0*/) {
-			checkShakeDetectAxes(m_accData, m_accDataCnt, &m_accShakeDetect);
+		if (m_accDataCnt > 1) {
+			checkShakeAxesCnt(m_accData, m_accDataCnt, &m_accShakeDetect);
 		}
 
 		m_accDataCnt++;
 		if (m_accDataCnt >= ACC_DATA_BUFF_CNT) {
 			m_accDataCnt = 0;
-//			m_accBuffCircualCnt++;
+			circulerBuffCnt++;
+			if (circulerBuffCnt > ACC_CIRCULER_BUFF_SHAKE_DETECT_TH) {
+				circulerBuffCnt = 0;
+				checkAxesShakeDetect(&m_accShakeDetect);
+				clearAxesShakeCnt(&m_accShakeDetect);
+			}
 		}
 	}
 
