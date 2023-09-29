@@ -36,7 +36,8 @@ Core/Driver/VTS/vehicleTrackingSystem.o: \
  C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/uart_debug/uart_debug.h \
  C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/gps/gps.h \
  C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/mems/MY_LIS3DSH.h \
- C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/bluetooth/bluetooth.h
+ C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/bluetooth/bluetooth.h \
+ C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/obd2/obd2.h
 C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/VTS/vehicleTrackingSystem.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -75,3 +76,4 @@ C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/uart_debug/
 C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/gps/gps.h:
 C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/mems/MY_LIS3DSH.h:
 C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/bluetooth/bluetooth.h:
+C:/Users/muham/ws/m95_vehicle/firmware/gsm_m95/m95_test1/Core/Driver/obd2/obd2.h:

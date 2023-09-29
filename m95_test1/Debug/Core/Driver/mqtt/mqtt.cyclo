@@ -7,9 +7,10 @@
 ../Core/Driver/mqtt/mqtt.c:109:19:getMQTTConfigState	1
 ../Core/Driver/mqtt/mqtt.c:113:6:setMQTTConfigState	1
 ../Core/Driver/mqtt/mqtt.c:117:10:getMqttSystick	1
-../Core/Driver/mqtt/mqtt.c:346:9:deleteCertKey	23
-../Core/Driver/mqtt/mqtt.c:431:9:writeCertKey	41
-../Core/Driver/mqtt/mqtt.c:125:6:mqttInit	50
+../Core/Driver/mqtt/mqtt.c:346:9:deleteCertKey	32
+../Core/Driver/mqtt/mqtt.c:431:9:writeCertKey	58
+../Core/Driver/mqtt/mqtt.c:125:6:mqttInit.part.0	49
+../Core/Driver/mqtt/mqtt.c:125:6:mqttInit	2
 ../Core/Driver/mqtt/mqtt.c:584:9:mqttConnect	11
 ../Core/Driver/mqtt/mqtt.c:658:9:mqttOpenBroker	11
 ../Core/Driver/mqtt/mqtt.c:732:9:disconnectBroker	1

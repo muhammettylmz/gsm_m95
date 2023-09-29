@@ -13,6 +13,7 @@ RM := rm -rf
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include Core/Driver/uart_debug/subdir.mk
+-include Core/Driver/obd2/subdir.mk
 -include Core/Driver/mqtt/subdir.mk
 -include Core/Driver/mems/subdir.mk
 -include Core/Driver/m95/subdir.mk

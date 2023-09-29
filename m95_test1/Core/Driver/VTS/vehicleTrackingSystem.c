@@ -14,6 +14,7 @@
 #include "gps.h"
 #include "MY_LIS3DSH.h"
 #include "bluetooth.h"
+#include "obd2.h"
 
 /* External variables --------------------------------------------------------*/
 extern SPI_HandleTypeDef hspi1;
@@ -81,7 +82,7 @@ void VTSInit(void) {
 	btInit(&huart5);
 	gpsInit(&huart4);
 	gsmInit(&huart3);
-
+	obd2Init();
 	customDebugMsg("Enter infinite While loop... \r\n");
 }
 
@@ -97,6 +98,7 @@ void VTSControl(void) {
 		gpsControl();
 		memsControl();
 		btControl();
+		obd2Control();
 
 //		if (btnState && isRls) {
 //			customDebugMsg("Button is pressed...\r\nPreparing Send MQTT Publish message\r\n");
@@ -117,6 +119,7 @@ void VTS_Virtual_SysTick_Handler(void) {
 	BT_Virtual_Systick();
 	MQTT_Virtual_Systick_Handler();
 	MEMS_Virtual_Systick_Handler();
+	OBD_Virtual_Systick_Handler();
 }
 
 /**

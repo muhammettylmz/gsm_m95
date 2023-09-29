@@ -15,6 +15,7 @@ extern void BT_Virtual_Rx_IT(void);
 extern void BT_Virtual_UART_RxCpltCallback(void *uart);
 
 extern void sendBtUartData(uint8_t* data, uint16_t len);
+extern uint8_t getBtConnState(void);
 
 extern void btInit(void* uart);
 extern void btControl(void);

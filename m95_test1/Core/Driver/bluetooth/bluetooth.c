@@ -104,9 +104,14 @@ void BT_Virtual_UART_RxCpltCallback(void *uart) {
 	}
 }
 
+void btInitConfig(void){
+
+}
+
 void btInit(void *uart) {
 	m_btUart = (UART_HandleTypeDef*) uart;
 	BT_Virtual_Rx_IT();
+	btInitConfig();
 }
 
 void sendBtUartData(uint8_t *data, uint16_t len) {

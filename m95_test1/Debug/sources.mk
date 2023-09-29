@@ -31,6 +31,7 @@ Core/Driver/gps \
 Core/Driver/m95 \
 Core/Driver/mems \
 Core/Driver/mqtt \
+Core/Driver/obd2 \
 Core/Driver/uart_debug \
 Core/Src \
 Core/Startup \

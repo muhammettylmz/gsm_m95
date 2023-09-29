@@ -8,9 +8,11 @@
 #ifndef DRIVER_OBD2_OBD2_H_
 #define DRIVER_OBD2_OBD2_H_
 
-#include "obd2pids.h"
+//extern void OBD_Virtual_TIM_ElapsedCallback(void* tim);
+extern void OBD_Virtual_Systick_Handler(void);
 
-
+extern void obd2Init(void);
+extern void obd2Control(void);
 
 
 #endif /* DRIVER_OBD2_OBD2_H_ */

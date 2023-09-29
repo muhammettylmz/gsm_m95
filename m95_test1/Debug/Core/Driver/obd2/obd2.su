@@ -1,0 +1,3 @@
+../Core/Driver/obd2/obd2.c:19:6:obd2Init	0	static
+../Core/Driver/obd2/obd2.c:25:6:obd2Control	0	static
+../Core/Driver/obd2/obd2.c:29:6:OBD_Virtual_Systick_Handler	0	static
