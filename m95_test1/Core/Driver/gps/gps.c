@@ -6,12 +6,10 @@
  */
 #include "gps.h"
 #include "main.h"
-#include "uart_debug.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "m95.h"
 
 #define GPS_MPH_PER_KNOT 			1.15077945
 #define GPS_MPS_PER_KNOT 			0.51444444
@@ -147,9 +145,11 @@ void GPS_Virtual_Rx_IT(void) {
 void GPS_Virtual_UART_RxCpltCallback(void *uart) {
 	if (m_gpsUart->Instance == ((UART_HandleTypeDef*) uart)->Instance) {
 
+		//stored nmea msg into uart buff
 		m_gpsUartBuff[m_gpsUartBuffIndis].uartBuff[m_gpsUartBuff[m_gpsUartBuffIndis].uartBuffCnt++] =
 				m_gpsRxData;
 
+		// find nmea msg linefeed
 		if (m_gpsRxData == '\n'
 				&& (m_gpsUartBuff[m_gpsUartBuffIndis].uartBuff[m_gpsUartBuff[m_gpsUartBuffIndis].uartBuffCnt
 						- 2]) == '\r') {
@@ -157,15 +157,18 @@ void GPS_Virtual_UART_RxCpltCallback(void *uart) {
 			m_gpsUartBuffIndis++;
 		}
 
-		if ((m_gpsUartBuffIndis < 10)
+		//clear buffer size for there is anamoly
+		if ((m_gpsUartBuffIndis < GPS_UART_BUFF_COUNT)
 				&& m_gpsUartBuff[m_gpsUartBuffIndis].uartBuffCnt >= GPS_UART_BUFF_SIZE) {
 			m_gpsUartBuff[m_gpsUartBuffIndis].uartBuffCnt = 0;
 		}
 
+		//	index buffer size clearing for there is circular buffer
 		if (m_gpsUartBuffIndis == GPS_UART_BUFF_COUNT) {
 			m_gpsUartBuffIndis = 0;
 		}
 
+		// RXD IT enable
 		GPS_Virtual_Rx_IT();
 	}
 }
@@ -350,7 +353,7 @@ void convertGSAMsg(char *msg, gpsNmeaGSAType_t *gsa) {
  * @brief NMEA msg parser
  * @retval none
  */
-void parseNmeaGGAandRMCMsg(void) {
+void parseNmeaMsg(void) {
 	for (uint8_t queIndis = 0; queIndis < GPS_UART_BUFF_COUNT; queIndis++) {
 		if (m_gpsUartBuff[queIndis].recvCompleted) {
 
@@ -366,13 +369,13 @@ void parseNmeaGGAandRMCMsg(void) {
 			else {
 				setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCHING);
 
-				if (strncmp(m_nmeaToken, NMEA_GSA_MSG_HEADER, 6) == 0) {
+				if (strncmp(m_nmeaToken, NMEA_GSA_MSG_HEADER, (size_t)sizeof(NMEA_GSA_MSG_HEADER)) == 0) {
 					convertGSAMsg(m_nmeaToken, &gsaMsg);
 				}
-				else if (strncmp(m_nmeaToken, NMEA_GGA_MSG_HEADER, 6) == 0) {
+				else if (strncmp(m_nmeaToken, NMEA_GGA_MSG_HEADER, (size_t)sizeof(NMEA_GGA_MSG_HEADER)) == 0) {
 					convertGGAMsg(m_nmeaToken, &ggaMsg);
 				}
-				else if (strncmp(m_nmeaToken, NMEA_RMC_MSG_HEADER, 6) == 0) {
+				else if (strncmp(m_nmeaToken, NMEA_RMC_MSG_HEADER, (size_t)sizeof(NMEA_RMC_MSG_HEADER)) == 0) {
 					convertRMCMsg(m_nmeaToken, &rmcMsg);
 				}
 
@@ -386,10 +389,12 @@ void parseNmeaGGAandRMCMsg(void) {
 }
 
 void gpsControl(void) {
+
+	// RX IT re-trigger
 	if (m_gpsRecvITError != HAL_OK) {
 		GPS_Virtual_Rx_IT();
 	}
 
-	//found msg
-	parseNmeaGGAandRMCMsg();
+	//find nmea msg into gps uart circular buffer
+	parseNmeaMsg();
 }

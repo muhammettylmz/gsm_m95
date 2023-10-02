@@ -105,6 +105,7 @@ void BT_Virtual_UART_RxCpltCallback(void *uart) {
 }
 
 void btInitConfig(void){
+	//TODO: HM-10 Bluetooth konfigürasyon AT ayarları yapılacak.(GSM gibi yap)
 
 }
 
