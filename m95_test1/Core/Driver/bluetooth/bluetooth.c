@@ -18,15 +18,19 @@
 #define BT_UART_BUFF_ARR_SIZE	128
 #define BT_UART_BUFF_SIZE		50
 
+typedef enum{
+	DISCONNECTED,
+	CONNECTED
+}connState_e;
+
 typedef enum {
 	BT_RECV_COMPLETED_IDLE, BT_RECV_COMPLETED
 } btRecvComp_e;
 
-typedef struct {
-	uint8_t buff[BT_UART_BUFF_ARR_SIZE];
-	uint8_t buffCnt;
-	uint8_t recvCompleted;
-} btUartBuff_t;
+connState_e m_btSerialConnState = DISCONNECTED;
+connState_e m_btConnState = DISCONNECTED;
+connState_e m_prevBtSerialConnState = DISCONNECTED;
+
 
 UART_HandleTypeDef *m_btUart;
 HAL_StatusTypeDef m_btRxIterror;
@@ -35,11 +39,14 @@ uint32_t m_btSystick;
 uint32_t m_prevBtRxTimeoutCnt;
 btRecvComp_e m_btRecvCompleted = BT_RECV_COMPLETED_IDLE;
 
-btUartBuff_t m_btUartRaw[BT_UART_BUFF_SIZE];
-uint16_t m_btUartBuffIndis;
+uint8_t btRxRawBuff[128];
 uint8_t btRxData;
-uint8_t tempBuff[64];
-char *m_btToken;
+uint8_t btRxRawBuffCnt;
+
+
+uint8_t getBtSerialConnState(void){
+	return (uint8_t)m_btSerialConnState;
+}
 
 uint32_t getBTSystick(void) {
 	return m_btSystick;
@@ -53,10 +60,10 @@ void setRecvCompleted(btRecvComp_e state) {
 	m_btRecvCompleted = state;
 }
 
-void checkBTRxTimeoutCompleted(void) {
-	if ((getBTSystick() - m_prevBtRxTimeoutCnt) >= HAL_TIMEOUT_UNIT1MS(5)) {
-		setRecvCompleted(BT_RECV_COMPLETED);
-	}
+
+
+void stopBTRxTimeout(void){
+	m_prevBtRxTimeoutCnt = 0;
 }
 
 void startBTRxTimeout(void) {
@@ -64,8 +71,22 @@ void startBTRxTimeout(void) {
 	setRecvCompleted(BT_RECV_COMPLETED_IDLE);
 }
 
+void checkBTRxTimeoutCompleted(void) {
+	if ((getBTSystick() - m_prevBtRxTimeoutCnt) >= HAL_TIMEOUT_UNIT1MS(5)) {
+		setRecvCompleted(BT_RECV_COMPLETED);
+		stopBTRxTimeout();
+	}
+}
+
+void clearBtRxRawBuffCnt(void){
+	btRxRawBuffCnt = 0;
+}
+
 void BT_Virtual_Systick(void) {
 	m_btSystick++;
+	if(m_prevBtRxTimeoutCnt != 0){
+		checkBTRxTimeoutCompleted();
+	}
 }
 
 void BT_Virtual_Rx_IT(void) {
@@ -74,39 +95,36 @@ void BT_Virtual_Rx_IT(void) {
 
 void BT_Virtual_UART_RxCpltCallback(void *uart) {
 	if (m_btUart->Instance == ((UART_HandleTypeDef*) uart)->Instance) {
-
-//		m_btUartRaw[m_btUartBuffIndis].buff[m_btUartRaw[m_btUartBuffIndis].buffCnt++] = btRxData;
-//
-//		if (btRxData == '\n'
-//				&& (m_btUartRaw[m_btUartBuffIndis].buff[m_btUartRaw[m_btUartBuffIndis].buffCnt - 2]
-//						== '\r')) {
-//			m_btUartRaw[m_btUartBuffIndis].recvCompleted = 1;
-//			m_btUartBuffIndis++;
-//		}
-//
-//		if (m_btUartRaw[m_btUartBuffIndis].buffCnt > BT_UART_BUFF_ARR_SIZE) {
-//			m_btUartRaw[m_btUartBuffIndis].buffCnt = 0;
-//		}
-//
-//		if (m_btUartBuffIndis >= BT_UART_BUFF_SIZE) {
-//			m_btUartBuffIndis = 0;
-//		}
-
+		btRxRawBuff[btRxRawBuffCnt++] = btRxData;
 		BT_Virtual_Rx_IT();
-		//startBTRxTimeout();
-		static uint8_t cnt = 0;
-		tempBuff[cnt++] = btRxData;
-		if (btRxData == '\n') {
-			obd2DebugUart(tempBuff, cnt);
-			cnt = 0;
-		}
-
+		startBTRxTimeout();
 	}
 }
 
 void btInitConfig(void){
 	//TODO: HM-10 Bluetooth konfigürasyon AT ayarları yapılacak.(GSM gibi yap)
+	enum{
+		BT_AT_SEND,
+		BT_AT_SEND_WAIT,
+		BT_ECHO_MODE,
+		BT_ECHO_MODE_WAIT,
+		BT_ROLE_MODE,
+		BT_ROLE_MODE_WAIT,
+	}btConfigState_e;
 
+//	//use serial comm timeout for bt conn state disconnected.
+//	goto labelBtConnState;
+//
+//	labelBtConnState:
+	m_btSerialConnState = DISCONNECTED;
+}
+
+uint8_t sendBtUartData(uint8_t *data, uint16_t len) {
+	clearBtRxRawBuffCnt();
+	if( (HAL_UART_Transmit(m_btUart, data, len, 15)) != HAL_OK){
+		return 1;
+	}
+	return 0;
 }
 
 void btInit(void *uart) {
@@ -115,33 +133,30 @@ void btInit(void *uart) {
 	btInitConfig();
 }
 
-void sendBtUartData(uint8_t *data, uint16_t len) {
-//	static uint8_t btTxdata = 0;
-//	btTxdata = data;
-	HAL_UART_Transmit(m_btUart, data, len, 5);
+uint8_t getBtConnState(void){
+	return (uint8_t)m_btConnState;
 }
 
-uint8_t checkValidMsg(uint8_t *data, uint16_t len) {
-	(void) data;
-	(void) len;
-	return 1;
+void checkBtConnState(void){
+	if(getBtConnState() == CONNECTED){
+		return;
+	}
+
+	if(getBtSerialConnState() != CONNECTED){
+		btInitConfig();
+		return;
+	}
+
+//	if(m_prevBtSerialConnState != m_btSerialConnState){
+//		btInitConfig();
+//		return;
+//	}
+	//TODO: bluetooth cihazı ile bağlantı işlemini burada yap.
 }
 
-void parserOBD2(void) {
-	for (uint8_t bufIndis = 0; bufIndis < BT_UART_BUFF_SIZE; bufIndis++) {
-		if (m_btUartRaw[m_btUartBuffIndis].recvCompleted) {
-
-			m_btToken = strtok((char*) m_btUartRaw[m_btUartBuffIndis].buff, "\r\n");
-
-			if (!checkValidMsg((uint8_t*) m_btToken, strlen(m_btToken))) {
-				m_btUartRaw[m_btUartBuffIndis].recvCompleted = 0;
-				m_btUartRaw[m_btUartBuffIndis].buffCnt = 0;
-			}
-			else {
-				m_btUartRaw[m_btUartBuffIndis].recvCompleted = 0;
-				m_btUartRaw[m_btUartBuffIndis].buffCnt = 0;
-			}
-		}
+void btSearchBTCommandResponse(void){
+	if(getBTRecvCompleted() == BT_RECV_COMPLETED_IDLE && getBtConnState() != CONNECTED){
+		return;
 	}
 }
 
@@ -150,6 +165,8 @@ void btControl(void) {
 		BT_Virtual_Rx_IT();
 	}
 
-	parserOBD2();
+	checkBtConnState();
+
+	btSearchBTCommandResponse();
 }
 
