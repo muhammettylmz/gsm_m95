@@ -76,7 +76,7 @@ uint32_t getBTSystick(void) {
 }
 
 uint8_t getBTRecvCompleted(void) {
-	return (uint8_t)m_btRecvCompleted;
+	return (uint8_t) m_btRecvCompleted;
 }
 
 void setRecvCompleted(btRecvComp_e state) {
@@ -122,7 +122,7 @@ void BT_Virtual_UART_RxCpltCallback(void *uart) {
 	}
 }
 
-void clearBtStateFlags(void){
+void clearBtStateFlags(void) {
 	m_btConfigState = BT_CONFIG_START;
 	m_btConnState = DISCONNECTED;
 	m_btSerialConnState = DISCONNECTED;
@@ -138,12 +138,18 @@ void btInitConfig(void) {
 	typedef enum {
 		BT_AT_SEND,
 		BT_AT_SEND_WAIT,
-		BT_ECHO_MODE,
-		BT_ECHO_MODE_WAIT,
+		BT_IMME_SEND,
+		BT_IMME_WAIT,
 		BT_ROLE_MODE,
 		BT_ROLE_MODE_WAIT,
 		BT_MODE,
 		BT_MODE_WAIT,
+		BT_SHOW_SEND,
+		BT_SHOW_SEND_WAIT,
+		BT_RESET_SEND,
+		BT_RESET_SEND_WAIT,
+		BT_START_SEND,
+		BT_START_SEND_WAIT,
 		EXIT
 	} btConfigState_e;
 
@@ -168,33 +174,93 @@ void btInitConfig(void) {
 	case BT_AT_SEND_WAIT:
 		if (getBTRecvCompleted()) {
 			if (findBTATCommandResp("OK")) {
-				initState = BT_ECHO_MODE;
+				initState = BT_IMME_SEND;
 			}
 		}
 	break;
-	case BT_ECHO_MODE:
-		timeout = getBTSystick();
-		initState = BT_ECHO_MODE_WAIT;
-		waitResponseTimeout = 300;
+	case BT_IMME_SEND:
+		if (!sendBtUartData((uint8_t*) "AT+IMME1\n\r", sizeof((uint8_t*) "AT+IMME1\n\r"))) {
+			timeout = getBTSystick();
+			initState = BT_IMME_WAIT;
+			waitResponseTimeout = 300;
+		}
 	break;
-	case BT_ECHO_MODE_WAIT:
-		initState = BT_ROLE_MODE;
+	case BT_IMME_WAIT:
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("OK+Set:1")) {
+				initState = BT_ROLE_MODE;
+			}
+		}
 	break;
 	case BT_ROLE_MODE:
-		timeout = getBTSystick();
-		initState = BT_ROLE_MODE_WAIT;
-		waitResponseTimeout = 300;
+		if (!sendBtUartData((uint8_t*) "AT+ROLE1\n\r", sizeof((uint8_t*) "AT+ROLE1\n\r"))) {
+			timeout = getBTSystick();
+			initState = BT_ROLE_MODE_WAIT;
+			waitResponseTimeout = 300;
+		}
 	break;
 	case BT_ROLE_MODE_WAIT:
-		initState = BT_MODE;
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("OK+Set:1")) {
+				initState = BT_MODE;
+			}
+		}
 	break;
 	case BT_MODE:
-		timeout = getBTSystick();
-		initState = BT_MODE_WAIT;
-		waitResponseTimeout = 300;
+		if (!sendBtUartData((uint8_t*) "AT+MODE1\n\r", sizeof((uint8_t*) "AT+MODE1\n\r"))) {
+			timeout = getBTSystick();
+			initState = BT_MODE_WAIT;
+			waitResponseTimeout = 300;
+		}
 	break;
 	case BT_MODE_WAIT:
-		initState = EXIT;
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("OK+Set:1")) {
+				initState = BT_SHOW_SEND;
+			}
+		}
+	break;
+	case BT_SHOW_SEND:
+		if (!sendBtUartData((uint8_t*) "AT+SHOW1\n\r", sizeof((uint8_t*) "AT+SHOW1\n\r"))) {
+			timeout = getBTSystick();
+			initState = BT_SHOW_SEND_WAIT;
+			waitResponseTimeout = 300;
+		}
+	break;
+	case BT_SHOW_SEND_WAIT:
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("OK+Set:1")) {
+				initState = BT_RESET_SEND;
+			}
+		}
+	break;
+	case BT_RESET_SEND:
+		if (!sendBtUartData((uint8_t*) "AT+RESET\n\r", sizeof((uint8_t*) "AT+RESET\n\r"))) {
+			timeout = getBTSystick();
+			initState = BT_RESET_SEND_WAIT;
+			waitResponseTimeout = 300;
+		}
+	break;
+	case BT_RESET_SEND_WAIT:
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("OK+RESET")) {
+				initState = BT_START_SEND;
+			}
+		}
+	break;
+	case BT_START_SEND:
+		if (!sendBtUartData((uint8_t*) "AT+START\n\r", sizeof((uint8_t*) "AT+START\n\r"))) {
+			timeout = getBTSystick();
+			initState = BT_START_SEND_WAIT;
+			waitResponseTimeout = 300;
+		}
+	break;
+	case BT_START_SEND_WAIT:
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("OK+START")) {
+				initState = EXIT;
+			}
+		}
 	break;
 	case EXIT:
 	default:
@@ -212,7 +278,7 @@ void btInitConfig(void) {
 		initState = BT_AT_SEND;
 		retry++;
 	}
-	else if(retry >= 3){
+	else if (retry >= 3) {
 		m_btConnState = m_btSerialConnState = DISCONNECTED;
 		timeout = 0;
 		retry = 0;
@@ -239,7 +305,7 @@ uint8_t getBtConnState(void) {
 	return (uint8_t) m_btConnState;
 }
 
-void btConnection(void){
+void btConnection(void) {
 
 }
 
@@ -271,11 +337,11 @@ void btControl(void) {
 		BT_Virtual_Rx_IT();
 	}
 
-	if(getBtConfigState() != BT_CONFIG_FINISH){
+	if (getBtConfigState() != BT_CONFIG_FINISH) {
 		btInitConfig();
 	}
 
-	if(getBtConnectionState() != BT_CONNECTION_FINISH){
+	if (getBtConnectionState() != BT_CONNECTION_FINISH) {
 		btConnection();
 	}
 
