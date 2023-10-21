@@ -32,8 +32,8 @@ uint32_t m_vtsButtonReleaseCnt;
 uint8_t btnState = 0;
 uint8_t isRls = 1;
 
-iwdgRefresRequestType_e m_prevIwdgRequestType;
-iwdgRefresRequestType_e m_currentIwdgRequestType;
+iwdgRefreshRequestType_e m_prevIwdgRequestType;
+iwdgRefreshRequestType_e m_currentIwdgRequestType;
 
 /**
  * @brief STM32 IWDG refresh counter
@@ -47,7 +47,7 @@ void iwdgControl(void) {
  * @brief Virtual IWDG Refresh.
  * @retval None
  */
-void virtualIwdgRefresh(iwdgRefresRequestType_e requestType) {
+void virtualIwdgRefresh(iwdgRefreshRequestType_e requestType) {
 	m_prevIwdgRequestType = requestType;
 	m_currentIwdgRequestType = requestType;
 	//TODO: ileride bu requesttype kullanılacak.

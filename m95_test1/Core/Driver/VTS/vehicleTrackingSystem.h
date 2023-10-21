@@ -39,16 +39,13 @@ typedef enum {
 	REQUEST_TYPE_WAIT_GPS_WARM_START_PROCESS,
 	REQUEST_TYPE_WAIT_GPS_DEADLOCK_PROCESS,
 	REQUEST_TYPE_WAIT_GPS_2D_3D_FIX_PROCESS,
-} iwdgRefresRequestType_e;
-
-
-
+} iwdgRefreshRequestType_e;
 
 
 extern void VTSInit(void);
 extern void VTSControl(void);
 
-extern void virtualIwdgRefresh(iwdgRefresRequestType_e requestType);
+extern void virtualIwdgRefresh(iwdgRefreshRequestType_e requestType);
 
 extern void VTS_Virtual_SysTick_Handler(void);
 extern void VTS_Virtual_UART_RxCpltCallback(void *huart);
