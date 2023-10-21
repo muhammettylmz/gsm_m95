@@ -1,0 +1,7 @@
+../Core/Driver/uart_debug/uart_debug.c:23:6:uartDebugInit	1
+../Core/Driver/uart_debug/uart_debug.c:28:5:customDebugMsg	1
+../Core/Driver/uart_debug/uart_debug.c:44:6:memsDebugAcc	1
+../Core/Driver/uart_debug/uart_debug.c:54:6:nmeaDebugUart	1
+../Core/Driver/uart_debug/uart_debug.c:60:6:obd2DebugUart	1
+../Core/Driver/uart_debug/uart_debug.c:67:6:DEBUG_Virtual_Rx_IT	1
+../Core/Driver/uart_debug/uart_debug.c:71:6:DEBUG_Virtual_UART_RxCpltCallback	3

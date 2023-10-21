@@ -6,7 +6,7 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include <vehicleTrackingSystem.h>
+#include "vehicleTrackingSystem.h"
 #include "main.h"
 #include "m95.h"
 #include "mqtt.h"
@@ -15,6 +15,7 @@
 #include "MY_LIS3DSH.h"
 #include "bluetooth.h"
 #include "obd2.h"
+#include <stdbool.h>
 
 /* External variables --------------------------------------------------------*/
 extern SPI_HandleTypeDef hspi1;
@@ -23,12 +24,35 @@ extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart5;
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
+extern IWDG_HandleTypeDef hiwdg;
 
 uint32_t m_vtsButtonPressedCnt;
 uint32_t m_vtsButtonReleaseCnt;
 
 uint8_t btnState = 0;
 uint8_t isRls = 1;
+
+iwdgRefresRequestType_e m_prevIwdgRequestType;
+iwdgRefresRequestType_e m_currentIwdgRequestType;
+
+/**
+ * @brief STM32 IWDG refresh counter
+ * @retval None
+ */
+void iwdgControl(void) {
+	HAL_IWDG_Refresh(&hiwdg);
+}
+
+/**
+ * @brief Virtual IWDG Refresh.
+ * @retval None
+ */
+void virtualIwdgRefresh(iwdgRefresRequestType_e requestType) {
+	m_prevIwdgRequestType = requestType;
+	m_currentIwdgRequestType = requestType;
+	//TODO: ileride bu requesttype kullanılacak.
+	iwdgControl();
+}
 
 /**
  * @brief STM32 Disco user button press and release check
@@ -92,20 +116,14 @@ void VTSInit(void) {
  */
 void VTSControl(void) {
 
-	while (1) {
+	while (true) {
 		gsmControl();
 		mqttControl();
 		gpsControl();
 		memsControl();
 		btControl();
 		obd2Control();
-
-//		if (btnState && isRls) {
-//			customDebugMsg("Button is pressed...\r\nPreparing Send MQTT Publish message\r\n");
-//			setMQTTPublishReadyState(PUBLISH_READY);
-//			isRls = 0;
-//		}
-		//HAL_Delay(2);
+		iwdgControl();
 	}
 }
 
