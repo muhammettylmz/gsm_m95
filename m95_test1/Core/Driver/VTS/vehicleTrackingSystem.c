@@ -106,7 +106,7 @@ void VTSInit(void) {
 	btInit(&huart5);
 	gpsInit(&huart4);
 	gsmInit(&huart3);
-	obd2Init();
+	//obd2Init();
 	customDebugMsg("Enter infinite While loop... \r\n");
 }
 

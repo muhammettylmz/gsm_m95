@@ -136,21 +136,7 @@ uint8_t findBTATCommandResp(char *resp) {
 void btInitConfig(void) {
 	//TODO: HM-10 Bluetooth konfigürasyon AT ayarları yapılacak.(GSM gibi yap)
 	typedef enum {
-		BT_AT_SEND,
-		BT_AT_SEND_WAIT,
-		BT_IMME_SEND,
-		BT_IMME_WAIT,
-		BT_ROLE_MODE,
-		BT_ROLE_MODE_WAIT,
-		BT_MODE,
-		BT_MODE_WAIT,
-		BT_SHOW_SEND,
-		BT_SHOW_SEND_WAIT,
-		BT_RESET_SEND,
-		BT_RESET_SEND_WAIT,
-		BT_START_SEND,
-		BT_START_SEND_WAIT,
-		EXIT
+		BT_AT_SEND, BT_AT_SEND_WAIT, BT_ROLE_MODE, BT_ROLE_MODE_WAIT, BT_MODE, BT_MODE_WAIT, EXIT
 	} btConfigState_e;
 
 	static btConfigState_e initState = BT_AT_SEND;
@@ -165,7 +151,7 @@ void btInitConfig(void) {
 
 	switch (initState) {
 	case BT_AT_SEND:
-		if (!sendBtUartData((uint8_t*) "AT\n\r", sizeof((uint8_t*) "AT\n\r"))) {
+		if (!sendBtUartData((uint8_t*) "AT\r\n", sizeof((uint8_t*) "AT\r\n"))) {
 			timeout = getBTSystick();
 			initState = BT_AT_SEND_WAIT;
 			waitResponseTimeout = 300;
@@ -174,26 +160,12 @@ void btInitConfig(void) {
 	case BT_AT_SEND_WAIT:
 		if (getBTRecvCompleted()) {
 			if (findBTATCommandResp("OK")) {
-				initState = BT_IMME_SEND;
-			}
-		}
-	break;
-	case BT_IMME_SEND:
-		if (!sendBtUartData((uint8_t*) "AT+IMME1\n\r", sizeof((uint8_t*) "AT+IMME1\n\r"))) {
-			timeout = getBTSystick();
-			initState = BT_IMME_WAIT;
-			waitResponseTimeout = 300;
-		}
-	break;
-	case BT_IMME_WAIT:
-		if (getBTRecvCompleted()) {
-			if (findBTATCommandResp("OK+Set:1")) {
 				initState = BT_ROLE_MODE;
 			}
 		}
 	break;
 	case BT_ROLE_MODE:
-		if (!sendBtUartData((uint8_t*) "AT+ROLE1\n\r", sizeof((uint8_t*) "AT+ROLE1\n\r"))) {
+		if (!sendBtUartData((uint8_t*) "AT+ROLE=1\r\n", sizeof((uint8_t*) "AT+ROLE=1\r\n"))) {
 			timeout = getBTSystick();
 			initState = BT_ROLE_MODE_WAIT;
 			waitResponseTimeout = 300;
@@ -201,13 +173,13 @@ void btInitConfig(void) {
 	break;
 	case BT_ROLE_MODE_WAIT:
 		if (getBTRecvCompleted()) {
-			if (findBTATCommandResp("OK+Set:1")) {
+			if (findBTATCommandResp("OK")) {
 				initState = BT_MODE;
 			}
 		}
 	break;
 	case BT_MODE:
-		if (!sendBtUartData((uint8_t*) "AT+MODE1\n\r", sizeof((uint8_t*) "AT+MODE1\n\r"))) {
+		if (!sendBtUartData((uint8_t*) "AT+MODE=1\r\n", sizeof((uint8_t*) "AT+MODE=1\r\n"))) {
 			timeout = getBTSystick();
 			initState = BT_MODE_WAIT;
 			waitResponseTimeout = 300;
@@ -215,49 +187,7 @@ void btInitConfig(void) {
 	break;
 	case BT_MODE_WAIT:
 		if (getBTRecvCompleted()) {
-			if (findBTATCommandResp("OK+Set:1")) {
-				initState = BT_SHOW_SEND;
-			}
-		}
-	break;
-	case BT_SHOW_SEND:
-		if (!sendBtUartData((uint8_t*) "AT+SHOW1\n\r", sizeof((uint8_t*) "AT+SHOW1\n\r"))) {
-			timeout = getBTSystick();
-			initState = BT_SHOW_SEND_WAIT;
-			waitResponseTimeout = 300;
-		}
-	break;
-	case BT_SHOW_SEND_WAIT:
-		if (getBTRecvCompleted()) {
-			if (findBTATCommandResp("OK+Set:1")) {
-				initState = BT_RESET_SEND;
-			}
-		}
-	break;
-	case BT_RESET_SEND:
-		if (!sendBtUartData((uint8_t*) "AT+RESET\n\r", sizeof((uint8_t*) "AT+RESET\n\r"))) {
-			timeout = getBTSystick();
-			initState = BT_RESET_SEND_WAIT;
-			waitResponseTimeout = 300;
-		}
-	break;
-	case BT_RESET_SEND_WAIT:
-		if (getBTRecvCompleted()) {
-			if (findBTATCommandResp("OK+RESET")) {
-				initState = BT_START_SEND;
-			}
-		}
-	break;
-	case BT_START_SEND:
-		if (!sendBtUartData((uint8_t*) "AT+START\n\r", sizeof((uint8_t*) "AT+START\n\r"))) {
-			timeout = getBTSystick();
-			initState = BT_START_SEND_WAIT;
-			waitResponseTimeout = 300;
-		}
-	break;
-	case BT_START_SEND_WAIT:
-		if (getBTRecvCompleted()) {
-			if (findBTATCommandResp("OK+START")) {
+			if (findBTATCommandResp("OK")) {
 				initState = EXIT;
 			}
 		}
@@ -271,6 +201,12 @@ void btInitConfig(void) {
 		m_btConfigState = BT_CONFIG_FINISH;
 	break;
 	}
+
+//	if (getBTRecvCompleted()) {
+//		if (findBTATCommandResp("OK")) {
+//			initState++;
+//		}
+//	}
 
 	if (getBTSystick() - timeout > HAL_TIMEOUT_UNIT1MS(waitResponseTimeout) && retry < 3) {
 		m_btConnState = m_btSerialConnState = DISCONNECTED;
@@ -306,7 +242,64 @@ uint8_t getBtConnState(void) {
 }
 
 void btConnection(void) {
+#define BT_INQ_REPLY_TIMEOUT 10000
+	typedef enum {
+		BT_INQ, BT_INQ_WAIT, /*BT_BIND, BT_BIND_WAIT,*/ BT_LINK, BT_LINK_WAIT, EXIT
+	} btConnState_e;
 
+	static btConnState_e connState = BT_INQ;
+	static uint8_t retry = 0;
+	static uint32_t timeout = 0;
+	uint32_t waitResponseTimeout = 300;
+
+	if (timeout == 0) {
+		timeout = getBTSystick();
+	}
+	m_btConnectionState = BT_CONNECTION_START;
+
+	switch (connState) {
+	case BT_INQ: {
+		if (!sendBtUartData((uint8_t*) "AT+INQ\r\n", sizeof((uint8_t*) "AT+INQ\r\n"))) {
+			timeout = getBTSystick();
+			waitResponseTimeout = BT_INQ_REPLY_TIMEOUT;
+			connState = BT_INQ_WAIT;
+		}
+		break;
+	}
+	case BT_INQ_WAIT: {
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("OK")) {
+				connState = BT_LINK;
+			}
+		}
+		break;
+	}
+	case BT_LINK:{
+
+		break;
+	}
+	case EXIT:
+	default:
+		m_btConnectionState = BT_CONNECTION_FINISH;
+		connState = BT_INQ;
+		timeout = 0;
+		retry = 0;
+	break;
+	}
+
+	if (getBTSystick() - timeout > HAL_TIMEOUT_UNIT1MS(waitResponseTimeout) && retry < 3) {
+		m_btConnState = m_btSerialConnState = DISCONNECTED;
+		timeout = 0;
+		connState = BT_INQ;
+		retry++;
+	}
+	else if (retry >= 3) {
+		m_btConnState = m_btSerialConnState = DISCONNECTED;
+		timeout = 0;
+		retry = 0;
+		connState = BT_INQ;
+		m_btConnectionState = BT_CONNECTION_TIMEOUT;
+	}
 }
 
 void checkBtConnState(void) {
