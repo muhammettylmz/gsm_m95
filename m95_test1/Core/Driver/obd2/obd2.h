@@ -10,6 +10,7 @@
 
 //extern void OBD_Virtual_TIM_ElapsedCallback(void* tim);
 extern void OBD_Virtual_Systick_Handler(void);
+extern void OBD_Virtual_Rx_Completed_Callback(unsigned char rxData);
 
 extern void obd2Init(void);
 extern void obd2Control(void);

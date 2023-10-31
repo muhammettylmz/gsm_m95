@@ -6,6 +6,7 @@
  */
 
 #include "bluetooth.h"
+#include "obd2.h"
 #include "main.h"
 #include "uart_debug.h"
 #include "m95.h"
@@ -13,10 +14,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#define BT_AT_LINK_FMT		(const char*)"AT+LINK=%s\r\n"
+
 #define HAL_TIMEOUT_UNIT1MS(x)	(x)
 
 #define BT_UART_BUFF_ARR_SIZE	128
 #define BT_UART_BUFF_SIZE		50
+#define BT_UART_TIMEOUT  		5
 
 typedef enum {
 	BT_CONFIG_START, BT_CONFIG_FINISH, BT_CONFIG_TIMEOUT
@@ -25,9 +29,7 @@ typedef enum {
 	BT_CONNECTION_START, BT_CONNECTION_FINISH, BT_CONNECTION_TIMEOUT
 } btConnectionState_e;
 
-typedef enum {
-	DISCONNECTED, CONNECTED
-} connState_e;
+
 
 typedef enum {
 	BT_RECV_COMPLETED_IDLE, BT_RECV_COMPLETED
@@ -51,6 +53,24 @@ uint8_t btRxRawBuff[128];
 uint8_t btRxData;
 uint8_t btRxRawBuffCnt;
 
+char m_obd2MacAddrForHc05[15];
+
+GPIO_PinState m_btModePinState = GPIO_PIN_RESET;
+GPIO_PinState m_btStatePinState = GPIO_PIN_RESET;
+
+uint8_t getBTStatePinState(void) {
+	return (uint8_t)m_btStatePinState;
+}
+
+void setBTModePin(uint8_t state) {
+	HAL_GPIO_WritePin(BT_MODE_PIN_GPIO_Port, BT_MODE_PIN_Pin, (GPIO_PinState)state);
+	m_btModePinState = (GPIO_PinState)state;
+}
+
+uint8_t getBTModePin(void) {
+	return (uint8_t)m_btModePinState;
+}
+
 uint8_t getBtConfigState(void) {
 	return (uint8_t) m_btConfigState;
 }
@@ -69,6 +89,10 @@ void setBtConnectionState(btConnectionState_e state) {
 
 uint8_t getBtSerialConnState(void) {
 	return (uint8_t) m_btSerialConnState;
+}
+
+void setBtSerialConnState(uint8_t state) {
+	 m_btSerialConnState = (connState_e)state;
 }
 
 uint32_t getBTSystick(void) {
@@ -93,7 +117,7 @@ void startBTRxTimeout(void) {
 }
 
 void checkBTRxTimeoutCompleted(void) {
-	if ((getBTSystick() - m_prevBtRxTimeoutCnt) >= HAL_TIMEOUT_UNIT1MS(5)) {
+	if ((getBTSystick() - m_prevBtRxTimeoutCnt) >= HAL_TIMEOUT_UNIT1MS(BT_UART_TIMEOUT)) {
 		setRecvCompleted(BT_RECV_COMPLETED);
 		stopBTRxTimeout();
 	}
@@ -101,25 +125,6 @@ void checkBTRxTimeoutCompleted(void) {
 
 void clearBtRxRawBuffCnt(void) {
 	btRxRawBuffCnt = 0;
-}
-
-void BT_Virtual_Systick(void) {
-	m_btSystick++;
-	if (m_prevBtRxTimeoutCnt != 0) {
-		checkBTRxTimeoutCompleted();
-	}
-}
-
-void BT_Virtual_Rx_IT(void) {
-	m_btRxIterror = HAL_UART_Receive_IT(m_btUart, &btRxData, 1);
-}
-
-void BT_Virtual_UART_RxCpltCallback(void *uart) {
-	if (m_btUart->Instance == ((UART_HandleTypeDef*) uart)->Instance) {
-		btRxRawBuff[btRxRawBuffCnt++] = btRxData;
-		BT_Virtual_Rx_IT();
-		startBTRxTimeout();
-	}
 }
 
 void clearBtStateFlags(void) {
@@ -131,6 +136,18 @@ void clearBtStateFlags(void) {
 
 uint8_t findBTATCommandResp(char *resp) {
 	return strstr((char*) btRxRawBuff, resp) != NULL;
+}
+
+uint8_t sendBtUartData(uint8_t *data, uint8_t len) {
+	clearBtRxRawBuffCnt();
+	if ((HAL_UART_Transmit(m_btUart, data, len, 15)) != HAL_OK) {
+		return 1;
+	}
+	return 0;
+}
+
+uint8_t getBtConnState(void) {
+	return (uint8_t) m_btConnState;
 }
 
 void btInitConfig(void) {
@@ -224,32 +241,41 @@ void btInitConfig(void) {
 
 }
 
-uint8_t sendBtUartData(uint8_t *data, uint8_t len) {
-	clearBtRxRawBuffCnt();
-	if ((HAL_UART_Transmit(m_btUart, data, len, 15)) != HAL_OK) {
-		return 1;
+void findOBD2DeviceMacAddr(char *addr) {
+	char *ftoken;
+	char *macs[3];
+	uint8_t indis = 0;
+	// BT response +INQ:xxxx:yy:zzzzzz,bbbbb,cccc,name
+	//first token is +INQ:xxxx:xx:xxxxxx
+	ftoken = strtok((char*) btRxRawBuff, ",");
+	//second token +INQ
+	ftoken = strtok((char*) ftoken, ":");
+	//first mac token xxxx
+	ftoken = strtok(NULL, ":");
+	while (ftoken != NULL) {
+		if (indis >= 3) {
+			break;
+		}
+		macs[indis++] = ftoken;
+		ftoken = strtok(NULL, ":");
 	}
-	return 0;
-}
-
-void btInit(void *uart) {
-	m_btUart = (UART_HandleTypeDef*) uart;
-	BT_Virtual_Rx_IT();
-}
-
-uint8_t getBtConnState(void) {
-	return (uint8_t) m_btConnState;
+	sprintf(&addr[0], "%s,%s,%s", macs[0], macs[1], macs[2]);
 }
 
 void btConnection(void) {
 #define BT_INQ_REPLY_TIMEOUT 10000
+#define BT_DEFAULT_REPLY_TIMEOUT 300
+#define BT_REQ_STATE_TRY_CNT 5
+	char atLinkCommad[30];
 	typedef enum {
-		BT_INQ, BT_INQ_WAIT, /*BT_BIND, BT_BIND_WAIT,*/ BT_LINK, BT_LINK_WAIT, EXIT
+		BT_INQ, BT_INQ_WAIT, /*BT_BIND, BT_BIND_WAIT,*/
+		BT_LINK, BT_LINK_WAIT, BT_STATE_REQ, BT_STATE_REP, EXIT
 	} btConnState_e;
 
 	static btConnState_e connState = BT_INQ;
 	static uint8_t retry = 0;
 	static uint32_t timeout = 0;
+	static uint8_t reqStateTryCnt = 0;
 	uint32_t waitResponseTimeout = 300;
 
 	if (timeout == 0) {
@@ -268,14 +294,57 @@ void btConnection(void) {
 	}
 	case BT_INQ_WAIT: {
 		if (getBTRecvCompleted()) {
-			if (findBTATCommandResp("OK")) {
+			if (findBTATCommandResp("OBD")) {
 				connState = BT_LINK;
+			}
+			else {
+				connState = BT_INQ;
 			}
 		}
 		break;
 	}
-	case BT_LINK:{
-
+	case BT_LINK: {
+		findOBD2DeviceMacAddr(m_obd2MacAddrForHc05);
+		sprintf(&atLinkCommad[0], BT_AT_LINK_FMT, m_obd2MacAddrForHc05);
+		if (!sendBtUartData((uint8_t*) atLinkCommad, sizeof(atLinkCommad))) {
+			timeout = getBTSystick();
+			waitResponseTimeout = BT_DEFAULT_REPLY_TIMEOUT;
+			connState = BT_LINK_WAIT;
+		}
+		break;
+	}
+	case BT_LINK_WAIT: {
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("OK")) {
+				connState = BT_STATE_REQ;
+			}
+		}
+		break;
+	}
+	case BT_STATE_REQ: {
+		reqStateTryCnt++;
+		if (reqStateTryCnt > BT_REQ_STATE_TRY_CNT) {
+			connState = BT_INQ;
+			reqStateTryCnt = 0;
+			break;
+		}
+		if (!sendBtUartData((uint8_t*) "AT+STATE?\r\n", sizeof((uint8_t*) "AT+STATE?\r\n"))) {
+			timeout = getBTSystick();
+			waitResponseTimeout = BT_DEFAULT_REPLY_TIMEOUT;
+			connState = BT_STATE_REP;
+		}
+		break;
+	}
+	case BT_STATE_REP: {
+		if (getBTRecvCompleted()) {
+			if (findBTATCommandResp("+STATE:CONNECTED")) {
+				connState = EXIT;
+				m_btConnState = CONNECTED;
+			}
+			else {
+				connState = BT_STATE_REQ;
+			}
+		}
 		break;
 	}
 	case EXIT:
@@ -284,6 +353,7 @@ void btConnection(void) {
 		connState = BT_INQ;
 		timeout = 0;
 		retry = 0;
+		reqStateTryCnt = 0;
 	break;
 	}
 
@@ -304,11 +374,12 @@ void btConnection(void) {
 
 void checkBtConnState(void) {
 
-	if (getBtConnState() == CONNECTED) {
+	if (getBtConnState() == CONNECTED && m_btStatePinState == GPIO_PIN_SET) {
 		return;
 	}
 
 	if (getBtSerialConnState() != CONNECTED) {
+		setBTModePin(GPIO_PIN_SET);
 		btInitConfig();
 		return;
 	}
@@ -325,21 +396,79 @@ void btSearchBTCommandResponse(void) {
 	//TODO: burada bt connected, reset, gelen mesaj vb. gibi kontrol işlemleri yapılacak.
 }
 
+void btInit(void *uart) {
+	m_btUart = (UART_HandleTypeDef*) uart;
+	BT_Virtual_Rx_IT();
+	setBTModePin(GPIO_PIN_RESET);
+}
+
 void btControl(void) {
 	if (m_btRxIterror != HAL_OK) {
 		BT_Virtual_Rx_IT();
 	}
 
 	if (getBtConfigState() != BT_CONFIG_FINISH) {
+		setBTModePin(GPIO_PIN_SET);
 		btInitConfig();
 	}
 
-	if (getBtConnectionState() != BT_CONNECTION_FINISH) {
+	if (getBtConfigState() == BT_CONFIG_FINISH &&
+			getBtConnectionState() != BT_CONNECTION_FINISH) {
+		setBTModePin(GPIO_PIN_SET);
 		btConnection();
 	}
 
 	checkBtConnState();
 
-	btSearchBTCommandResponse();
+}
+
+void BT_Virtual_UART_RxCpltCallback(void *uart) {
+	if (m_btUart->Instance == ((UART_HandleTypeDef*) uart)->Instance) {
+		btRxRawBuff[btRxRawBuffCnt++] = btRxData;
+		BT_Virtual_Rx_IT();
+		startBTRxTimeout();
+		if(getBtConnState() == CONNECTED){
+			OBD_Virtual_Rx_Completed_Callback(btRxData);
+		}
+	}
+}
+
+void checkStatePin(GPIO_PinState *pin) {
+	static uint16_t pinSetCnt = 0;
+	static uint16_t pinResetCnt = 0;
+
+	//debounce cnt
+	if (HAL_GPIO_ReadPin(BT_STATE_PIN_GPIO_Port, BT_STATE_PIN_Pin) == GPIO_PIN_SET) {
+		pinSetCnt++;
+		pinResetCnt = 0;
+	}
+	else {
+		pinSetCnt = 0;
+		pinResetCnt++;
+	}
+
+	// state high
+	if (pinSetCnt >= HAL_TIMEOUT_UNIT1MS(25)) {
+		pinSetCnt = 0;
+		*pin = GPIO_PIN_SET;
+	}
+	//state low
+	else if (pinResetCnt >= HAL_TIMEOUT_UNIT1MS(25)) {
+		pinResetCnt = 0;
+		*pin = GPIO_PIN_RESET;
+	}
+}
+
+void BT_Virtual_Systick(void) {
+	m_btSystick++;
+	if (m_prevBtRxTimeoutCnt != 0) {
+		checkBTRxTimeoutCompleted();
+	}
+	checkStatePin(&m_btStatePinState);
+
+}
+
+void BT_Virtual_Rx_IT(void) {
+	m_btRxIterror = HAL_UART_Receive_IT(m_btUart, &btRxData, 1);
 }
 

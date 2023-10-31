@@ -91,6 +91,10 @@ void Error_Handler(void);
 #define LD5_GPIO_Port GPIOD
 #define LD6_Pin GPIO_PIN_15
 #define LD6_GPIO_Port GPIOD
+#define BT_MODE_PIN_Pin GPIO_PIN_0
+#define BT_MODE_PIN_GPIO_Port GPIOD
+#define BT_STATE_PIN_Pin GPIO_PIN_1
+#define BT_STATE_PIN_GPIO_Port GPIOD
 #define Audio_RST_Pin GPIO_PIN_4
 #define Audio_RST_GPIO_Port GPIOD
 #define OTG_FS_OverCurrent_Pin GPIO_PIN_5
