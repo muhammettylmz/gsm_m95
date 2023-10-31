@@ -7,19 +7,19 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         0000af44  08000190  08000190  00010190  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00001fa0  0800b0d8  0800b0d8  0001b0d8  2**3
+  2 .rodata       00001fa8  0800b0d8  0800b0d8  0001b0d8  2**3
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  0800d078  0800d078  00020210  2**0
+  3 .ARM.extab    00000000  0800d080  0800d080  00020210  2**0
                   CONTENTS
-  4 .ARM          00000008  0800d078  0800d078  0001d078  2**2
+  4 .ARM          00000008  0800d080  0800d080  0001d080  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  0800d080  0800d080  00020210  2**0
+  5 .preinit_array 00000000  0800d088  0800d088  00020210  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  0800d080  0800d080  0001d080  2**2
+  6 .init_array   00000004  0800d088  0800d088  0001d088  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .fini_array   00000004  0800d084  0800d084  0001d084  2**2
+  7 .fini_array   00000004  0800d08c  0800d08c  0001d08c  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .data         00000210  20000000  0800d088  00020000  2**3
+  8 .data         00000210  20000000  0800d090  00020000  2**3
                   CONTENTS, ALLOC, LOAD, DATA
   9 .ccmram       00000000  10000000  10000000  00020210  2**0
                   CONTENTS
@@ -31,25 +31,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
  13 .comment      00000043  00000000  00000000  00020240  2**0
                   CONTENTS, READONLY
- 14 .debug_info   00020b29  00000000  00000000  00020283  2**0
+ 14 .debug_info   00020d9f  00000000  00000000  00020283  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_abbrev 000049b3  00000000  00000000  00040dac  2**0
+ 15 .debug_abbrev 00004a3d  00000000  00000000  00041022  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_loclists 0000ddf4  00000000  00000000  0004575f  2**0
+ 16 .debug_loclists 0000dec4  00000000  00000000  00045a5f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_aranges 000010e8  00000000  00000000  00053558  2**3
+ 17 .debug_aranges 000010f0  00000000  00000000  00053928  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_rnglists 00001dff  00000000  00000000  00054640  2**0
+ 18 .debug_rnglists 00001e2d  00000000  00000000  00054a18  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_macro  00024519  00000000  00000000  0005643f  2**0
+ 19 .debug_macro  00024519  00000000  00000000  00056845  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_line   00022ece  00000000  00000000  0007a958  2**0
+ 20 .debug_line   000230d3  00000000  00000000  0007ad5e  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_str    000d2f2c  00000000  00000000  0009d826  2**0
+ 21 .debug_str    000d2f5c  00000000  00000000  0009de31  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_frame  00004dd8  00000000  00000000  00170754  2**2
+ 22 .debug_frame  00004e08  00000000  00000000  00170d90  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 23 .debug_line_str 00000067  00000000  00000000  0017552c  2**0
+ 23 .debug_line_str 00000067  00000000  00000000  00175b98  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -7617,7 +7617,7 @@ void obd2Init(void) {
  80039c6:	2308      	movs	r3, #8
  80039c8:	f888 3000 	strb.w	r3, [r8]
  80039cc:	e7ca      	b.n	8003964 <obd2Init+0x88>
-		sprintf(&setProtocolStr[0], "ATSP%s", protocolType);
+		sprintf(&setProtocolStr[0], "ATSP%s\r\n", protocolType);
  80039ce:	4a40      	ldr	r2, [pc, #256]	; (8003ad0 <obd2Init+0x1f4>)
  80039d0:	4944      	ldr	r1, [pc, #272]	; (8003ae4 <obd2Init+0x208>)
  80039d2:	a801      	add	r0, sp, #4
@@ -7784,7 +7784,7 @@ void obd2Init(void) {
  8003ad0:	20000038 	.word	0x20000038
  8003ad4:	20001240 	.word	0x20001240
  8003ad8:	200012c0 	.word	0x200012c0
- 8003adc:	0800cbc4 	.word	0x0800cbc4
+ 8003adc:	0800cbc8 	.word	0x0800cbc8
  8003ae0:	0800b140 	.word	0x0800b140
  8003ae4:	0800cbbc 	.word	0x0800cbbc
  8003ae8:	0800cbb4 	.word	0x0800cbb4
@@ -7794,6 +7794,10 @@ void obd2Init(void) {
  8003af8:	2000123c 	.word	0x2000123c
 
 08003afc <obd2Control>:
+	}
+
+	return 1;
+}
 
 void obd2Control(void) {
  8003afc:	b508      	push	{r3, lr}
@@ -7818,10 +7822,10 @@ void obd2Control(void) {
 		m_obdReConnectedFlag = 0;
  8003b12:	2200      	movs	r2, #0
  8003b14:	701a      	strb	r2, [r3, #0]
-	}
+		 	 }
+		 }
 
-	if(getObdConfigState() == OBD_CONFIG_FINISH){
-		//TODO: burada obd2 den datalar sorularak alınacak.
+		 */
 	}
 }
  8003b16:	e8bd 4008 	ldmia.w	sp!, {r3, lr}
@@ -9773,7 +9777,7 @@ LoopFillZerobss:
   ldr r1, =_edata
  800453c:	20000210 	.word	0x20000210
   ldr r2, =_sidata
- 8004540:	0800d088 	.word	0x0800d088
+ 8004540:	0800d090 	.word	0x0800d090
   ldr r2, =_sbss
  8004544:	20000210 	.word	0x20000210
   ldr r4, =_ebss
@@ -11616,7 +11620,7 @@ __weak HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruc
  8004fc6:	bf00      	nop
  8004fc8:	40023c00 	.word	0x40023c00
  8004fcc:	40023800 	.word	0x40023800
- 8004fd0:	0800cbcc 	.word	0x0800cbcc
+ 8004fd0:	0800cbd0 	.word	0x0800cbd0
  8004fd4:	2000003c 	.word	0x2000003c
  8004fd8:	20000044 	.word	0x20000044
 
@@ -11641,7 +11645,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  8004fee:	4770      	bx	lr
  8004ff0:	40023800 	.word	0x40023800
  8004ff4:	2000003c 	.word	0x2000003c
- 8004ff8:	0800cbdc 	.word	0x0800cbdc
+ 8004ff8:	0800cbe0 	.word	0x0800cbe0
 
 08004ffc <HAL_RCC_GetPCLK2Freq>:
   * @retval PCLK2 frequency
@@ -11664,7 +11668,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  800500e:	4770      	bx	lr
  8005010:	40023800 	.word	0x40023800
  8005014:	2000003c 	.word	0x2000003c
- 8005018:	0800cbdc 	.word	0x0800cbdc
+ 8005018:	0800cbe0 	.word	0x0800cbe0
 
 0800501c <SPI_WaitFlagStateUntilTimeout.constprop.0>:
   * @param  State flag state to check
@@ -15305,8 +15309,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8006790:	e788      	b.n	80066a4 <_strtod_l+0x19c>
  8006792:	f04f 0c01 	mov.w	ip, #1
  8006796:	e7f8      	b.n	800678a <_strtod_l+0x282>
- 8006798:	0800cbe8 	.word	0x0800cbe8
- 800679c:	0800cbe4 	.word	0x0800cbe4
+ 8006798:	0800cbec 	.word	0x0800cbec
+ 800679c:	0800cbe8 	.word	0x0800cbe8
  80067a0:	7ff00000 	.word	0x7ff00000
  80067a4:	9a15      	ldr	r2, [sp, #84]	; 0x54
  80067a6:	1c51      	adds	r1, r2, #1
@@ -15598,13 +15602,13 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8006a78:	f04f 0900 	mov.w	r9, #0
  8006a7c:	6023      	str	r3, [r4, #0]
  8006a7e:	e78d      	b.n	800699c <_strtod_l+0x494>
- 8006a80:	0800cd46 	.word	0x0800cd46
- 8006a84:	0800cbfc 	.word	0x0800cbfc
- 8006a88:	0800cd3e 	.word	0x0800cd3e
- 8006a8c:	0800ce2a 	.word	0x0800ce2a
- 8006a90:	0800ce26 	.word	0x0800ce26
- 8006a94:	0800cf80 	.word	0x0800cf80
- 8006a98:	0800cf58 	.word	0x0800cf58
+ 8006a80:	0800cd4e 	.word	0x0800cd4e
+ 8006a84:	0800cc00 	.word	0x0800cc00
+ 8006a88:	0800cd46 	.word	0x0800cd46
+ 8006a8c:	0800ce32 	.word	0x0800ce32
+ 8006a90:	0800ce2e 	.word	0x0800ce2e
+ 8006a94:	0800cf88 	.word	0x0800cf88
+ 8006a98:	0800cf60 	.word	0x0800cf60
  8006a9c:	7ff00000 	.word	0x7ff00000
  8006aa0:	7ca00000 	.word	0x7ca00000
  8006aa4:	7fefffff 	.word	0x7fefffff
@@ -15969,7 +15973,7 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8006e48:	39500000 	.word	0x39500000
  8006e4c:	000fffff 	.word	0x000fffff
  8006e50:	7fefffff 	.word	0x7fefffff
- 8006e54:	0800cc10 	.word	0x0800cc10
+ 8006e54:	0800cc18 	.word	0x0800cc18
  8006e58:	4659      	mov	r1, fp
  8006e5a:	4628      	mov	r0, r5
  8006e5c:	f003 fa36 	bl	800a2cc <__ratio>
@@ -16281,7 +16285,7 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  80071bc:	601a      	str	r2, [r3, #0]
  80071be:	e7c4      	b.n	800714a <strtof+0x3e>
  80071c0:	20000054 	.word	0x20000054
- 80071c4:	0800ce26 	.word	0x0800ce26
+ 80071c4:	0800ce2e 	.word	0x0800ce2e
  80071c8:	7f7fffff 	.word	0x7f7fffff
  80071cc:	7fefffff 	.word	0x7fefffff
  80071d0:	7ff00000 	.word	0x7ff00000
@@ -16390,7 +16394,7 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  80072d2:	230a      	movs	r3, #10
  80072d4:	e7ab      	b.n	800722e <_strtol_l.constprop.0+0x56>
  80072d6:	bf00      	nop
- 80072d8:	0800cc39 	.word	0x0800cc39
+ 80072d8:	0800cc41 	.word	0x0800cc41
 
 080072dc <_strtol_r>:
  80072dc:	f7ff bf7c 	b.w	80071d8 <_strtol_l.constprop.0>
@@ -16831,11 +16835,11 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8007708:	e7ee      	b.n	80076e8 <_printf_float+0x2b4>
  800770a:	bf00      	nop
  800770c:	7fefffff 	.word	0x7fefffff
- 8007710:	0800cd39 	.word	0x0800cd39
- 8007714:	0800cd3d 	.word	0x0800cd3d
- 8007718:	0800cd41 	.word	0x0800cd41
- 800771c:	0800cd45 	.word	0x0800cd45
- 8007720:	0800cd49 	.word	0x0800cd49
+ 8007710:	0800cd41 	.word	0x0800cd41
+ 8007714:	0800cd45 	.word	0x0800cd45
+ 8007718:	0800cd49 	.word	0x0800cd49
+ 800771c:	0800cd4d 	.word	0x0800cd4d
+ 8007720:	0800cd51 	.word	0x0800cd51
  8007724:	9a0a      	ldr	r2, [sp, #40]	; 0x28
  8007726:	6da3      	ldr	r3, [r4, #88]	; 0x58
  8007728:	429a      	cmp	r2, r3
@@ -17322,8 +17326,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8007bb0:	f104 0619 	add.w	r6, r4, #25
  8007bb4:	e7f5      	b.n	8007ba2 <_printf_i+0x226>
  8007bb6:	bf00      	nop
- 8007bb8:	0800cd4b 	.word	0x0800cd4b
- 8007bbc:	0800cd5c 	.word	0x0800cd5c
+ 8007bb8:	0800cd53 	.word	0x0800cd53
+ 8007bbc:	0800cd64 	.word	0x0800cd64
 
 08007bc0 <_scanf_float>:
  8007bc0:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -17717,8 +17721,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8007fd2:	2500      	movs	r5, #0
  8007fd4:	e635      	b.n	8007c42 <_scanf_float+0x82>
  8007fd6:	bf00      	nop
- 8007fd8:	0800cd6d 	.word	0x0800cd6d
- 8007fdc:	0800ce26 	.word	0x0800ce26
+ 8007fd8:	0800cd75 	.word	0x0800cd75
+ 8007fdc:	0800ce2e 	.word	0x0800ce2e
 
 08007fe0 <std>:
  8007fe0:	2300      	movs	r3, #0
@@ -18034,8 +18038,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  80082a8:	e8bd 4070 	ldmia.w	sp!, {r4, r5, r6, lr}
  80082ac:	f000 b806 	b.w	80082bc <__strtok_r>
  80082b0:	2000020c 	.word	0x2000020c
- 80082b4:	0800cd72 	.word	0x0800cd72
- 80082b8:	0800cd89 	.word	0x0800cd89
+ 80082b4:	0800cd7a 	.word	0x0800cd7a
+ 80082b8:	0800cd91 	.word	0x0800cd91
 
 080082bc <__strtok_r>:
  80082bc:	b5f0      	push	{r4, r5, r6, r7, lr}
@@ -18204,10 +18208,10 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  800840a:	4798      	blx	r3
  800840c:	3601      	adds	r6, #1
  800840e:	e7f2      	b.n	80083f6 <__libc_init_array+0x1e>
- 8008410:	0800d080 	.word	0x0800d080
- 8008414:	0800d080 	.word	0x0800d080
- 8008418:	0800d080 	.word	0x0800d080
- 800841c:	0800d084 	.word	0x0800d084
+ 8008410:	0800d088 	.word	0x0800d088
+ 8008414:	0800d088 	.word	0x0800d088
+ 8008418:	0800d088 	.word	0x0800d088
+ 800841c:	0800d08c 	.word	0x0800d08c
 
 08008420 <__retarget_lock_acquire_recursive>:
  8008420:	4770      	bx	lr
@@ -18262,9 +18266,9 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8008484:	e7f3      	b.n	800846e <__assert_func+0x12>
  8008486:	bf00      	nop
  8008488:	2000020c 	.word	0x2000020c
- 800848c:	0800cdeb 	.word	0x0800cdeb
- 8008490:	0800cdf8 	.word	0x0800cdf8
- 8008494:	0800ce26 	.word	0x0800ce26
+ 800848c:	0800cdf3 	.word	0x0800cdf3
+ 8008490:	0800ce00 	.word	0x0800ce00
+ 8008494:	0800ce2e 	.word	0x0800ce2e
 
 08008498 <quorem>:
  8008498:	e92d 4ff7 	stmdb	sp!, {r0, r1, r2, r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -18655,15 +18659,15 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8008884:	3fc68a28 	.word	0x3fc68a28
  8008888:	509f79fb 	.word	0x509f79fb
  800888c:	3fd34413 	.word	0x3fd34413
- 8008890:	0800cd72 	.word	0x0800cd72
- 8008894:	0800ce34 	.word	0x0800ce34
+ 8008890:	0800cd7a 	.word	0x0800cd7a
+ 8008894:	0800ce3c 	.word	0x0800ce3c
  8008898:	7ff00000 	.word	0x7ff00000
- 800889c:	0800ce30 	.word	0x0800ce30
- 80088a0:	0800ce27 	.word	0x0800ce27
- 80088a4:	0800cd4a 	.word	0x0800cd4a
+ 800889c:	0800ce38 	.word	0x0800ce38
+ 80088a0:	0800ce2f 	.word	0x0800ce2f
+ 80088a4:	0800cd52 	.word	0x0800cd52
  80088a8:	3ff80000 	.word	0x3ff80000
- 80088ac:	0800cf80 	.word	0x0800cf80
- 80088b0:	0800ce8c 	.word	0x0800ce8c
+ 80088ac:	0800cf88 	.word	0x0800cf88
+ 80088b0:	0800ce94 	.word	0x0800ce94
  80088b4:	2301      	movs	r3, #1
  80088b6:	9309      	str	r3, [sp, #36]	; 0x24
  80088b8:	e7d7      	b.n	800886a <_dtoa_r+0x2c2>
@@ -18963,8 +18967,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8008bde:	4689      	mov	r9, r1
  8008be0:	e7bd      	b.n	8008b5e <_dtoa_r+0x5b6>
  8008be2:	bf00      	nop
- 8008be4:	0800cf80 	.word	0x0800cf80
- 8008be8:	0800cf58 	.word	0x0800cf58
+ 8008be4:	0800cf88 	.word	0x0800cf88
+ 8008be8:	0800cf60 	.word	0x0800cf60
  8008bec:	3ff00000 	.word	0x3ff00000
  8008bf0:	40240000 	.word	0x40240000
  8008bf4:	401c0000 	.word	0x401c0000
@@ -19560,9 +19564,9 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009178:	f73f aeb1 	bgt.w	8008ede <_dtoa_r+0x936>
  800917c:	e7b0      	b.n	80090e0 <_dtoa_r+0xb38>
  800917e:	bf00      	nop
- 8009180:	0800ce8c 	.word	0x0800ce8c
- 8009184:	0800cd49 	.word	0x0800cd49
- 8009188:	0800ce27 	.word	0x0800ce27
+ 8009180:	0800ce94 	.word	0x0800ce94
+ 8009184:	0800cd51 	.word	0x0800cd51
+ 8009188:	0800ce2f 	.word	0x0800ce2f
 
 0800918c <_free_r>:
  800918c:	b537      	push	{r0, r1, r2, r4, r5, lr}
@@ -20012,9 +20016,9 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  80095c6:	2b00      	cmp	r3, #0
  80095c8:	d1dc      	bne.n	8009584 <__gethex+0x290>
  80095ca:	e7ed      	b.n	80095a8 <__gethex+0x2b4>
- 80095cc:	0800cbe4 	.word	0x0800cbe4
- 80095d0:	0800ce8c 	.word	0x0800ce8c
- 80095d4:	0800ce9d 	.word	0x0800ce9d
+ 80095cc:	0800cbe8 	.word	0x0800cbe8
+ 80095d0:	0800ce94 	.word	0x0800ce94
+ 80095d4:	0800cea5 	.word	0x0800cea5
  80095d8:	f106 38ff 	add.w	r8, r6, #4294967295
  80095dc:	f1bb 0f00 	cmp.w	fp, #0
  80095e0:	d133      	bne.n	800964a <__gethex+0x356>
@@ -20154,7 +20158,7 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009746:	dbe6      	blt.n	8009716 <__gethex+0x422>
  8009748:	e7ee      	b.n	8009728 <__gethex+0x434>
  800974a:	bf00      	nop
- 800974c:	0800ce8c 	.word	0x0800ce8c
+ 800974c:	0800ce94 	.word	0x0800ce94
 
 08009750 <L_shift>:
  8009750:	f1c2 0208 	rsb	r2, r2, #8
@@ -20552,8 +20556,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009ad0:	e9c0 3303 	strd	r3, r3, [r0, #12]
  8009ad4:	e7f7      	b.n	8009ac6 <_Balloc+0x66>
  8009ad6:	bf00      	nop
- 8009ad8:	0800cd72 	.word	0x0800cd72
- 8009adc:	0800cefd 	.word	0x0800cefd
+ 8009ad8:	0800cd7a 	.word	0x0800cd7a
+ 8009adc:	0800cf05 	.word	0x0800cf05
 
 08009ae0 <_Bfree>:
  8009ae0:	b570      	push	{r4, r5, r6, lr}
@@ -20581,8 +20585,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009b14:	6021      	str	r1, [r4, #0]
  8009b16:	f843 4022 	str.w	r4, [r3, r2, lsl #2]
  8009b1a:	bd70      	pop	{r4, r5, r6, pc}
- 8009b1c:	0800cd72 	.word	0x0800cd72
- 8009b20:	0800cefd 	.word	0x0800cefd
+ 8009b1c:	0800cd7a 	.word	0x0800cd7a
+ 8009b20:	0800cf05 	.word	0x0800cf05
 
 08009b24 <__multadd>:
  8009b24:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
@@ -20636,8 +20640,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009ba0:	6125      	str	r5, [r4, #16]
  8009ba2:	4620      	mov	r0, r4
  8009ba4:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
- 8009ba8:	0800ce8c 	.word	0x0800ce8c
- 8009bac:	0800cefd 	.word	0x0800cefd
+ 8009ba8:	0800ce94 	.word	0x0800ce94
+ 8009bac:	0800cf05 	.word	0x0800cf05
 
 08009bb0 <__s2b>:
  8009bb0:	e92d 43f8 	stmdb	sp!, {r3, r4, r5, r6, r7, r8, r9, lr}
@@ -20698,8 +20702,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009c34:	f7ff ff76 	bl	8009b24 <__multadd>
  8009c38:	e7ee      	b.n	8009c18 <__s2b+0x68>
  8009c3a:	bf00      	nop
- 8009c3c:	0800ce8c 	.word	0x0800ce8c
- 8009c40:	0800cefd 	.word	0x0800cefd
+ 8009c3c:	0800ce94 	.word	0x0800ce94
+ 8009c40:	0800cf05 	.word	0x0800cf05
 
 08009c44 <__hi0bits>:
  8009c44:	0c03      	lsrs	r3, r0, #16
@@ -20792,8 +20796,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009cfe:	6103      	str	r3, [r0, #16]
  8009d00:	bd10      	pop	{r4, pc}
  8009d02:	bf00      	nop
- 8009d04:	0800ce8c 	.word	0x0800ce8c
- 8009d08:	0800cefd 	.word	0x0800cefd
+ 8009d04:	0800ce94 	.word	0x0800ce94
+ 8009d08:	0800cf05 	.word	0x0800cf05
 
 08009d0c <__multiply>:
  8009d0c:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -20912,8 +20916,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009e52:	e799      	b.n	8009d88 <__multiply+0x7c>
  8009e54:	3e01      	subs	r6, #1
  8009e56:	e79b      	b.n	8009d90 <__multiply+0x84>
- 8009e58:	0800ce8c 	.word	0x0800ce8c
- 8009e5c:	0800cefd 	.word	0x0800cefd
+ 8009e58:	0800ce94 	.word	0x0800ce94
+ 8009e5c:	0800cf05 	.word	0x0800cf05
 
 08009e60 <__pow5mult>:
  8009e60:	e92d 43f8 	stmdb	sp!, {r3, r4, r5, r6, r7, r8, r9, lr}
@@ -20981,9 +20985,9 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009f00:	4638      	mov	r0, r7
  8009f02:	e8bd 83f8 	ldmia.w	sp!, {r3, r4, r5, r6, r7, r8, r9, pc}
  8009f06:	bf00      	nop
- 8009f08:	0800d048 	.word	0x0800d048
- 8009f0c:	0800cd72 	.word	0x0800cd72
- 8009f10:	0800cefd 	.word	0x0800cefd
+ 8009f08:	0800d050 	.word	0x0800d050
+ 8009f0c:	0800cd7a 	.word	0x0800cd7a
+ 8009f10:	0800cf05 	.word	0x0800cf05
 
 08009f14 <__lshift>:
  8009f14:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -21062,8 +21066,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  8009fde:	d8f9      	bhi.n	8009fd4 <__lshift+0xc0>
  8009fe0:	e7ea      	b.n	8009fb8 <__lshift+0xa4>
  8009fe2:	bf00      	nop
- 8009fe4:	0800ce8c 	.word	0x0800ce8c
- 8009fe8:	0800cefd 	.word	0x0800cefd
+ 8009fe4:	0800ce94 	.word	0x0800ce94
+ 8009fe8:	0800cf05 	.word	0x0800cf05
 
 08009fec <__mcmp>:
  8009fec:	b530      	push	{r4, r5, lr}
@@ -21189,8 +21193,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  800a12a:	3f01      	subs	r7, #1
  800a12c:	e7ea      	b.n	800a104 <__mdiff+0xe0>
  800a12e:	bf00      	nop
- 800a130:	0800ce8c 	.word	0x0800ce8c
- 800a134:	0800cefd 	.word	0x0800cefd
+ 800a130:	0800ce94 	.word	0x0800ce94
+ 800a134:	0800cf05 	.word	0x0800cf05
 
 0800a138 <__ulp>:
  800a138:	b082      	sub	sp, #8
@@ -21342,8 +21346,8 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  800a2bc:	ebc0 1042 	rsb	r0, r0, r2, lsl #5
  800a2c0:	e7e2      	b.n	800a288 <__d2b+0x70>
  800a2c2:	bf00      	nop
- 800a2c4:	0800ce8c 	.word	0x0800ce8c
- 800a2c8:	0800cefd 	.word	0x0800cefd
+ 800a2c4:	0800ce94 	.word	0x0800ce94
+ 800a2c8:	0800cf05 	.word	0x0800cf05
 
 0800a2cc <__ratio>:
  800a2cc:	e92d 4ff7 	stmdb	sp!, {r0, r1, r2, r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -21729,11 +21733,11 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  800a668:	4638      	mov	r0, r7
  800a66a:	f7fd f987 	bl	800797c <_printf_i>
  800a66e:	e7eb      	b.n	800a648 <_svfiprintf_r+0x1c0>
- 800a670:	0800d054 	.word	0x0800d054
- 800a674:	0800d05e 	.word	0x0800d05e
+ 800a670:	0800d05c 	.word	0x0800d05c
+ 800a674:	0800d066 	.word	0x0800d066
  800a678:	08007435 	.word	0x08007435
  800a67c:	0800a3d5 	.word	0x0800a3d5
- 800a680:	0800d05a 	.word	0x0800d05a
+ 800a680:	0800d062 	.word	0x0800d062
 
 0800a684 <__sflush_r>:
  800a684:	898a      	ldrh	r2, [r1, #12]
@@ -22284,11 +22288,11 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  800ab5c:	4630      	mov	r0, r6
  800ab5e:	f7fc ff0d 	bl	800797c <_printf_i>
  800ab62:	e7e4      	b.n	800ab2e <_vfiprintf_r+0x1ea>
- 800ab64:	0800d054 	.word	0x0800d054
- 800ab68:	0800d05e 	.word	0x0800d05e
+ 800ab64:	0800d05c 	.word	0x0800d05c
+ 800ab68:	0800d066 	.word	0x0800d066
  800ab6c:	08007435 	.word	0x08007435
  800ab70:	0800a91f 	.word	0x0800a91f
- 800ab74:	0800d05a 	.word	0x0800d05a
+ 800ab74:	0800d062 	.word	0x0800d062
 
 0800ab78 <__swbuf_r>:
  800ab78:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
@@ -22844,7 +22848,7 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
  800b0a2:	bf00      	nop
  800b0a4:	7fefffff 	.word	0x7fefffff
  800b0a8:	7ff00000 	.word	0x7ff00000
- 800b0ac:	0800d068 	.word	0x0800d068
+ 800b0ac:	0800d070 	.word	0x0800d070
  800b0b0:	fffffbed 	.word	0xfffffbed
  800b0b4:	fffffc02 	.word	0xfffffc02
  800b0b8:	fffffbe2 	.word	0xfffffbe2

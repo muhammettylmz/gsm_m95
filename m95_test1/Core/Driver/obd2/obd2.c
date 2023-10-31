@@ -25,7 +25,7 @@ uint8_t m_obdUartRecvCompleted = 0;
 
 uint8_t m_obdUartBuffCnt;
 uint8_t m_obdUartBuf[128];
-char protocolType[3] = "A7";
+char protocolType[3] = "A7";  // auto and can 29/500
 
 void changeProtocolType(char *type) {
 	memcpy(&protocolType[0], type, 2);
@@ -150,7 +150,7 @@ void obd2Init(void) {
 		break;
 	}
 	case OBD_SET_PROTOCOL: {
-		sprintf(&setProtocolStr[0], "ATSP%s", protocolType);
+		sprintf(&setProtocolStr[0], "ATSP%s\r\n", protocolType);
 		if (!sendOBDUartData((uint8_t*) setProtocolStr, sizeof((uint8_t*) setProtocolStr))) {
 			timeout = getOBDSystick();
 			state = OBD_SET_PROTOCOL_WAIT;
@@ -205,6 +205,80 @@ void obd2Init(void) {
 
 }
 
+/**
+ * return
+ * 0 is completed,
+ * 1 is in progress,
+ * 2 is timeout
+ * */
+uint8_t changeOBD2Protocol(char *protocol) {
+	typedef enum {
+		OBD_SET_PROTOCOL, OBD_SET_PROTOCOL_WAIT, OBD_GET_PROTOCOL, OBD_GET_PROTOCOL_WAIT, EXIT
+	} obdChangeProtocol_e;
+	static obdChangeProtocol_e state = OBD_SET_PROTOCOL;
+	static uint32_t timeout = 0;
+	static uint8_t retry = 0;
+	char setProtocolStr[30] = { 0 };
+
+	if (timeout == 0) {
+		timeout = getOBDSystick();
+	}
+
+	switch (state) {
+	case OBD_SET_PROTOCOL: {
+		sprintf(&setProtocolStr[0], "ATSP%s\r\n", protocolType);
+		if (!sendOBDUartData((uint8_t*) setProtocolStr, sizeof((uint8_t*) setProtocolStr))) {
+			timeout = getOBDSystick();
+			state = OBD_SET_PROTOCOL_WAIT;
+		}
+		break;
+	}
+	case OBD_SET_PROTOCOL_WAIT: {
+		if (getOBDRecvCompleted()) {
+			if (findOBDATCommandResp("OK")) {
+				state = OBD_GET_PROTOCOL;
+			}
+		}
+		break;
+	}
+	case OBD_GET_PROTOCOL: {
+		if (!sendOBDUartData((uint8_t*) "ATDPN\r\n", sizeof((uint8_t*) "ATDPN\r\n"))) {
+			timeout = getOBDSystick();
+			state = OBD_SET_PROTOCOL_WAIT;
+		}
+		break;
+	}
+	case OBD_GET_PROTOCOL_WAIT: {
+		if (getOBDRecvCompleted()) {
+			if (findOBDATCommandResp(protocolType)) {
+				state = EXIT;
+			}
+		}
+		break;
+	}
+	case EXIT:
+	default:
+		return 0;
+	break;
+	}
+
+	if (getOBDSystick() - timeout > OBD_HAL_TIMEOUT_UNIT1MS(300) && retry < 3) {
+
+		timeout = 0;
+		state = OBD_SET_PROTOCOL;
+		retry++;
+	}
+	else if (retry >= 3) {
+
+		timeout = 0;
+		retry = 0;
+		state = OBD_SET_PROTOCOL;
+		return 2;
+	}
+
+	return 1;
+}
+
 void obd2Control(void) {
 	if (!getBtConnState()) {
 		if (getObdConfigState() == OBD_CONFIG_FINISH) {
@@ -218,8 +292,19 @@ void obd2Control(void) {
 		obd2Init();
 	}
 
-	if(getObdConfigState() == OBD_CONFIG_FINISH){
+	if (getObdConfigState() == OBD_CONFIG_FINISH) {
 		//TODO: burada obd2 den datalar sorularak alınacak.
+		//TODO: OBD2 pid sorgusunda NODATA veya hatalı bir durumolursa protocol değiştirip
+		// changeOBD2Protocol fonksiyonu kullanılacak;
+		/*//örnek kullanım
+		 while(retVal != 2 ){
+		 	 retVal = changeOBD2Protocol(tryProtocol);
+		 	 if(retVal == 0){
+		 	 	 break;
+		 	 }
+		 }
+
+		 */
 	}
 }
 

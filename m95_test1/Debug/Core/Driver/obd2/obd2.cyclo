@@ -8,6 +8,7 @@
 ../Core/Driver/obd2/obd2.c:57:6:clearOBDRxRawBuffCnt	1
 ../Core/Driver/obd2/obd2.c:61:9:sendOBDUartData	1
 ../Core/Driver/obd2/obd2.c:66:6:obd2Init	34
-../Core/Driver/obd2/obd2.c:208:6:obd2Control	5
-../Core/Driver/obd2/obd2.c:226:6:OBD_Virtual_Systick_Handler	1
-../Core/Driver/obd2/obd2.c:230:6:OBD_Virtual_Rx_Completed_Callback	2
+../Core/Driver/obd2/obd2.c:214:9:changeOBD2Protocol	15
+../Core/Driver/obd2/obd2.c:282:6:obd2Control	5
+../Core/Driver/obd2/obd2.c:311:6:OBD_Virtual_Systick_Handler	1
+../Core/Driver/obd2/obd2.c:315:6:OBD_Virtual_Rx_Completed_Callback	2
