@@ -298,7 +298,9 @@ void btConnection(void) {
 				connState = BT_LINK;
 			}
 			else {
-				connState = BT_INQ;
+				if(findBTATCommandResp("OK")){
+					connState = BT_INQ;
+				}
 			}
 		}
 		break;
