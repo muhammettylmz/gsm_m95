@@ -429,6 +429,9 @@ void BT_Virtual_UART_RxCpltCallback(void *uart) {
 		btRxRawBuff[btRxRawBuffCnt++] = btRxData;
 		BT_Virtual_Rx_IT();
 		startBTRxTimeout();
+		if(btRxRawBuffCnt >= 128){
+			btRxRawBuffCnt = 0;
+		}
 		if(getBtConnState() == CONNECTED){
 			OBD_Virtual_Rx_Completed_Callback(btRxData);
 		}
