@@ -4,6 +4,6 @@
 ../Core/Driver/VTS/vehicleTrackingSystem.c:99:6:VTSInit	1
 ../Core/Driver/VTS/vehicleTrackingSystem.c:117:6:VTSControl	1
 ../Core/Driver/VTS/vehicleTrackingSystem.c:134:6:VTS_Virtual_SysTick_Handler	1
-../Core/Driver/VTS/vehicleTrackingSystem.c:147:6:VTS_Virtual_UART_RxCpltCallback	1
-../Core/Driver/VTS/vehicleTrackingSystem.c:158:6:VTS_Virtual_TIM_PeriodElapsedCallback	6
-../Core/Driver/VTS/vehicleTrackingSystem.c:168:6:VTS_Virtual_GPIO_EXTI_Callback	2
+../Core/Driver/VTS/vehicleTrackingSystem.c:147:6:VTS_Virtual_UART_RxCpltCallback	5
+../Core/Driver/VTS/vehicleTrackingSystem.c:168:6:VTS_Virtual_TIM_PeriodElapsedCallback	6
+../Core/Driver/VTS/vehicleTrackingSystem.c:178:6:VTS_Virtual_GPIO_EXTI_Callback	2

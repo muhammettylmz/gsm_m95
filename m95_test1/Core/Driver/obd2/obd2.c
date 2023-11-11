@@ -12,7 +12,9 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define OBD_HAL_TIMEOUT_UNIT1MS(x)	(x)
+#define OBD_HAL_TIMEOUT_UNIT1MS(x)		(x)
+#define OBD2_PROTOCOL_TYPE_SIZE 		9
+#define OBD2_PIDs_SIZE 					5
 
 typedef enum {
 	OBD_CONFIG_START, OBD_CONFIG_FINISH, OBD_CONFIG_TIMEOUT
@@ -30,10 +32,14 @@ uint8_t m_obdUartRecvCompleted = 0;
 
 uint8_t m_obdUartBuffCnt;
 uint8_t m_obdUartBuf[128];
-char protocolType[3] = "A7";  // auto and can 29/500
+char protocolType[3] = "A7";  // auto and can 29bit/500kbps
 
-const char *m_protocolTypeList[9] = { "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9" };
+
+const char *m_protocolTypeList[OBD2_PROTOCOL_TYPE_SIZE] = { "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9" };
 uint8_t m_protocolTypeListIndex = 0;
+
+char *obd2DataIDs[OBD2_PIDs_SIZE] = { "0100", "0101", "0102", "0103", "0104" };
+uint8_t obd2DataIDsIndex = 0;
 
 void changeProtocolType(char *type) {
 	memcpy(&protocolType[0], type, 2);
@@ -71,6 +77,7 @@ uint8_t findOBDATCommandResp(char *resp) {
 
 void clearOBDRxRawBuffCnt(void) {
 	m_obdUartBuffCnt = 0;
+	memset(m_obdUartBuf, 0 , sizeof(m_obdUartBuf));
 	setOBDRecvCompleted(0);
 }
 
@@ -293,8 +300,12 @@ uint8_t changeOBD2Protocol(const char *protocol) {
 	return 1;
 }
 
-char *obd2DataIDs[5] = { "0100", "0101", "0102", "0104", "0104" };
-uint8_t obd2DataIDsIndex = 0;
+
+
+void convertObd2Data(void){
+	//TODO: burada obd2uart bufdan alınan mesaj çözülerek ilgil pid e ye göre çevirme işlemi yapılacak.
+	// ornek 41 01 22 33
+}
 
 void obd2GetPeriodicMsg(void) {
 	typedef enum {
@@ -304,14 +315,16 @@ void obd2GetPeriodicMsg(void) {
 	static obd2PeriodicMsg_e state = OBD2_GET_PIDs_DATA;
 	static uint32_t timeout = 0;
 	static uint8_t retry = 0;
+	static uint8_t noDataCount = 0;
 	char strPidsNumber[8] = { 0 };
+
 	setObd2GetPeriodicDataState(OBD2_PERIODIC_DATA_START);
 	if (timeout == 0) {
 		timeout = getOBDSystick();
 	}
 	switch (state) {
 	case OBD2_GET_PIDs_DATA: {
-		sprintf(&strPidsNumber[0], "%s\r\n", obd2DataIDs[obd2DataIDsIndex]);
+		sprintf(&strPidsNumber[0], "%s\r\n", obd2DataIDs[obd2DataIDsIndex++]);
 		if (!sendOBDUartData((uint8_t*) strPidsNumber, strlen(strPidsNumber))) {
 			timeout = getOBDSystick();
 			state = OBD2_GET_PIDs_DATA_WAIT;
@@ -321,13 +334,21 @@ void obd2GetPeriodicMsg(void) {
 	case OBD2_GET_PIDs_DATA_WAIT: {
 		if (getOBDRecvCompleted()) {
 			if (findOBDATCommandResp("NODATA")) {
-				state = EXIT;
-			}
-			else {
-				obd2DataIDsIndex++;
-				if (obd2DataIDsIndex >= 9) {
+				if(obd2DataIDsIndex < OBD2_PIDs_SIZE ){
+					state = OBD2_GET_PIDs_DATA;
+					noDataCount++;
+				}else if(noDataCount >= OBD2_PIDs_SIZE){
+					state = EXIT;
 					obd2DataIDsIndex = 0;
 				}
+			}
+			else {
+				noDataCount = 0;
+				if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
+					obd2DataIDsIndex = 0;
+				}
+				convertObd2Data();
+				state = OBD2_GET_PIDs_DATA;
 			}
 		}
 		break;
@@ -335,6 +356,7 @@ void obd2GetPeriodicMsg(void) {
 	case EXIT:
 	default:
 		timeout = 0;
+		noDataCount = 0;
 		obd2DataIDsIndex = 0;
 		retry = 0;
 		setObd2GetPeriodicDataState(OBD2_PERIODIC_DATA_TIMEOUT);
@@ -377,7 +399,7 @@ void obd2Control(void) {
 		 }
 		 */
 		if (getObd2GetPeriodicDataState() == OBD2_PERIODIC_DATA_TIMEOUT) {
-			if (m_protocolTypeListIndex >= 9) {
+			if (m_protocolTypeListIndex >= OBD2_PROTOCOL_TYPE_SIZE) {
 				m_protocolTypeListIndex = 0;
 			}
 			if (changeOBD2Protocol(m_protocolTypeList[m_protocolTypeListIndex++]) == 0) {
@@ -389,15 +411,28 @@ void obd2Control(void) {
 		}
 	}
 }
+uint32_t m_obd2DataTimeout = 0;
+void startObd2DataTimeout(void){
+	m_obd2DataTimeout = getOBDSystick();
+}
+void stopObd2DataTimeout(void){
+	m_obd2DataTimeout = 0;
+}
 
 void OBD_Virtual_Systick_Handler(void) {
 	m_obdSystickCnt++;
+	if(getOBDSystick() - m_obd2DataTimeout >= OBD_HAL_TIMEOUT_UNIT1MS(300)){
+		setOBDRecvCompleted(1);
+		stopObd2DataTimeout();
+	}
 }
 
 void OBD_Virtual_Rx_Completed_Callback(unsigned char rxData) {
 	m_obdUartBuf[m_obdUartBuffCnt++] = rxData;
+	startObd2DataTimeout();
 	if (rxData == '>') {
 		setOBDRecvCompleted(1);
+		stopObd2DataTimeout();
 	}
 
 	if (m_obdUartBuffCnt >= 128) {

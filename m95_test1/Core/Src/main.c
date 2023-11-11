@@ -111,7 +111,7 @@ int main(void)
   MX_UART4_Init();
   MX_UART5_Init();
   MX_SPI1_Init();
-  MX_IWDG_Init();
+  //MX_IWDG_Init();
   MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
 

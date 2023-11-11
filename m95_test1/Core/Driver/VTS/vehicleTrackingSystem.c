@@ -145,10 +145,20 @@ void VTS_Virtual_SysTick_Handler(void) {
  * @retval None
  */
 void VTS_Virtual_UART_RxCpltCallback(void *huart) {
-	GSM_Virtual_UART_RxCpltCallback(huart);
-	GPS_Virtual_UART_RxCpltCallback(huart);
-	BT_Virtual_UART_RxCpltCallback(huart);
-	DEBUG_Virtual_UART_RxCpltCallback(huart);
+	UART_HandleTypeDef *uart = (UART_HandleTypeDef*) huart;
+
+	if (uart->Instance == huart3.Instance) {
+		GSM_Virtual_UART_RxCpltCallback(huart);
+	}
+	else if (uart->Instance == huart4.Instance) {
+		GPS_Virtual_UART_RxCpltCallback(huart);
+	}
+	else if (uart->Instance == huart5.Instance) {
+		BT_Virtual_UART_RxCpltCallback(huart);
+	}
+	else if (uart->Instance == huart6.Instance) {
+		DEBUG_Virtual_UART_RxCpltCallback(huart);
+	}
 }
 
 /**

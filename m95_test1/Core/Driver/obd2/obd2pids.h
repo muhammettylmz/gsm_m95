@@ -39,7 +39,7 @@ typedef enum {
 
 //typedef enum{
 //	PIDs_SUPPORT_1_20 = 0, // response big-endian 4 byte
-//	PIDs_DTC_STORED_DATA = 2, // resonse 2 byte, use only sevice mode 3
+//	PIDs_DTC_STORED_DATA = 2, // resonse 2 byte, use only service mode 3
 //	PIDs_FUEL_SYSTEM_STATUS = 3, // response 2 byte
 //	PIDs_CALCULATE_ENGINE_LOAD = 4, // response 1 byte, response/2.55
 //	PIDs_ENGINE_COOLANT_TEMP = 5, //response signed 1 byte, response - 40
