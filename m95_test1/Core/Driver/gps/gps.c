@@ -103,25 +103,25 @@ uint32_t getGPSSystick(void) {
 	return m_gpsSystick;
 }
 
-void getGGALatLongValue(double *_lat, double *_long) {
+void getGGALatLongValue(double *lati, double *longi) {
 	if (ggaMsg.numberOfSatellites > 2 && ggaMsg.quality > 0) {
-		*_lat = ggaMsg.latitude;
-		*_long = ggaMsg.longitude;
+		*lati = ggaMsg.latitude;
+		*longi = ggaMsg.longitude;
 	}
 	else {
-		*_lat = 0;
-		*_long = 0;
+		*lati = 0;
+		*longi = 0;
 	}
 }
 
-void getRMCLatLongValue(double *_lat, double *_long) {
+void getRMCLatLongValue(double *lati, double *longi) {
 	if (rmcMsg.status == 'A') {
-		*_lat = rmcMsg.latitude;
-		*_long = rmcMsg.longitude;
+		*lati = rmcMsg.latitude;
+		*longi = rmcMsg.longitude;
 	}
 	else {
-		*_lat = 0;
-		*_long = 0;
+		*lati = 0;
+		*longi = 0;
 	}
 }
 

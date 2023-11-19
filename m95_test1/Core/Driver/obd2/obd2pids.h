@@ -9,7 +9,7 @@
 #define DRIVER_OBD2_OBD2PIDS_H_
 
 #define OBD2_PROTOCOL_TYPE_SIZE 					9
-#define OBD2_PIDs_SIZE 								5
+#define OBD2_PIDs_SIZE 								9
 #define OBD2_MODE_VALID_RESPONSE_DATA_SIZE 			12
 #define OBD2_MODE_RESP_INDEX 						0
 #define OBD2_MODE_PID_INDEX  						1
@@ -40,6 +40,7 @@ typedef enum{
 	PIDs_SUPPORT_21_40 = 32, // response big-endian 4 byte
 	PIDs_FUEL_LEVEL = 0x2F,
 	PIDs_SUPPORT_41_60 = 64, // response big-endian 4 byte
+	PIDs_ENGINE_OIL_TEMP = 0x5C,
 	PIDs_ENGINE_FUEL_RATE = 0x5E,
 	PIDs_SUPPORT_61_80 = 96, // response big-endian 4 byte
 	PIDs_SUPPORT_81_A0 = 128, // response big-endian 4 byte

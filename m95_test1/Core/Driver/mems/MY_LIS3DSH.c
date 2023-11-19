@@ -215,6 +215,14 @@ uint32_t getMEMsSystick(void) {
 	return m_memsSystick;
 }
 
+accAxisShake_t getAccAllAxisShake(void){
+	accAxisShake_t axisShake = {0};
+	axisShake.x = m_accShakeDetect.xAxesShakeDetect;
+	axisShake.y = m_accShakeDetect.yAxesShakeDetect;
+	axisShake.z = m_accShakeDetect.zAxesShakeDetect;
+	return axisShake;
+}
+
 void memsInit(void *spi) {
 	m_accConfigDef.dataRate = LIS3DSH_DATARATE_100;
 	m_accConfigDef.fullScale = LIS3DSH_FULLSCALE_16;

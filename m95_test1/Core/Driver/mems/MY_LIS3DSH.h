@@ -118,8 +118,16 @@ void LIS3DSH_Y_calibrate(float y_min, float y_max);
 //3. Set Z-Axis calibrate
 void LIS3DSH_Z_calibrate(float z_min, float z_max);
 
+
+typedef struct{
+	uint8_t x;
+	uint8_t y;
+	uint8_t z;
+}accAxisShake_t;
+
 extern void memsInit(void* spi);
 extern void memsControl(void);
 extern void MEMS_Virtual_GPIO_EXTI(void);
 extern void MEMS_Virtual_Systick_Handler(void);
+extern accAxisShake_t getAccAllAxisShake(void);
 

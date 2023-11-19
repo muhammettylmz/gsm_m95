@@ -26,6 +26,8 @@
 #include "m95.h"
 #include "gps.h"
 #include "uart_debug.h"
+#include "obd2.h"
+#include "MY_LIS3DSH.h"
 
 #define GSM_TCP_IP_STACK_START_FMT 	(const uint8_t*)"AT+QIREGAPP\r\n"
 #define GPRS_ACTIVE_CTX_FMT			(const uint8_t*)"AT+QIACT\r\n"
@@ -62,7 +64,7 @@
 #define MQTT_PUB_SEND_CTRL_Z		0x1A // ascii table ctrl+z decimal 26,
 #define MQTT_PUB_REQ_RESPONSE_TIME  (20200) // unit ms
 
-#define PUB_MSG_JSON_FMT 			(const char*)"{\"working\":%s,\"km\":%d,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%.8f,\"longitude\":%.8f}}"
+#define PUB_MSG_JSON_FMT 			(const char*)"{\"working\":%s,\"km\":%lu,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%.8f,\"longitude\":%.8f}}"
 
 unsigned char pubMessage[512];
 
@@ -921,10 +923,12 @@ void mqttControl(void) {
 	if (getMQTTConnectState() == MQTT_CONNECTED && m_publishReady == PUBLISH_READY) {
 
 		getGGALatLongValue(&test_latitude, &test_longitude);
+		obd2VehicleData_t vehicleData = getPeriodicObdVehicleData();
+//		accAxisShake_t accAllAxisShake = getAccAllAxisShake();
 
 		sprintf((char*) test_topic, MQTT_AWS_TOPIC, test_id);
-		sprintf((char*) test_json_value, PUB_MSG_JSON_FMT, test_working, test_km, test_speed,
-				test_fuel, test_latitude, test_longitude);
+		sprintf((char*) test_json_value, PUB_MSG_JSON_FMT, test_working, vehicleData.vehicleOdometer, vehicleData.vehicleSpeed,
+				vehicleData.fuelLevelInput, test_latitude, test_longitude);
 
 		mqttPubMessage(test_topic, test_json_value, (strlen((char*) test_json_value) + 2));
 	}

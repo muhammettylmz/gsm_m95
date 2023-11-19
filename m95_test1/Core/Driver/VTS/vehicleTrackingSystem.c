@@ -24,7 +24,7 @@ extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart5;
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
-extern IWDG_HandleTypeDef hiwdg;
+//extern IWDG_HandleTypeDef hiwdg;
 
 uint32_t m_vtsButtonPressedCnt;
 uint32_t m_vtsButtonReleaseCnt;
@@ -40,7 +40,7 @@ iwdgRefreshRequestType_e m_currentIwdgRequestType;
  * @retval None
  */
 void iwdgControl(void) {
-	HAL_IWDG_Refresh(&hiwdg);
+	//HAL_IWDG_Refresh(&hiwdg);
 }
 
 /**
@@ -51,7 +51,7 @@ void virtualIwdgRefresh(iwdgRefreshRequestType_e requestType) {
 	m_prevIwdgRequestType = requestType;
 	m_currentIwdgRequestType = requestType;
 	//TODO: ileride bu requesttype kullanılacak.
-	iwdgControl();
+	//iwdgControl();
 }
 
 /**
@@ -123,7 +123,7 @@ void VTSControl(void) {
 		memsControl();
 		btControl();
 		obd2Control();
-		iwdgControl();
+		//iwdgControl();
 	}
 }
 
