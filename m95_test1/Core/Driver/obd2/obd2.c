@@ -38,6 +38,7 @@ uint8_t m_obdReConnectedFlag = 0;
 uint8_t m_obdUartRecvCompleted = 0;
 uint8_t m_obdUartBuffCnt;
 uint8_t m_obdUartBuf[OBD2_UART_RAW_DATA_SIZE];
+uint8_t m_changeProtocolFlag = 0;
 char protocolType[3] = "A7";  // auto and can 29bit/500kbps
 
 const char *m_protocolTypeList[OBD2_PROTOCOL_TYPE_SIZE] = { "A1", "A2", "A3", "A4", "A5", "A6",
@@ -494,6 +495,7 @@ void obd2GetPeriodicMsg(void) {
 				else if (noDataCount >= OBD2_PIDs_SIZE) {
 					state = EXIT;
 					obd2DataIDsIndex = 0;
+					m_changeProtocolFlag = 1;
 				}
 			}
 			else {
@@ -555,12 +557,13 @@ void obd2Control(void) {
 		 }
 		 }
 		 */
-		if (getObd2GetPeriodicDataState() == OBD2_PERIODIC_DATA_TIMEOUT) {
+		if (getObd2GetPeriodicDataState() == OBD2_PERIODIC_DATA_TIMEOUT && m_changeProtocolFlag == 1) {
 			if (m_protocolTypeListIndex >= OBD2_PROTOCOL_TYPE_SIZE) {
 				m_protocolTypeListIndex = 0;
 			}
 			if (changeOBD2Protocol(m_protocolTypeList[m_protocolTypeListIndex++]) == 0) {
 				setObd2GetPeriodicDataState(OBD2_PERIODIC_DATA_START);
+				m_changeProtocolFlag = 0;
 			}
 		}
 		else {
