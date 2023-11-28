@@ -9,7 +9,7 @@
 #define DRIVER_OBD2_OBD2PIDS_H_
 
 #define OBD2_PROTOCOL_TYPE_SIZE 					9
-#define OBD2_PIDs_SIZE 								9
+#define OBD2_PIDs_SIZE 								10
 #define OBD2_MODE_VALID_RESPONSE_DATA_SIZE 			12
 #define OBD2_MODE_RESP_INDEX 						0
 #define OBD2_MODE_PID_INDEX  						1

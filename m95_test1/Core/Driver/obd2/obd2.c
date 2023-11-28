@@ -45,7 +45,7 @@ const char *m_protocolTypeList[OBD2_PROTOCOL_TYPE_SIZE] = { "A1", "A2", "A3", "A
 uint8_t m_protocolTypeListIndex = 0;
 
 char *obd2DataIDs[OBD2_PIDs_SIZE] = { "0104", "0105", "010A", "010C", "010D", "012F", "015C",
-		"015E", "01A6" };
+		"015E", "01A6" , "03" };
 uint8_t obd2DataIDsIndex = 0;
 
 uint32_t m_obd2DataTimeout = 0;
