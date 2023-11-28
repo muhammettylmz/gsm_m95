@@ -920,10 +920,12 @@ void mqttControl(void) {
 //				test_fuel, test_latitude, test_longitude);
 	}
 
-	if (getMQTTConnectState() == MQTT_CONNECTED && m_publishReady == PUBLISH_READY) {
+	if (getMQTTConnectState() == MQTT_CONNECTED && m_publishReady == PUBLISH_READY
+			&& getObd2PeroidicDataCompletedState() == OBD2_PERIODIC_DATA_COMPLETED) {
 
 		getGGALatLongValue(&test_latitude, &test_longitude);
 		obd2VehicleData_t vehicleData = getPeriodicObdVehicleData();
+		setObd2PeroidicDataCompletedState(OBD2_PERIODIC_DATA_IDLE);
 //		accAxisShake_t accAllAxisShake = getAccAllAxisShake();
 
 		sprintf((char*) test_topic, MQTT_AWS_TOPIC, test_id);

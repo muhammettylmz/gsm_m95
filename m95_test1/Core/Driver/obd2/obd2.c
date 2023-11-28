@@ -20,6 +20,9 @@
 static const uint8_t obd2ModeValidResponseDataList[OBD2_MODE_VALID_RESPONSE_DATA_SIZE] = { 0x41,
 		0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x62, 0x61, 0x63 };
 
+static const char strDTCs[16][3] = { "P0\0", "P1\0", "P2\0", "P3\0", "C0\0", "C1\0", "C2\0", "C3\0",
+		"B0\0", "B1\0", "B2\0", "B3\0", "U0\0", "U1\0", "U2\0", "U3\0" };
+
 typedef enum {
 	OBD_CONFIG_START, OBD_CONFIG_FINISH, OBD_CONFIG_TIMEOUT
 } obdConfigState_e;
@@ -33,8 +36,6 @@ obdConfigState_e m_obdConfigState = OBD_CONFIG_START;
 uint32_t m_obdSystickCnt;
 uint8_t m_obdReConnectedFlag = 0;
 uint8_t m_obdUartRecvCompleted = 0;
-
-
 uint8_t m_obdUartBuffCnt;
 uint8_t m_obdUartBuf[OBD2_UART_RAW_DATA_SIZE];
 char protocolType[3] = "A7";  // auto and can 29bit/500kbps
@@ -50,6 +51,16 @@ uint8_t obd2DataIDsIndex = 0;
 uint32_t m_obd2DataTimeout = 0;
 
 obd2VehicleData_t obd2VehicleData;
+
+obd2PeriodicDataCompletedState_e m_obd2PeriodicDataState = OBD2_PERIODIC_DATA_IDLE;
+
+void setObd2PeroidicDataCompletedState(obd2PeriodicDataCompletedState_e state) {
+	m_obd2PeriodicDataState = state;
+}
+
+obd2PeriodicDataCompletedState_e getObd2PeroidicDataCompletedState(void) {
+	return m_obd2PeriodicDataState;
+}
 
 uint32_t getOBDSystick(void) {
 	return m_obdSystickCnt;
@@ -328,19 +339,28 @@ uint8_t findArrayValue(uint8_t replyCmdId) {
 	return 0;
 }
 
-obd2VehicleData_t getPeriodicObdVehicleData(void){
+obd2VehicleData_t getPeriodicObdVehicleData(void) {
 	return obd2VehicleData;
 }
 
 bool convertObd2Data(void) {
-	//TODO: burada obd2uart bufdan alınan mesaj çözülerek ilgil pid e ye göre çevirme işlemi yapılacak.
-	// ornek 41012233\r>
-#define HEX_BASE_VALUE 16
-#define OBD_RESP_CMD_IDx 	0
-#define OBD_RESP_PID_IDx 	2
-#define OBD_RESP_DATA_IDx 	4
+#define HEX_BASE_VALUE 				16
+#define OBD_RESP_CMD_IDx 			0
+#define OBD_RESP_PID_IDx 			2
+#define OBD_RESP_DATA_IDx 			4
+#define FIRST_DTC_DATA_INDEX		2
+#define DTC_STR_DATA_SIZE			4
+#define DTC_RECORD_SIZE 			1
+#define DTC_STR_DATA_VALUE_SIZE 	3
+#define FIRST_DTC_STR_DATA_INDEX 	(FIRST_DTC_DATA_INDEX+1)
+#define OBD2_MIN_RESPONSE_SIZE 		4
+#define OBD2_SERVICE_MODE_3_RESPONSE 0x43
+#define OBD2_REPLY_CMD_ID_STR_SIZE 2
+#define OBD2_REPLY_PIDs_STR_SIZE 2
 
 	char *token = NULL;
+	char *tokenArr[5];
+	uint8_t tokenArrIndex = 0;
 	char strReplyPids[3] = { 0 };
 	char strReplyObdCmd[3] = { 0 };
 	uint8_t obd2Pid;
@@ -349,23 +369,60 @@ bool convertObd2Data(void) {
 
 	token = strtok((char*) m_obdUartBuf, "\r");
 
-	memcpy(strReplyObdCmd, &token[OBD_RESP_CMD_IDx], 2);
-	respObdCmd = (uint8_t) strtoul(strReplyObdCmd, NULL, HEX_BASE_VALUE);
+	while (token != NULL) {
+		tokenArr[tokenArrIndex++] = token;
+		token = strtok(NULL, "\r");
+	}
 
+	if (tokenArrIndex) {
+		tokenArrIndex--;
+	}
+
+	if (tokenArrIndex == 0) {
+		return false;
+	}
+	else {
+		memcpy(strReplyObdCmd, &tokenArr[0][OBD_RESP_CMD_IDx], OBD2_REPLY_CMD_ID_STR_SIZE);
+		// array 1 de > karakteri mevcut
+	}
+
+	respObdCmd = (uint8_t) strtoul(strReplyObdCmd, NULL, HEX_BASE_VALUE);
 	if (!findArrayValue(respObdCmd)) {
 		return false;
 	}
 
-	if (respObdCmd == 0x43) {
-		//TODO: DTC çevirme işlemi burada yapılacak.
-		// convertDTCData();
+	uint8_t size = strlen(tokenArr[0]);
+	if(size < OBD2_MIN_RESPONSE_SIZE){
+		return false;
+	}
+
+	if (respObdCmd == OBD2_SERVICE_MODE_3_RESPONSE) {
+		char strDtcRecord = 0;
+		uint8_t dtcRecord = 0;
+		char strTokenDtcData[4]={0};
+
+		for (uint8_t u8 = 0; u8 < (size - FIRST_DTC_DATA_INDEX) / DTC_STR_DATA_SIZE; u8++) {
+			memcpy(&strDtcRecord, &tokenArr[0][FIRST_DTC_DATA_INDEX + (u8 * DTC_STR_DATA_SIZE)],
+					DTC_RECORD_SIZE);
+			dtcRecord = (uint8_t) strtoul(&strDtcRecord, NULL, HEX_BASE_VALUE);
+			memcpy(strTokenDtcData,
+					&tokenArr[0][FIRST_DTC_STR_DATA_INDEX + (u8 * DTC_STR_DATA_SIZE)],
+					DTC_STR_DATA_VALUE_SIZE);
+			strTokenDtcData[DTC_STR_DATA_VALUE_SIZE] = '\0';
+			sprintf(obd2VehicleData.vehicleDtcData[obd2VehicleData.vehicleDtcArrIndex++], "%s%s",
+					strDTCs[dtcRecord], strTokenDtcData);
+		}
+
+		if (obd2VehicleData.vehicleDtcArrIndex) {
+			obd2VehicleData.vehicleDtcArrIndex--;
+		}
 	}
 	else {
 
-		memcpy(strReplyPids, &token[OBD_RESP_PID_IDx], 2);
+		memcpy(strReplyPids, &tokenArr[0][OBD_RESP_PID_IDx], OBD2_REPLY_PIDs_STR_SIZE);
 		obd2Pid = (uint8_t) strtoul(strReplyPids, NULL, HEX_BASE_VALUE);
 
-		obd2Data = strtoul(&token[OBD_RESP_DATA_IDx], NULL, HEX_BASE_VALUE);
+		obd2Data = strtoul(&tokenArr[0][OBD_RESP_DATA_IDx], NULL, HEX_BASE_VALUE);
 
 		switch (obd2Pid) {
 		case PIDs_CALCULATE_ENGINE_LOAD:  // A * 100/255
@@ -441,11 +498,13 @@ void obd2GetPeriodicMsg(void) {
 			}
 			else {
 				noDataCount = 0;
-				if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
-					obd2DataIDsIndex = 0;
-				}
 				convertObd2Data();
 				state = OBD2_GET_PIDs_DATA;
+				if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
+					obd2DataIDsIndex = 0;
+					setObd2PeroidicDataCompletedState(OBD2_PERIODIC_DATA_COMPLETED);
+				}
+
 			}
 		}
 		break;

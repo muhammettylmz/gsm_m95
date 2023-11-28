@@ -17,4 +17,4 @@
 ../Core/Driver/mqtt/mqtt.c:746:9:mqttPubMessage	17
 ../Core/Driver/mqtt/mqtt.c:862:6:MQTT_Virtual_Systick_Handler	1
 ../Core/Driver/mqtt/mqtt.c:866:6:MQTT_Virtual_TIM_ElapsedCallback	1
-../Core/Driver/mqtt/mqtt.c:883:6:mqttControl	10
+../Core/Driver/mqtt/mqtt.c:883:6:mqttControl	11
