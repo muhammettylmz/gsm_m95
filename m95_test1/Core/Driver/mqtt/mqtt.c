@@ -66,6 +66,14 @@
 
 #define PUB_MSG_JSON_FMT 			(const char*)"{\"working\":%s,\"km\":%lu,\"speed\":%d,\"fuel\": %d,\"location\":{\"latitude\":%.8f,\"longitude\":%.8f}}"
 
+#define MQTT_PUBLISH_DEFAULT_TIMEOUT_MS 					10000
+#define OFFSET_DIV											4
+#define VEHICLE_SPEED_MAX_VALUE 							255
+#define MQTT_PUBLISH_VEHICLE_SPEED_TIMEOUT_OFFSET 			((MQTT_PUBLISH_DEFAULT_TIMEOUT_MS / OFFSET_DIV) / (VEHICLE_SPEED_MAX_VALUE - 1))
+#define MQTT_PUBLISH_VEHICLE_SPEED_TIMEOUT_CALC(x)			((VEHICLE_SPEED_MAX_VALUE - x) * MQTT_PUBLISH_VEHICLE_SPEED_TIMEOUT_OFFSET)
+
+uint32_t m_vehicleSpeedTimeout = MQTT_PUBLISH_DEFAULT_TIMEOUT_MS;
+
 unsigned char pubMessage[512];
 
 uint32_t mqtt_systick;
@@ -80,6 +88,9 @@ uint32_t mqttConnectPrevtimeout = 0;
 uint32_t mqttOpenPrevtimeout = 0;
 uint32_t mqttPubReqPrevtimeout = 0;
 uint32_t mqttInitPrevTick = 0;
+obd2VehicleData_t vehicleData = { 0 };
+uint32_t m_mqttPublishTimeoutCnt = 0;
+uint8_t m_mqttPublishTimeout = 0;
 
 uint8_t deleteCertKey(void);
 uint8_t writeCertKey(void);
@@ -100,7 +111,7 @@ mqttOpenState_e getMQTTOpenState(void) {
 	return m_mqttOpenState;
 }
 
-void setMQTTConnectState(mqttConnectState_e state){
+void setMQTTConnectState(mqttConnectState_e state) {
 	m_mqttConnectState = state;
 }
 
@@ -639,6 +650,7 @@ uint8_t mqttConnect(uint8_t *client) {
 	default:
 		state = MQTT_CONNECT;
 		mqttConnectPrevtimeout = 0;
+		m_mqttPublishTimeoutCnt = getMqttSystick();
 	break;
 	}
 
@@ -861,6 +873,13 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 
 void MQTT_Virtual_Systick_Handler(void) {
 	mqtt_systick++;
+
+	if (m_mqttPublishTimeoutCnt != 0) {
+		if ((mqtt_systick - m_mqttPublishTimeoutCnt) >= m_vehicleSpeedTimeout) {
+			m_mqttPublishTimeout = 1;
+			m_mqttPublishTimeoutCnt = mqtt_systick;
+		}
+	}
 }
 
 void MQTT_Virtual_TIM_ElapsedCallback(void *tim) {
@@ -880,6 +899,7 @@ double test_latitude = 29.12;
 uint32_t test_prevtimeout = 0;
 
 uint8_t rawData[128];
+
 void mqttControl(void) {
 	if (getMQTTConfigState() != MQTT_CONFIG_FINISH) {
 		mqttInit();
@@ -907,34 +927,32 @@ void mqttControl(void) {
 		return;
 	}
 
-	if (getMqttSystick() - test_prevtimeout  >= 1000) {
-		test_prevtimeout = getMqttSystick();
-		test_km++;
-		test_speed++;
-		test_fuel--;
-		test_longitude = test_longitude + 0.00022;
-		test_latitude = test_latitude + 0.0002;
-//		customDebugMsg("Test json variable: working:%s\r\n"
-//				"km: %d\r\nspeed: %d\r\nfuel: %d\r\n"
-//				"latitude: %.6f\r\nlongitude: %.6f\r\n", test_working, test_km, test_speed,
-//				test_fuel, test_latitude, test_longitude);
+	if (vehicleData.vehicleSpeed != 0) {
+		m_vehicleSpeedTimeout = MQTT_PUBLISH_VEHICLE_SPEED_TIMEOUT_CALC(vehicleData.vehicleSpeed);
+	}
+	else {
+		m_vehicleSpeedTimeout = MQTT_PUBLISH_DEFAULT_TIMEOUT_MS;
 	}
 
-	if (getMQTTConnectState() == MQTT_CONNECTED && m_publishReady == PUBLISH_READY
-			&& getObd2PeroidicDataCompletedState() == OBD2_PERIODIC_DATA_COMPLETED) {
+	if ((getMQTTConnectState() == MQTT_CONNECTED && m_publishReady == PUBLISH_READY
+			&& getObd2PeroidicDataCompletedState() == OBD2_PERIODIC_DATA_COMPLETED)
+			|| m_mqttPublishTimeout) {
+
+		m_mqttPublishTimeout = 0;
+		m_mqttPublishTimeoutCnt = getMqttSystick();
 
 		getGGALatLongValue(&test_latitude, &test_longitude);
-		obd2VehicleData_t vehicleData = getPeriodicObdVehicleData();
+		vehicleData = getPeriodicObdVehicleData();
 		setObd2PeroidicDataCompletedState(OBD2_PERIODIC_DATA_IDLE);
 //		accAxisShake_t accAllAxisShake = getAccAllAxisShake();
 
 		sprintf((char*) test_topic, MQTT_AWS_TOPIC, test_id);
-		sprintf((char*) test_json_value, PUB_MSG_JSON_FMT, test_working, vehicleData.vehicleOdometer, vehicleData.vehicleSpeed,
-				vehicleData.fuelLevelInput, test_latitude, test_longitude);
+		sprintf((char*) test_json_value, PUB_MSG_JSON_FMT, test_working,
+				vehicleData.vehicleOdometer, vehicleData.vehicleSpeed, vehicleData.fuelLevelInput,
+				test_latitude, test_longitude);
 
 		mqttPubMessage(test_topic, test_json_value, (strlen((char*) test_json_value) + 2));
 	}
-
 
 	/*
 	 * */
