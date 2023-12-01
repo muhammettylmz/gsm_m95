@@ -109,8 +109,8 @@ void getGGALatLongValue(double *lati, double *longi) {
 		*longi = ggaMsg.longitude;
 	}
 	else {
-		*lati = 0;
-		*longi = 0;
+		*lati = lastValidGgaMsg.latitude;
+		*longi = lastValidGgaMsg.longitude;
 	}
 }
 
@@ -120,8 +120,8 @@ void getRMCLatLongValue(double *lati, double *longi) {
 		*longi = rmcMsg.longitude;
 	}
 	else {
-		*lati = 0;
-		*longi = 0;
+		*lati = lastValidRmcMsg.latitude;
+		*longi = lastValidRmcMsg.longitude;
 	}
 }
 
