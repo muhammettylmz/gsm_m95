@@ -26,6 +26,6 @@
 ../Core/Driver/bluetooth/bluetooth.c:420:6:btInit	1
 ../Core/Driver/bluetooth/bluetooth.c:426:6:btControl	7
 ../Core/Driver/bluetooth/bluetooth.c:451:6:BT_Virtual_UART_RxCpltCallback	3
-../Core/Driver/bluetooth/bluetooth.c:465:6:checkStatePin	4
-../Core/Driver/bluetooth/bluetooth.c:493:6:BT_Virtual_Systick	6
-../Core/Driver/bluetooth/bluetooth.c:502:6:BT_Virtual_Rx_IT	1
+../Core/Driver/bluetooth/bluetooth.c:465:6:checkStatePin	5
+../Core/Driver/bluetooth/bluetooth.c:496:6:BT_Virtual_Systick	7
+../Core/Driver/bluetooth/bluetooth.c:505:6:BT_Virtual_Rx_IT	1

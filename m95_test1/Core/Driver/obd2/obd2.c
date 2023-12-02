@@ -24,10 +24,6 @@ static const char strDTCs[16][3] = { "P0\0", "P1\0", "P2\0", "P3\0", "C0\0", "C1
 		"B0\0", "B1\0", "B2\0", "B3\0", "U0\0", "U1\0", "U2\0", "U3\0" };
 
 typedef enum {
-	OBD_CONFIG_START, OBD_CONFIG_FINISH, OBD_CONFIG_TIMEOUT
-} obdConfigState_e;
-
-typedef enum {
 	OBD2_PERIODIC_DATA_START, OBD2_PERIODIC_DATA_FINISH, OBD2_PERIODIC_DATA_TIMEOUT
 } obd2GetPeriodicDataState_e;
 
@@ -45,8 +41,8 @@ const char *m_protocolTypeList[OBD2_PROTOCOL_TYPE_SIZE] = { "A1", "A2", "A3", "A
 		"A7", "A8", "A9" };
 uint8_t m_protocolTypeListIndex = 0;
 
-char *obd2DataIDs[OBD2_PIDs_SIZE] = { "0104", "0105", "010A", "010C", "010D", "012F", "015C",
-		"015E", "01A6" , "03" };
+char *obd2DataIDs[OBD2_PIDs_SIZE] = { "AT IGN", "0104", "0105", "010A", "010C", "010D", "012F", "015C",
+		"015E", "01A6", "03" };
 uint8_t obd2DataIDsIndex = 0;
 
 uint32_t m_obd2DataTimeout = 0;
@@ -156,7 +152,7 @@ void obd2Init(void) {
 
 	switch (state) {
 	case OBD_ATZ: {
-		if (!sendOBDUartData((uint8_t*) "ATZ\r",4)){// sizeof((uint8_t*) "ATZ\r"))) {
+		if (!sendOBDUartData((uint8_t*) "ATZ\r", 4)) {  // sizeof((uint8_t*) "ATZ\r"))) {
 			timeout = getOBDSystick();
 			state = OBD_ATZ_WAIT;
 		}
@@ -174,7 +170,7 @@ void obd2Init(void) {
 		break;
 	}
 	case OBD_ECHO_OFF: {
-		if (!sendOBDUartData((uint8_t*) "AT E0\r",6)){// sizeof((uint8_t*) "ATE0\r"))) {
+		if (!sendOBDUartData((uint8_t*) "AT E0\r", 6)) {  // sizeof((uint8_t*) "ATE0\r"))) {
 			timeout = getOBDSystick();
 			state = OBD_ECHO_WAIT;
 		}
@@ -189,7 +185,7 @@ void obd2Init(void) {
 		break;
 	}
 	case OBD_SPACE_OFF: {
-		if (!sendOBDUartData((uint8_t*) "AT S0\r",6)){// sizeof((uint8_t*) "ATS0\r"))) {
+		if (!sendOBDUartData((uint8_t*) "AT S0\r", 6)) {  // sizeof((uint8_t*) "ATS0\r"))) {
 			timeout = getOBDSystick();
 			state = OBD_SPACE_WAIT;
 		}
@@ -220,7 +216,7 @@ void obd2Init(void) {
 		break;
 	}
 	case OBD_GET_PROTOCOL: {
-		if (!sendOBDUartData((uint8_t*) "AT DPN\r", 7)){// sizeof((uint8_t*) "ATDPN\r"))) {
+		if (!sendOBDUartData((uint8_t*) "AT DPN\r", 7)) {  // sizeof((uint8_t*) "ATDPN\r"))) {
 			timeout = getOBDSystick();
 			state = OBD_GET_PROTOCOL_WAIT;
 		}
@@ -395,18 +391,18 @@ bool convertObd2Data(void) {
 	}
 
 	uint8_t size = strlen(tokenArr[0]);
-	if(size < OBD2_MIN_RESPONSE_SIZE){
+	if (size < OBD2_MIN_RESPONSE_SIZE) {
 		return false;
 	}
 
 	if (respObdCmd == OBD2_SERVICE_MODE_3_RESPONSE) {
 		char strDtcRecord = 0;
 		uint8_t dtcRecord = 0;
-		char strTokenDtcData[4]={0};
+		char strTokenDtcData[4] = { 0 };
 
 		for (uint8_t u8 = 0; u8 < (size - FIRST_DTC_DATA_INDEX) / DTC_STR_DATA_SIZE; u8++) {
 			memcpy(&strDtcRecord, &tokenArr[0][FIRST_DTC_DATA_INDEX + (u8 * DTC_STR_DATA_SIZE)],
-					DTC_RECORD_SIZE);
+			DTC_RECORD_SIZE);
 			dtcRecord = (uint8_t) strtoul(&strDtcRecord, NULL, HEX_BASE_VALUE);
 			memcpy(strTokenDtcData,
 					&tokenArr[0][FIRST_DTC_STR_DATA_INDEX + (u8 * DTC_STR_DATA_SIZE)],
@@ -480,6 +476,8 @@ void obd2GetPeriodicMsg(void) {
 	}
 	switch (state) {
 	case OBD2_GET_PIDs_DATA: {
+		if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
+							obd2DataIDsIndex = 0;}
 		sprintf(&strPidsNumber[0], "%s\r", obd2DataIDs[obd2DataIDsIndex++]);
 		if (!sendOBDUartData((uint8_t*) strPidsNumber, strlen(strPidsNumber))) {
 			timeout = getOBDSystick();
@@ -498,6 +496,9 @@ void obd2GetPeriodicMsg(void) {
 			else if (findOBDATCommandResp("SEARCHING")) {
 				state = OBD2_GET_PIDs_DATA;
 			}
+			else if (findOBDATCommandResp("?")) {
+				state = OBD2_GET_PIDs_DATA;
+			}
 			else if (findOBDATCommandResp("NO DATA")) {
 				if (obd2DataIDsIndex < OBD2_PIDs_SIZE) {
 					state = OBD2_GET_PIDs_DATA;
@@ -511,6 +512,12 @@ void obd2GetPeriodicMsg(void) {
 			}
 			else {
 				noDataCount = 0;
+				if(findOBDATCommandResp("ON")){
+					memcpy(obd2VehicleData.vehicleIgnStr, "ON", 2);
+				}
+				else if(findOBDATCommandResp("OFF")){
+					memcpy(obd2VehicleData.vehicleIgnStr, "OFF", 3);
+				}
 				convertObd2Data();
 				state = OBD2_GET_PIDs_DATA;
 				if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
@@ -558,7 +565,8 @@ void obd2Control(void) {
 	}
 
 	if (getObdConfigState() == OBD_CONFIG_FINISH) {
-		if (getObd2GetPeriodicDataState() == OBD2_PERIODIC_DATA_TIMEOUT && m_changeProtocolFlag == 1) {
+		if (getObd2GetPeriodicDataState() == OBD2_PERIODIC_DATA_TIMEOUT
+				&& m_changeProtocolFlag == 1) {
 			if (m_protocolTypeListIndex >= OBD2_PROTOCOL_TYPE_SIZE) {
 				m_protocolTypeListIndex = 0;
 			}

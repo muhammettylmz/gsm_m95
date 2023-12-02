@@ -136,7 +136,7 @@ void clearBtStateFlags(void) {
 	m_btConfigState = BT_CONFIG_START;
 	m_btConnState = DISCONNECTED;
 	m_btSerialConnState = DISCONNECTED;
-
+	//setObdConfigState(OBD_CONFIG_START);
 }
 
 uint8_t findBTATCommandResp(char *resp) {
@@ -486,6 +486,9 @@ void checkStatePin(GPIO_PinState *pin) {
 	else if (pinResetCnt >= HAL_TIMEOUT_UNIT1MS(25)) {
 		pinResetCnt = 0;
 		*pin = GPIO_PIN_RESET;
+		if(m_btConnState == CONNECTED){
+			clearBtStateFlags();
+		}
 		m_btConnState = DISCONNECTED;
 	}
 }
