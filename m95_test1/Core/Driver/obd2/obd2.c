@@ -156,7 +156,7 @@ void obd2Init(void) {
 
 	switch (state) {
 	case OBD_ATZ: {
-		if (!sendOBDUartData((uint8_t*) "ATZ\r", sizeof((uint8_t*) "ATZ\r"))) {
+		if (!sendOBDUartData((uint8_t*) "ATZ\r",4)){// sizeof((uint8_t*) "ATZ\r"))) {
 			timeout = getOBDSystick();
 			state = OBD_ATZ_WAIT;
 		}
@@ -174,7 +174,7 @@ void obd2Init(void) {
 		break;
 	}
 	case OBD_ECHO_OFF: {
-		if (!sendOBDUartData((uint8_t*) "ATE0\r", sizeof((uint8_t*) "ATE0\r"))) {
+		if (!sendOBDUartData((uint8_t*) "AT E0\r",6)){// sizeof((uint8_t*) "ATE0\r"))) {
 			timeout = getOBDSystick();
 			state = OBD_ECHO_WAIT;
 		}
@@ -189,7 +189,7 @@ void obd2Init(void) {
 		break;
 	}
 	case OBD_SPACE_OFF: {
-		if (!sendOBDUartData((uint8_t*) "ATS0\r", sizeof((uint8_t*) "ATS0\r"))) {
+		if (!sendOBDUartData((uint8_t*) "AT S0\r",6)){// sizeof((uint8_t*) "ATS0\r"))) {
 			timeout = getOBDSystick();
 			state = OBD_SPACE_WAIT;
 		}
@@ -204,8 +204,8 @@ void obd2Init(void) {
 		break;
 	}
 	case OBD_SET_PROTOCOL: {
-		sprintf(&setProtocolStr[0], "ATSP%s\r", protocolType);
-		if (!sendOBDUartData((uint8_t*) setProtocolStr, sizeof((uint8_t*) setProtocolStr))) {
+		sprintf(&setProtocolStr[0], "AT SP%s\r", protocolType);
+		if (!sendOBDUartData((uint8_t*) setProtocolStr, strlen(setProtocolStr))) {
 			timeout = getOBDSystick();
 			state = OBD_SET_PROTOCOL_WAIT;
 		}
@@ -220,9 +220,9 @@ void obd2Init(void) {
 		break;
 	}
 	case OBD_GET_PROTOCOL: {
-		if (!sendOBDUartData((uint8_t*) "ATDPN\r", sizeof((uint8_t*) "ATDPN\r"))) {
+		if (!sendOBDUartData((uint8_t*) "AT DPN\r", 7)){// sizeof((uint8_t*) "ATDPN\r"))) {
 			timeout = getOBDSystick();
-			state = OBD_SET_PROTOCOL_WAIT;
+			state = OBD_GET_PROTOCOL_WAIT;
 		}
 		break;
 	}
@@ -240,6 +240,7 @@ void obd2Init(void) {
 		retry = 0;
 		state = OBD_ATZ;
 		m_obdConfigState = OBD_CONFIG_FINISH;
+		setBtSerialConnState(1);
 	break;
 	}
 
@@ -255,6 +256,7 @@ void obd2Init(void) {
 		retry = 0;
 		state = OBD_ATZ;
 		m_obdConfigState = OBD_CONFIG_TIMEOUT;
+		setBtSerialConnState(0);
 	}
 
 }
@@ -280,8 +282,8 @@ uint8_t changeOBD2Protocol(const char *protocol) {
 
 	switch (state) {
 	case OBD_SET_PROTOCOL: {
-		sprintf(&setProtocolStr[0], "ATSP%s\r", protocol);
-		if (!sendOBDUartData((uint8_t*) setProtocolStr, sizeof((uint8_t*) setProtocolStr))) {
+		sprintf(&setProtocolStr[0], "AT SP%s\r", protocol);
+		if (!sendOBDUartData((uint8_t*) setProtocolStr, strlen(setProtocolStr))) {
 			timeout = getOBDSystick();
 			state = OBD_SET_PROTOCOL_WAIT;
 		}
@@ -298,7 +300,7 @@ uint8_t changeOBD2Protocol(const char *protocol) {
 	case OBD_GET_PROTOCOL: {
 		if (!sendOBDUartData((uint8_t*) "ATDPN\r", sizeof((uint8_t*) "ATDPN\r"))) {
 			timeout = getOBDSystick();
-			state = OBD_SET_PROTOCOL_WAIT;
+			state = OBD_GET_PROTOCOL_WAIT;
 		}
 		break;
 	}
@@ -487,7 +489,16 @@ void obd2GetPeriodicMsg(void) {
 	}
 	case OBD2_GET_PIDs_DATA_WAIT: {
 		if (getOBDRecvCompleted()) {
-			if (findOBDATCommandResp("NO DATA")) {
+			if (findOBDATCommandResp("UNABLE TO CONNECT")) {
+				// OBD2 BAGLI DEGIL
+				state = OBD2_GET_PIDs_DATA;
+				obd2VehicleData.obd2SocketConnected = 0;
+				break;
+			}
+			else if (findOBDATCommandResp("SEARCHING")) {
+				state = OBD2_GET_PIDs_DATA;
+			}
+			else if (findOBDATCommandResp("NO DATA")) {
 				if (obd2DataIDsIndex < OBD2_PIDs_SIZE) {
 					state = OBD2_GET_PIDs_DATA;
 					noDataCount++;
@@ -508,6 +519,7 @@ void obd2GetPeriodicMsg(void) {
 				}
 
 			}
+			obd2VehicleData.obd2SocketConnected = 1;
 		}
 		break;
 	}
@@ -522,7 +534,7 @@ void obd2GetPeriodicMsg(void) {
 	break;
 	}
 
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(200)) {
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
 		retry++;
 		timeout = 0;
 	}
@@ -546,17 +558,6 @@ void obd2Control(void) {
 	}
 
 	if (getObdConfigState() == OBD_CONFIG_FINISH) {
-		//TODO: burada obd2 den datalar sorularak alınacak.
-		//TODO: OBD2 pid sorgusunda NODATA veya hatalı bir durumolursa protocol değiştirip
-		// changeOBD2Protocol fonksiyonu kullanılacak;
-		/*//örnek kullanım
-		 while(retVal != 2 ){
-		 retVal = changeOBD2Protocol(tryProtocol);
-		 if(retVal == 0){
-		 break;
-		 }
-		 }
-		 */
 		if (getObd2GetPeriodicDataState() == OBD2_PERIODIC_DATA_TIMEOUT && m_changeProtocolFlag == 1) {
 			if (m_protocolTypeListIndex >= OBD2_PROTOCOL_TYPE_SIZE) {
 				m_protocolTypeListIndex = 0;
@@ -574,18 +575,18 @@ void obd2Control(void) {
 
 void OBD_Virtual_Systick_Handler(void) {
 	m_obdSystickCnt++;
-	if (getOBDSystick() - m_obd2DataTimeout >= OBD_HAL_TIMEOUT_UNIT1MS(300)) {
-		setOBDRecvCompleted(1);
-		stopObd2DataTimeout();
-	}
+//	if (getOBDSystick() - m_obd2DataTimeout >= OBD_HAL_TIMEOUT_UNIT1MS(300)) {
+//		setOBDRecvCompleted(1);
+//		stopObd2DataTimeout();
+//	}
 }
 
 void OBD_Virtual_Rx_Completed_Callback(unsigned char rxData) {
 	m_obdUartBuf[m_obdUartBuffCnt++] = rxData;
-	startObd2DataTimeout();
+	//startObd2DataTimeout();
 	if (rxData == '>') {
 		setOBDRecvCompleted(1);
-		stopObd2DataTimeout();
+		//stopObd2DataTimeout();
 	}
 
 	if (m_obdUartBuffCnt >= OBD2_UART_RAW_DATA_SIZE) {

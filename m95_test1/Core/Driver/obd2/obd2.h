@@ -21,6 +21,7 @@ typedef struct {
 	uint32_t    vehicleOdometer;//A6
 	char 		vehicleDtcData[3][6];
 	uint8_t 	vehicleDtcArrIndex;
+	uint8_t		obd2SocketConnected;
 }obd2VehicleData_t;
 
 typedef enum{

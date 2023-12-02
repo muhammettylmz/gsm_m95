@@ -85,7 +85,7 @@ gpsUartBuff_t m_gpsUartBuff[GPS_UART_BUFF_COUNT];
 uint8_t m_gpsUartBuffIndis;
 uint8_t m_gpsRxData;
 
-char* m_nmeaToken;
+char *m_nmeaToken;
 
 uint32_t m_gpsSystick;
 
@@ -252,7 +252,7 @@ void convertRMCMsg(char *msg, gpsNmeaRMCType_t *rmc) {
 
 	rmc->recvData++;
 
-	if(rmc->status == 'A'){
+	if (rmc->status == 'A') {
 		lastValidRmcMsg = *rmc;
 		//memcpy(&lastValidRmcMsg, rmc , sizeof(lastValidRmcMsg));
 	}
@@ -306,7 +306,7 @@ void convertGGAMsg(char *msg, gpsNmeaGGAType_t *gga) {
 
 	gga->recvData++;
 
-	if(gga->quality > 0){
+	if (gga->quality > 0) {
 		lastValidGgaMsg = *gga;
 //		memcpy(&lastValidGgaMsg ,gga , sizeof(lastValidGgaMsg));
 	}
@@ -343,7 +343,7 @@ void convertGSAMsg(char *msg, gpsNmeaGSAType_t *gsa) {
 	gsa->vdop = atoff(tempgsa + 1);
 
 	gsa->recvData++;
-	if(gsa->fixStatus > 1){
+	if (gsa->fixStatus > 1) {
 		lastValidGsaMsg = *gsa;
 //		memcpy(&lastValidGsaMsg ,gsa , sizeof(lastValidGsaMsg));
 	}
@@ -369,14 +369,14 @@ void parseNmeaMsg(void) {
 			else {
 				setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCHING);
 
-				if (strncmp(m_nmeaToken, NMEA_GSA_MSG_HEADER, (size_t)sizeof(NMEA_GSA_MSG_HEADER)) == 0) {
-					convertGSAMsg(m_nmeaToken, &gsaMsg);
-				}
-				else if (strncmp(m_nmeaToken, NMEA_GGA_MSG_HEADER, (size_t)sizeof(NMEA_GGA_MSG_HEADER)) == 0) {
+				if (strstr(m_nmeaToken, NMEA_GGA_MSG_HEADER) != NULL) {
 					convertGGAMsg(m_nmeaToken, &ggaMsg);
 				}
-				else if (strncmp(m_nmeaToken, NMEA_RMC_MSG_HEADER, (size_t)sizeof(NMEA_RMC_MSG_HEADER)) == 0) {
+				else if (strstr(m_nmeaToken, NMEA_RMC_MSG_HEADER) != NULL) {
 					convertRMCMsg(m_nmeaToken, &rmcMsg);
+				}
+				else if (strstr(m_nmeaToken, NMEA_GSA_MSG_HEADER) != NULL) {
+					convertGSAMsg(m_nmeaToken, &gsaMsg);
 				}
 
 				setGPSNmeaMsgSearchState(GPS_NMEA_MSG_SEARCH_FINISH);
