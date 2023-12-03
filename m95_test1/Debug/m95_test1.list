@@ -31,25 +31,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
  13 .comment      00000043  00000000  00000000  00020298  2**0
                   CONTENTS, READONLY
- 14 .debug_info   00021d77  00000000  00000000  000202db  2**0
+ 14 .debug_info   00021e33  00000000  00000000  000202db  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_abbrev 00004abd  00000000  00000000  00042052  2**0
+ 15 .debug_abbrev 00004aa6  00000000  00000000  0004210e  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_loclists 0000e3fd  00000000  00000000  00046b0f  2**0
+ 16 .debug_loclists 0000e3fd  00000000  00000000  00046bb4  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_aranges 00001120  00000000  00000000  00054f10  2**3
+ 17 .debug_aranges 00001120  00000000  00000000  00054fb8  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_rnglists 00001f8b  00000000  00000000  00056030  2**0
+ 18 .debug_rnglists 00001f7f  00000000  00000000  000560d8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_macro  000242a7  00000000  00000000  00057fbb  2**0
+ 19 .debug_macro  000242a7  00000000  00000000  00058057  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_line   000233b2  00000000  00000000  0007c262  2**0
+ 20 .debug_line   000233ae  00000000  00000000  0007c2fe  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_str    000d31f9  00000000  00000000  0009f614  2**0
+ 21 .debug_str    000d325f  00000000  00000000  0009f6ac  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_frame  00004f7c  00000000  00000000  00172810  2**2
+ 22 .debug_frame  00004f7c  00000000  00000000  0017290c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 23 .debug_line_str 00000067  00000000  00000000  0017778c  2**0
+ 23 .debug_line_str 00000067  00000000  00000000  00177888  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -8862,289 +8862,288 @@ void obd2GetPeriodicMsg(void) {
  800417e:	602c      	str	r4, [r5, #0]
 	}
 	switch (state) {
- 8004180:	4f67      	ldr	r7, [pc, #412]	; (8004320 <obd2GetPeriodicMsg+0x1c0>)
- 8004182:	783e      	ldrb	r6, [r7, #0]
- 8004184:	b1ce      	cbz	r6, 80041ba <obd2GetPeriodicMsg+0x5a>
- 8004186:	2e01      	cmp	r6, #1
- 8004188:	d048      	beq.n	800421c <obd2GetPeriodicMsg+0xbc>
-	m_obd2GetPeriodicDataState = state;
- 800418a:	2102      	movs	r1, #2
- 800418c:	7011      	strb	r1, [r2, #0]
+ 8004180:	4e67      	ldr	r6, [pc, #412]	; (8004320 <obd2GetPeriodicMsg+0x1c0>)
+ 8004182:	7837      	ldrb	r7, [r6, #0]
+ 8004184:	b1d7      	cbz	r7, 80041bc <obd2GetPeriodicMsg+0x5c>
+ 8004186:	2f01      	cmp	r7, #1
+ 8004188:	d049      	beq.n	800421e <obd2GetPeriodicMsg+0xbe>
 		break;
 	}
 	case EXIT:
 	default:
 		timeout = 0;
 		noDataCount = 0;
- 800418e:	4a65      	ldr	r2, [pc, #404]	; (8004324 <obd2GetPeriodicMsg+0x1c4>)
+ 800418a:	4966      	ldr	r1, [pc, #408]	; (8004324 <obd2GetPeriodicMsg+0x1c4>)
 		state = OBD2_GET_PIDs_DATA;
 		setObd2GetPeriodicDataState(OBD2_PERIODIC_DATA_TIMEOUT);
 	break;
 	}
 
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 8004190:	f8d8 0000 	ldr.w	r0, [r8]
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(25000)) {
+ 800418c:	f8d8 0000 	ldr.w	r0, [r8]
 		timeout = 0;
- 8004194:	2300      	movs	r3, #0
+ 8004190:	2300      	movs	r3, #0
 		noDataCount = 0;
- 8004196:	7013      	strb	r3, [r2, #0]
+ 8004192:	700b      	strb	r3, [r1, #0]
 		obd2DataIDsIndex = 0;
- 8004198:	4a63      	ldr	r2, [pc, #396]	; (8004328 <obd2GetPeriodicMsg+0x1c8>)
-		state = OBD2_GET_PIDs_DATA;
- 800419a:	703b      	strb	r3, [r7, #0]
-		obd2DataIDsIndex = 0;
- 800419c:	7013      	strb	r3, [r2, #0]
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 800419e:	f242 710f 	movw	r1, #9999	; 0x270f
-		retry = 0;
- 80041a2:	4a62      	ldr	r2, [pc, #392]	; (800432c <obd2GetPeriodicMsg+0x1cc>)
+ 8004194:	4964      	ldr	r1, [pc, #400]	; (8004328 <obd2GetPeriodicMsg+0x1c8>)
 		timeout = 0;
- 80041a4:	602b      	str	r3, [r5, #0]
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 80041a6:	4288      	cmp	r0, r1
+ 8004196:	602b      	str	r3, [r5, #0]
+		obd2DataIDsIndex = 0;
+ 8004198:	700b      	strb	r3, [r1, #0]
 		retry = 0;
- 80041a8:	7013      	strb	r3, [r2, #0]
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 80041aa:	d903      	bls.n	80041b4 <obd2GetPeriodicMsg+0x54>
+ 800419a:	4964      	ldr	r1, [pc, #400]	; (800432c <obd2GetPeriodicMsg+0x1cc>)
+		state = OBD2_GET_PIDs_DATA;
+ 800419c:	7033      	strb	r3, [r6, #0]
+		retry = 0;
+ 800419e:	700b      	strb	r3, [r1, #0]
+	m_obd2GetPeriodicDataState = state;
+ 80041a0:	2302      	movs	r3, #2
+ 80041a2:	7013      	strb	r3, [r2, #0]
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(25000)) {
+ 80041a4:	f246 13a7 	movw	r3, #24999	; 0x61a7
+ 80041a8:	4298      	cmp	r0, r3
+ 80041aa:	d904      	bls.n	80041b6 <obd2GetPeriodicMsg+0x56>
  80041ac:	2301      	movs	r3, #1
 		retry++;
 		timeout = 0;
- 80041ae:	2100      	movs	r1, #0
+ 80041ae:	2200      	movs	r2, #0
 		retry++;
- 80041b0:	7013      	strb	r3, [r2, #0]
+ 80041b0:	700b      	strb	r3, [r1, #0]
 		timeout = 0;
- 80041b2:	6029      	str	r1, [r5, #0]
+ 80041b2:	602a      	str	r2, [r5, #0]
+		state = OBD2_GET_PIDs_DATA;
+ 80041b4:	7032      	strb	r2, [r6, #0]
 	}
 	else if (retry >= 3) {
 		state = EXIT;
 	}
 }
- 80041b4:	b002      	add	sp, #8
- 80041b6:	e8bd 87f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, pc}
+ 80041b6:	b002      	add	sp, #8
+ 80041b8:	e8bd 87f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, pc}
 		if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
- 80041ba:	4a5b      	ldr	r2, [pc, #364]	; (8004328 <obd2GetPeriodicMsg+0x1c8>)
- 80041bc:	7813      	ldrb	r3, [r2, #0]
- 80041be:	2b0a      	cmp	r3, #10
+ 80041bc:	4a5a      	ldr	r2, [pc, #360]	; (8004328 <obd2GetPeriodicMsg+0x1c8>)
+ 80041be:	7813      	ldrb	r3, [r2, #0]
+ 80041c0:	2b0a      	cmp	r3, #10
 		sprintf(&strPidsNumber[0], "%s\r", obd2DataIDs[obd2DataIDsIndex++]);
- 80041c0:	bf99      	ittee	ls
- 80041c2:	1c59      	addls	r1, r3, #1
- 80041c4:	b2c9      	uxtbls	r1, r1
- 80041c6:	2101      	movhi	r1, #1
- 80041c8:	4633      	movhi	r3, r6
- 80041ca:	7011      	strb	r1, [r2, #0]
- 80041cc:	4a58      	ldr	r2, [pc, #352]	; (8004330 <obd2GetPeriodicMsg+0x1d0>)
- 80041ce:	4959      	ldr	r1, [pc, #356]	; (8004334 <obd2GetPeriodicMsg+0x1d4>)
- 80041d0:	f852 2023 	ldr.w	r2, [r2, r3, lsl #2]
- 80041d4:	4668      	mov	r0, sp
- 80041d6:	f004 fc6b 	bl	8008ab0 <siprintf>
+ 80041c2:	bf99      	ittee	ls
+ 80041c4:	1c59      	addls	r1, r3, #1
+ 80041c6:	b2c9      	uxtbls	r1, r1
+ 80041c8:	2101      	movhi	r1, #1
+ 80041ca:	463b      	movhi	r3, r7
+ 80041cc:	7011      	strb	r1, [r2, #0]
+ 80041ce:	4a58      	ldr	r2, [pc, #352]	; (8004330 <obd2GetPeriodicMsg+0x1d0>)
+ 80041d0:	4958      	ldr	r1, [pc, #352]	; (8004334 <obd2GetPeriodicMsg+0x1d4>)
+ 80041d2:	f852 2023 	ldr.w	r2, [r2, r3, lsl #2]
+ 80041d6:	4668      	mov	r0, sp
+ 80041d8:	f004 fc6a 	bl	8008ab0 <siprintf>
 		if (!sendOBDUartData((uint8_t*) strPidsNumber, strlen(strPidsNumber))) {
- 80041da:	4668      	mov	r0, sp
- 80041dc:	f7fc f848 	bl	8000270 <strlen>
+ 80041dc:	4668      	mov	r0, sp
+ 80041de:	f7fc f847 	bl	8000270 <strlen>
 	m_obdUartBuffCnt = 0;
- 80041e0:	2400      	movs	r4, #0
- 80041e2:	4b55      	ldr	r3, [pc, #340]	; (8004338 <obd2GetPeriodicMsg+0x1d8>)
+ 80041e2:	2400      	movs	r4, #0
+ 80041e4:	4b54      	ldr	r3, [pc, #336]	; (8004338 <obd2GetPeriodicMsg+0x1d8>)
 		if (!sendOBDUartData((uint8_t*) strPidsNumber, strlen(strPidsNumber))) {
- 80041e4:	4606      	mov	r6, r0
+ 80041e6:	4607      	mov	r7, r0
 	memset(m_obdUartBuf, 0, sizeof(m_obdUartBuf));
- 80041e6:	4621      	mov	r1, r4
- 80041e8:	4854      	ldr	r0, [pc, #336]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
+ 80041e8:	4621      	mov	r1, r4
+ 80041ea:	4854      	ldr	r0, [pc, #336]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
 	m_obdUartBuffCnt = 0;
- 80041ea:	701c      	strb	r4, [r3, #0]
+ 80041ec:	701c      	strb	r4, [r3, #0]
 	memset(m_obdUartBuf, 0, sizeof(m_obdUartBuf));
- 80041ec:	2280      	movs	r2, #128	; 0x80
- 80041ee:	f004 fcc2 	bl	8008b76 <memset>
+ 80041ee:	2280      	movs	r2, #128	; 0x80
+ 80041f0:	f004 fcc1 	bl	8008b76 <memset>
 	m_obdUartRecvCompleted = state;
- 80041f2:	4b53      	ldr	r3, [pc, #332]	; (8004340 <obd2GetPeriodicMsg+0x1e0>)
+ 80041f4:	4b52      	ldr	r3, [pc, #328]	; (8004340 <obd2GetPeriodicMsg+0x1e0>)
 	return sendBtUartData(data, len);
- 80041f4:	b2f1      	uxtb	r1, r6
- 80041f6:	4668      	mov	r0, sp
+ 80041f6:	b2f9      	uxtb	r1, r7
+ 80041f8:	4668      	mov	r0, sp
 	m_obdUartRecvCompleted = state;
- 80041f8:	701c      	strb	r4, [r3, #0]
+ 80041fa:	701c      	strb	r4, [r3, #0]
 	return sendBtUartData(data, len);
- 80041fa:	f7fc ffd9 	bl	80011b0 <sendBtUartData>
+ 80041fc:	f7fc ffd8 	bl	80011b0 <sendBtUartData>
 		if (!sendOBDUartData((uint8_t*) strPidsNumber, strlen(strPidsNumber))) {
- 80041fe:	bb38      	cbnz	r0, 8004250 <obd2GetPeriodicMsg+0xf0>
+ 8004200:	bb38      	cbnz	r0, 8004252 <obd2GetPeriodicMsg+0xf2>
 			timeout = getOBDSystick();
- 8004200:	f8d8 2000 	ldr.w	r2, [r8]
- 8004204:	602a      	str	r2, [r5, #0]
+ 8004202:	f8d8 2000 	ldr.w	r2, [r8]
+ 8004206:	602a      	str	r2, [r5, #0]
 			state = OBD2_GET_PIDs_DATA_WAIT;
- 8004206:	2301      	movs	r3, #1
- 8004208:	703b      	strb	r3, [r7, #0]
+ 8004208:	2301      	movs	r3, #1
+ 800420a:	7033      	strb	r3, [r6, #0]
 	else if (retry >= 3) {
- 800420a:	4b48      	ldr	r3, [pc, #288]	; (800432c <obd2GetPeriodicMsg+0x1cc>)
- 800420c:	781b      	ldrb	r3, [r3, #0]
- 800420e:	2b02      	cmp	r3, #2
+ 800420c:	4b47      	ldr	r3, [pc, #284]	; (800432c <obd2GetPeriodicMsg+0x1cc>)
+ 800420e:	781b      	ldrb	r3, [r3, #0]
+ 8004210:	2b02      	cmp	r3, #2
 		state = EXIT;
- 8004210:	bf84      	itt	hi
- 8004212:	2302      	movhi	r3, #2
- 8004214:	703b      	strbhi	r3, [r7, #0]
+ 8004212:	bf84      	itt	hi
+ 8004214:	2302      	movhi	r3, #2
+ 8004216:	7033      	strbhi	r3, [r6, #0]
 }
- 8004216:	b002      	add	sp, #8
- 8004218:	e8bd 87f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, pc}
+ 8004218:	b002      	add	sp, #8
+ 800421a:	e8bd 87f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, pc}
 	return m_obdUartRecvCompleted;
- 800421c:	4b48      	ldr	r3, [pc, #288]	; (8004340 <obd2GetPeriodicMsg+0x1e0>)
+ 800421e:	4b48      	ldr	r3, [pc, #288]	; (8004340 <obd2GetPeriodicMsg+0x1e0>)
 		if (getOBDRecvCompleted()) {
- 800421e:	781b      	ldrb	r3, [r3, #0]
- 8004220:	b153      	cbz	r3, 8004238 <obd2GetPeriodicMsg+0xd8>
+ 8004220:	781b      	ldrb	r3, [r3, #0]
+ 8004222:	b153      	cbz	r3, 800423a <obd2GetPeriodicMsg+0xda>
 	return strstr((char*) m_obdUartBuf, resp) != NULL;
- 8004222:	4948      	ldr	r1, [pc, #288]	; (8004344 <obd2GetPeriodicMsg+0x1e4>)
- 8004224:	4845      	ldr	r0, [pc, #276]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
- 8004226:	f004 fd29 	bl	8008c7c <strstr>
+ 8004224:	4947      	ldr	r1, [pc, #284]	; (8004344 <obd2GetPeriodicMsg+0x1e4>)
+ 8004226:	4845      	ldr	r0, [pc, #276]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
+ 8004228:	f004 fd28 	bl	8008c7c <strstr>
 			if (findOBDATCommandResp("UNABLE TO CONNECT")) {
- 800422a:	4681      	mov	r9, r0
- 800422c:	b190      	cbz	r0, 8004254 <obd2GetPeriodicMsg+0xf4>
+ 800422c:	4681      	mov	r9, r0
+ 800422e:	b190      	cbz	r0, 8004256 <obd2GetPeriodicMsg+0xf6>
 				obd2VehicleData.obd2SocketConnected = 0;
- 800422e:	4a46      	ldr	r2, [pc, #280]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
+ 8004230:	4a45      	ldr	r2, [pc, #276]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
 				state = OBD2_GET_PIDs_DATA;
- 8004230:	2300      	movs	r3, #0
- 8004232:	703b      	strb	r3, [r7, #0]
+ 8004232:	2300      	movs	r3, #0
+ 8004234:	7033      	strb	r3, [r6, #0]
 				obd2VehicleData.obd2SocketConnected = 0;
- 8004234:	f882 3030 	strb.w	r3, [r2, #48]	; 0x30
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 8004238:	f8d8 3000 	ldr.w	r3, [r8]
- 800423c:	f242 720f 	movw	r2, #9999	; 0x270f
- 8004240:	1b1b      	subs	r3, r3, r4
- 8004242:	4293      	cmp	r3, r2
- 8004244:	d9e1      	bls.n	800420a <obd2GetPeriodicMsg+0xaa>
+ 8004236:	f882 3030 	strb.w	r3, [r2, #48]	; 0x30
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(25000)) {
+ 800423a:	f8d8 3000 	ldr.w	r3, [r8]
+ 800423e:	f246 12a7 	movw	r2, #24999	; 0x61a7
+ 8004242:	1b1b      	subs	r3, r3, r4
+ 8004244:	4293      	cmp	r3, r2
+ 8004246:	d9e1      	bls.n	800420c <obd2GetPeriodicMsg+0xac>
 	else if (retry >= 3) {
- 8004246:	4a39      	ldr	r2, [pc, #228]	; (800432c <obd2GetPeriodicMsg+0x1cc>)
+ 8004248:	4938      	ldr	r1, [pc, #224]	; (800432c <obd2GetPeriodicMsg+0x1cc>)
 		retry++;
- 8004248:	7813      	ldrb	r3, [r2, #0]
- 800424a:	3301      	adds	r3, #1
- 800424c:	b2db      	uxtb	r3, r3
- 800424e:	e7ae      	b.n	80041ae <obd2GetPeriodicMsg+0x4e>
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 8004250:	682c      	ldr	r4, [r5, #0]
- 8004252:	e7f1      	b.n	8004238 <obd2GetPeriodicMsg+0xd8>
+ 800424a:	780b      	ldrb	r3, [r1, #0]
+ 800424c:	3301      	adds	r3, #1
+ 800424e:	b2db      	uxtb	r3, r3
+ 8004250:	e7ad      	b.n	80041ae <obd2GetPeriodicMsg+0x4e>
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(25000)) {
+ 8004252:	682c      	ldr	r4, [r5, #0]
+ 8004254:	e7f1      	b.n	800423a <obd2GetPeriodicMsg+0xda>
 	return strstr((char*) m_obdUartBuf, resp) != NULL;
- 8004254:	493d      	ldr	r1, [pc, #244]	; (800434c <obd2GetPeriodicMsg+0x1ec>)
- 8004256:	4839      	ldr	r0, [pc, #228]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
- 8004258:	f004 fd10 	bl	8008c7c <strstr>
+ 8004256:	493d      	ldr	r1, [pc, #244]	; (800434c <obd2GetPeriodicMsg+0x1ec>)
+ 8004258:	4838      	ldr	r0, [pc, #224]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
+ 800425a:	f004 fd0f 	bl	8008c7c <strstr>
 			else if (findOBDATCommandResp("SEARCHING")) {
- 800425c:	4682      	mov	sl, r0
- 800425e:	b130      	cbz	r0, 800426e <obd2GetPeriodicMsg+0x10e>
+ 800425e:	4682      	mov	sl, r0
+ 8004260:	b130      	cbz	r0, 8004270 <obd2GetPeriodicMsg+0x110>
 				state = OBD2_GET_PIDs_DATA;
- 8004260:	4e39      	ldr	r6, [pc, #228]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
- 8004262:	f887 9000 	strb.w	r9, [r7]
+ 8004262:	4f39      	ldr	r7, [pc, #228]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
+ 8004264:	f886 9000 	strb.w	r9, [r6]
 			obd2VehicleData.obd2SocketConnected = 1;
- 8004266:	2301      	movs	r3, #1
- 8004268:	f886 3030 	strb.w	r3, [r6, #48]	; 0x30
- 800426c:	e7e4      	b.n	8004238 <obd2GetPeriodicMsg+0xd8>
+ 8004268:	2301      	movs	r3, #1
+ 800426a:	f887 3030 	strb.w	r3, [r7, #48]	; 0x30
+ 800426e:	e7e4      	b.n	800423a <obd2GetPeriodicMsg+0xda>
 	return strstr((char*) m_obdUartBuf, resp) != NULL;
- 800426e:	4833      	ldr	r0, [pc, #204]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
- 8004270:	213f      	movs	r1, #63	; 0x3f
- 8004272:	f004 fc88 	bl	8008b86 <strchr>
+ 8004270:	4832      	ldr	r0, [pc, #200]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
+ 8004272:	213f      	movs	r1, #63	; 0x3f
+ 8004274:	f004 fc87 	bl	8008b86 <strchr>
 			else if (findOBDATCommandResp("?")) {
- 8004276:	4681      	mov	r9, r0
- 8004278:	b118      	cbz	r0, 8004282 <obd2GetPeriodicMsg+0x122>
+ 8004278:	4681      	mov	r9, r0
+ 800427a:	b118      	cbz	r0, 8004284 <obd2GetPeriodicMsg+0x124>
 				state = OBD2_GET_PIDs_DATA;
- 800427a:	4e33      	ldr	r6, [pc, #204]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
- 800427c:	f887 a000 	strb.w	sl, [r7]
- 8004280:	e7f1      	b.n	8004266 <obd2GetPeriodicMsg+0x106>
+ 800427c:	4f32      	ldr	r7, [pc, #200]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
+ 800427e:	f886 a000 	strb.w	sl, [r6]
+ 8004282:	e7f1      	b.n	8004268 <obd2GetPeriodicMsg+0x108>
 	return strstr((char*) m_obdUartBuf, resp) != NULL;
- 8004282:	4933      	ldr	r1, [pc, #204]	; (8004350 <obd2GetPeriodicMsg+0x1f0>)
- 8004284:	482d      	ldr	r0, [pc, #180]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
- 8004286:	f004 fcf9 	bl	8008c7c <strstr>
+ 8004284:	4932      	ldr	r1, [pc, #200]	; (8004350 <obd2GetPeriodicMsg+0x1f0>)
+ 8004286:	482d      	ldr	r0, [pc, #180]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
+ 8004288:	f004 fcf8 	bl	8008c7c <strstr>
 			else if (findOBDATCommandResp("NO DATA")) {
- 800428a:	b188      	cbz	r0, 80042b0 <obd2GetPeriodicMsg+0x150>
+ 800428c:	b188      	cbz	r0, 80042b2 <obd2GetPeriodicMsg+0x152>
 				if (obd2DataIDsIndex < OBD2_PIDs_SIZE) {
- 800428c:	4b26      	ldr	r3, [pc, #152]	; (8004328 <obd2GetPeriodicMsg+0x1c8>)
- 800428e:	781a      	ldrb	r2, [r3, #0]
- 8004290:	2a0a      	cmp	r2, #10
+ 800428e:	4b26      	ldr	r3, [pc, #152]	; (8004328 <obd2GetPeriodicMsg+0x1c8>)
+ 8004290:	781a      	ldrb	r2, [r3, #0]
+ 8004292:	2a0a      	cmp	r2, #10
 					noDataCount++;
- 8004292:	4a24      	ldr	r2, [pc, #144]	; (8004324 <obd2GetPeriodicMsg+0x1c4>)
+ 8004294:	4a23      	ldr	r2, [pc, #140]	; (8004324 <obd2GetPeriodicMsg+0x1c4>)
 				if (obd2DataIDsIndex < OBD2_PIDs_SIZE) {
- 8004294:	d807      	bhi.n	80042a6 <obd2GetPeriodicMsg+0x146>
+ 8004296:	d807      	bhi.n	80042a8 <obd2GetPeriodicMsg+0x148>
 					noDataCount++;
- 8004296:	7813      	ldrb	r3, [r2, #0]
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 8004298:	682c      	ldr	r4, [r5, #0]
- 800429a:	4e2b      	ldr	r6, [pc, #172]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
+ 8004298:	7813      	ldrb	r3, [r2, #0]
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(25000)) {
+ 800429a:	682c      	ldr	r4, [r5, #0]
+ 800429c:	4f2a      	ldr	r7, [pc, #168]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
 					state = OBD2_GET_PIDs_DATA;
- 800429c:	f887 9000 	strb.w	r9, [r7]
+ 800429e:	f886 9000 	strb.w	r9, [r6]
 					noDataCount++;
- 80042a0:	3301      	adds	r3, #1
- 80042a2:	7013      	strb	r3, [r2, #0]
- 80042a4:	e7df      	b.n	8004266 <obd2GetPeriodicMsg+0x106>
+ 80042a2:	3301      	adds	r3, #1
+ 80042a4:	7013      	strb	r3, [r2, #0]
+ 80042a6:	e7df      	b.n	8004268 <obd2GetPeriodicMsg+0x108>
 				else if (noDataCount >= OBD2_PIDs_SIZE) {
- 80042a6:	7812      	ldrb	r2, [r2, #0]
- 80042a8:	2a0a      	cmp	r2, #10
- 80042aa:	d81c      	bhi.n	80042e6 <obd2GetPeriodicMsg+0x186>
- 80042ac:	4e26      	ldr	r6, [pc, #152]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
- 80042ae:	e7da      	b.n	8004266 <obd2GetPeriodicMsg+0x106>
+ 80042a8:	7812      	ldrb	r2, [r2, #0]
+ 80042aa:	2a0a      	cmp	r2, #10
+ 80042ac:	d81c      	bhi.n	80042e8 <obd2GetPeriodicMsg+0x188>
+ 80042ae:	4f26      	ldr	r7, [pc, #152]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
+ 80042b0:	e7da      	b.n	8004268 <obd2GetPeriodicMsg+0x108>
 				noDataCount = 0;
- 80042b0:	4b1c      	ldr	r3, [pc, #112]	; (8004324 <obd2GetPeriodicMsg+0x1c4>)
+ 80042b2:	4b1c      	ldr	r3, [pc, #112]	; (8004324 <obd2GetPeriodicMsg+0x1c4>)
 	return strstr((char*) m_obdUartBuf, resp) != NULL;
- 80042b2:	4c28      	ldr	r4, [pc, #160]	; (8004354 <obd2GetPeriodicMsg+0x1f4>)
+ 80042b4:	4c27      	ldr	r4, [pc, #156]	; (8004354 <obd2GetPeriodicMsg+0x1f4>)
 				noDataCount = 0;
- 80042b4:	7018      	strb	r0, [r3, #0]
+ 80042b6:	7018      	strb	r0, [r3, #0]
 	return strstr((char*) m_obdUartBuf, resp) != NULL;
- 80042b6:	4621      	mov	r1, r4
- 80042b8:	4820      	ldr	r0, [pc, #128]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
- 80042ba:	f004 fcdf 	bl	8008c7c <strstr>
+ 80042b8:	4621      	mov	r1, r4
+ 80042ba:	4820      	ldr	r0, [pc, #128]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
+ 80042bc:	f004 fcde 	bl	8008c7c <strstr>
 				if(findOBDATCommandResp("ON")){
- 80042be:	b1d8      	cbz	r0, 80042f8 <obd2GetPeriodicMsg+0x198>
+ 80042c0:	b1d8      	cbz	r0, 80042fa <obd2GetPeriodicMsg+0x19a>
 					memcpy(obd2VehicleData.vehicleIgnStr, "ON", 2);
- 80042c0:	4e21      	ldr	r6, [pc, #132]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
- 80042c2:	8823      	ldrh	r3, [r4, #0]
- 80042c4:	f8a6 302b 	strh.w	r3, [r6, #43]	; 0x2b
+ 80042c2:	4f21      	ldr	r7, [pc, #132]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
+ 80042c4:	8823      	ldrh	r3, [r4, #0]
+ 80042c6:	f8a7 302b 	strh.w	r3, [r7, #43]	; 0x2b
 				convertObd2Data();
- 80042c8:	f7ff fdda 	bl	8003e80 <convertObd2Data>
+ 80042ca:	f7ff fdd9 	bl	8003e80 <convertObd2Data>
 				if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
- 80042cc:	4b16      	ldr	r3, [pc, #88]	; (8004328 <obd2GetPeriodicMsg+0x1c8>)
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 80042ce:	682c      	ldr	r4, [r5, #0]
+ 80042ce:	4b16      	ldr	r3, [pc, #88]	; (8004328 <obd2GetPeriodicMsg+0x1c8>)
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(25000)) {
+ 80042d0:	682c      	ldr	r4, [r5, #0]
 				if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
- 80042d0:	7819      	ldrb	r1, [r3, #0]
+ 80042d2:	7819      	ldrb	r1, [r3, #0]
 				state = OBD2_GET_PIDs_DATA;
- 80042d2:	2200      	movs	r2, #0
+ 80042d4:	2200      	movs	r2, #0
 				if (obd2DataIDsIndex >= OBD2_PIDs_SIZE) {
- 80042d4:	290a      	cmp	r1, #10
+ 80042d6:	290a      	cmp	r1, #10
 					obd2DataIDsIndex = 0;
- 80042d6:	bf84      	itt	hi
- 80042d8:	701a      	strbhi	r2, [r3, #0]
+ 80042d8:	bf84      	itt	hi
+ 80042da:	701a      	strbhi	r2, [r3, #0]
 	m_obd2PeriodicDataState = state;
- 80042da:	4b1f      	ldrhi	r3, [pc, #124]	; (8004358 <obd2GetPeriodicMsg+0x1f8>)
+ 80042dc:	4b1e      	ldrhi	r3, [pc, #120]	; (8004358 <obd2GetPeriodicMsg+0x1f8>)
 				state = OBD2_GET_PIDs_DATA;
- 80042dc:	703a      	strb	r2, [r7, #0]
+ 80042de:	7032      	strb	r2, [r6, #0]
 	m_obd2PeriodicDataState = state;
- 80042de:	bf84      	itt	hi
- 80042e0:	2201      	movhi	r2, #1
- 80042e2:	701a      	strbhi	r2, [r3, #0]
+ 80042e0:	bf84      	itt	hi
+ 80042e2:	2201      	movhi	r2, #1
+ 80042e4:	701a      	strbhi	r2, [r3, #0]
 }
- 80042e4:	e7bf      	b.n	8004266 <obd2GetPeriodicMsg+0x106>
+ 80042e6:	e7bf      	b.n	8004268 <obd2GetPeriodicMsg+0x108>
 					obd2DataIDsIndex = 0;
- 80042e6:	f883 9000 	strb.w	r9, [r3]
+ 80042e8:	f883 9000 	strb.w	r9, [r3]
 					m_changeProtocolFlag = 1;
- 80042ea:	4b1c      	ldr	r3, [pc, #112]	; (800435c <obd2GetPeriodicMsg+0x1fc>)
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
- 80042ec:	682c      	ldr	r4, [r5, #0]
+ 80042ec:	4b1b      	ldr	r3, [pc, #108]	; (800435c <obd2GetPeriodicMsg+0x1fc>)
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(25000)) {
+ 80042ee:	682c      	ldr	r4, [r5, #0]
 					m_changeProtocolFlag = 1;
- 80042ee:	701e      	strb	r6, [r3, #0]
+ 80042f0:	701f      	strb	r7, [r3, #0]
 					state = EXIT;
- 80042f0:	2302      	movs	r3, #2
- 80042f2:	4e15      	ldr	r6, [pc, #84]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
- 80042f4:	703b      	strb	r3, [r7, #0]
+ 80042f2:	2302      	movs	r3, #2
+ 80042f4:	4f14      	ldr	r7, [pc, #80]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
+ 80042f6:	7033      	strb	r3, [r6, #0]
 					m_changeProtocolFlag = 1;
- 80042f6:	e7b6      	b.n	8004266 <obd2GetPeriodicMsg+0x106>
+ 80042f8:	e7b6      	b.n	8004268 <obd2GetPeriodicMsg+0x108>
 	return strstr((char*) m_obdUartBuf, resp) != NULL;
- 80042f8:	4c19      	ldr	r4, [pc, #100]	; (8004360 <obd2GetPeriodicMsg+0x200>)
- 80042fa:	4810      	ldr	r0, [pc, #64]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
+ 80042fa:	4c19      	ldr	r4, [pc, #100]	; (8004360 <obd2GetPeriodicMsg+0x200>)
+ 80042fc:	480f      	ldr	r0, [pc, #60]	; (800433c <obd2GetPeriodicMsg+0x1dc>)
 					memcpy(obd2VehicleData.vehicleIgnStr, "OFF", 3);
- 80042fc:	4e12      	ldr	r6, [pc, #72]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
+ 80042fe:	4f12      	ldr	r7, [pc, #72]	; (8004348 <obd2GetPeriodicMsg+0x1e8>)
 	return strstr((char*) m_obdUartBuf, resp) != NULL;
- 80042fe:	4621      	mov	r1, r4
- 8004300:	f004 fcbc 	bl	8008c7c <strstr>
+ 8004300:	4621      	mov	r1, r4
+ 8004302:	f004 fcbb 	bl	8008c7c <strstr>
 				else if(findOBDATCommandResp("OFF")){
- 8004304:	2800      	cmp	r0, #0
- 8004306:	d0df      	beq.n	80042c8 <obd2GetPeriodicMsg+0x168>
+ 8004306:	2800      	cmp	r0, #0
+ 8004308:	d0df      	beq.n	80042ca <obd2GetPeriodicMsg+0x16a>
 					memcpy(obd2VehicleData.vehicleIgnStr, "OFF", 3);
- 8004308:	8823      	ldrh	r3, [r4, #0]
- 800430a:	f8a6 302b 	strh.w	r3, [r6, #43]	; 0x2b
- 800430e:	78a3      	ldrb	r3, [r4, #2]
- 8004310:	f886 302d 	strb.w	r3, [r6, #45]	; 0x2d
- 8004314:	e7d8      	b.n	80042c8 <obd2GetPeriodicMsg+0x168>
- 8004316:	bf00      	nop
+ 800430a:	8823      	ldrh	r3, [r4, #0]
+ 800430c:	f8a7 302b 	strh.w	r3, [r7, #43]	; 0x2b
+ 8004310:	78a3      	ldrb	r3, [r4, #2]
+ 8004312:	f887 302d 	strb.w	r3, [r7, #45]	; 0x2d
+ 8004316:	e7d8      	b.n	80042ca <obd2GetPeriodicMsg+0x16a>
  8004318:	20001514 	.word	0x20001514
  800431c:	20001445 	.word	0x20001445
  8004320:	2000150f 	.word	0x2000150f

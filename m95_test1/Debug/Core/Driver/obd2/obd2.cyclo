@@ -19,6 +19,6 @@
 ../Core/Driver/obd2/obd2.c:341:19:getPeriodicObdVehicleData	1
 ../Core/Driver/obd2/obd2.c:345:6:convertObd2Data	24
 ../Core/Driver/obd2/obd2.c:462:6:obd2GetPeriodicMsg	19
-../Core/Driver/obd2/obd2.c:553:6:obd2Control	11
-../Core/Driver/obd2/obd2.c:584:6:OBD_Virtual_Systick_Handler	1
-../Core/Driver/obd2/obd2.c:592:6:OBD_Virtual_Rx_Completed_Callback	3
+../Core/Driver/obd2/obd2.c:554:6:obd2Control	11
+../Core/Driver/obd2/obd2.c:585:6:OBD_Virtual_Systick_Handler	1
+../Core/Driver/obd2/obd2.c:593:6:OBD_Virtual_Rx_Completed_Callback	3

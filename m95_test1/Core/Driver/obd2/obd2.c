@@ -541,9 +541,10 @@ void obd2GetPeriodicMsg(void) {
 	break;
 	}
 
-	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(10000)) {
+	if (getOBDSystick() - timeout >= OBD_HAL_TIMEOUT_UNIT1MS(25000)) {
 		retry++;
 		timeout = 0;
+		state = OBD2_GET_PIDs_DATA;
 	}
 	else if (retry >= 3) {
 		state = EXIT;
