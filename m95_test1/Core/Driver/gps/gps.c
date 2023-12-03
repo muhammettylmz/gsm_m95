@@ -155,18 +155,18 @@ void gpsInit(void *uart) {
 	GPS_Virtual_Rx_IT();
 
 
-//	HAL_UART_Transmit(m_gpsUart, ubxGPSFullPowerCfg, 16, 200);
-//	HAL_Delay(100);
-//	HAL_UART_Transmit(m_gpsUart, ubxAntennaCfg, 12, 200);
-//	HAL_Delay(100);
-//	HAL_UART_Transmit(m_gpsUart, ubxNavigateModeCfg, 44, 200);
-//	HAL_Delay(100);
-//	HAL_UART_Transmit(m_gpsUart, ubxEnableOdometerCfg, 28, 200);
-//	HAL_Delay(100);
-//	HAL_UART_Transmit(m_gpsUart, ubxGNSSCfg, 68, 300);
-//	HAL_Delay(100);
-//	HAL_UART_Transmit(m_gpsUart, ubxGNSSRunningCfg, 16, 200);
-//	HAL_Delay(100);
+	HAL_UART_Transmit(m_gpsUart, ubxGPSFullPowerCfg, 16, 200);
+	HAL_Delay(100);
+	HAL_UART_Transmit(m_gpsUart, ubxAntennaCfg, 12, 200);
+	HAL_Delay(100);
+	HAL_UART_Transmit(m_gpsUart, ubxNavigateModeCfg, 44, 200);
+	HAL_Delay(100);
+	HAL_UART_Transmit(m_gpsUart, ubxEnableOdometerCfg, 28, 200);
+	HAL_Delay(100);
+	HAL_UART_Transmit(m_gpsUart, ubxGNSSCfg, 68, 300);
+	HAL_Delay(100);
+	HAL_UART_Transmit(m_gpsUart, ubxGNSSRunningCfg, 16, 200);
+	HAL_Delay(100);
 }
 
 void GPS_Virtual_Systick(void) {
