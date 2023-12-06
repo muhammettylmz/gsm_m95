@@ -281,8 +281,7 @@ void memsControl(void) {
 	if (ACC_XYZ_NEW_DATA_AVAILABLE(m_accStatus)) {
 
 		m_accData[m_accDataCnt] = LIS3DSH_GetDataScaled();
-//		memsDebugAcc("%.6f\t%.6f\t%.6f\r\n", m_accData[m_accDataCnt].x,
-//				m_accData[m_accDataCnt].y, m_accData[m_accDataCnt].z);
+
 		if (m_accDataCnt > 1) {
 			checkShakeAxesCnt(m_accData, m_accDataCnt, &m_accShakeDetect);
 		}

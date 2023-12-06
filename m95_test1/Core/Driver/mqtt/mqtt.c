@@ -95,6 +95,10 @@ uint8_t m_mqttPublishTimeout = 0;
 uint8_t deleteCertKey(void);
 uint8_t writeCertKey(void);
 
+mqttPubReqState_e getMqttPubReqState(void) {
+	return m_mqttPubReqState;
+}
+
 void setMQTTPublishReadyState(mqttPublishReady_e state) {
 	m_publishReady = state;
 }
@@ -867,7 +871,7 @@ uint8_t mqttPubMessage(uint8_t *topic, uint8_t *value, uint16_t len) {
 		m_mqttPubReqState = MQTT_PUBLISH_TIMEOUT;
 		customDebugMsg("MQTT Publish send TIMEOUT... \r\n");
 	}
-	//HAL_Delay(1000);
+
 	return 0;
 }
 
@@ -899,12 +903,7 @@ double test_latitude = 29.12;
 uint32_t test_prevtimeout = 0;
 
 uint8_t rawData[128];
-
-void mqttControl(void) {
-	if (getMQTTConfigState() != MQTT_CONFIG_FINISH) {
-		mqttInit();
-		return;
-	}
+static void checkMqttBrokerLive(void) {
 	//check mqtt open closed. +QMTSTAT: 0,1
 	if (getRecvCompleted()) {
 		if (findATCommandResp((uint8_t*) "+QMTSTAT:")) {
@@ -916,25 +915,34 @@ void mqttControl(void) {
 			}
 		}
 	}
+}
 
+static uint8_t checkAndTryMqttBrokerOpen(void) {
 	if (getMQTTOpenState() != MQTT_OPEN_SUCCESS) {
 		mqttOpenBroker(MQTT_AWS_URL, MQTT_AWS_PORT);
-		return;
+		return 1;
 	}
-//
+	return 0;
+}
+static uint8_t checkMqttOpenStateAndConn(void) {
 	if (getMQTTConnectState() != MQTT_CONNECTED) {
 		mqttConnect(MQTT_CLIENT);
-		return;
+		return 1;
 	}
+	return 0;
+}
 
+static void calcVehicleSpeedTimeout(void) {
 	if (vehicleData.vehicleSpeed != 0) {
 		m_vehicleSpeedTimeout = MQTT_PUBLISH_VEHICLE_SPEED_TIMEOUT_CALC(vehicleData.vehicleSpeed);
 	}
 	else {
 		m_vehicleSpeedTimeout = MQTT_PUBLISH_DEFAULT_TIMEOUT_MS;
 	}
+}
 
-	if ((getMQTTConnectState() == MQTT_CONNECTED && m_publishReady == PUBLISH_READY
+static void readyMqttPublishData(void) {
+	if ((getMQTTConnectState() == MQTT_CONNECTED
 			&& getObd2PeroidicDataCompletedState() == OBD2_PERIODIC_DATA_COMPLETED)
 			|| m_mqttPublishTimeout) {
 
@@ -951,8 +959,41 @@ void mqttControl(void) {
 				vehicleData.vehicleOdometer, vehicleData.vehicleSpeed, vehicleData.fuelLevelInput,
 				test_latitude, test_longitude);
 
-		mqttPubMessage(test_topic, test_json_value, (strlen((char*) test_json_value) + 2));
+		m_publishReady = PUBLISH_READY;
 	}
+}
+
+static void publishMqttData(void) {
+	//publish yapana kadar burayı işletecek.
+	if (m_publishReady == PUBLISH_READY) {
+		mqttPubMessage(test_topic, test_json_value, (strlen((char*) test_json_value) + 2));
+		if (getMqttPubReqState() == MQTT_PUBLISH_SUCCESS) {
+			m_publishReady = PUBLISH_FINISH;
+		}
+	}
+}
+
+void mqttControl(void) {
+	if (getMQTTConfigState() != MQTT_CONFIG_FINISH) {
+		mqttInit();
+		return;
+	}
+
+	checkMqttBrokerLive();
+
+	if (checkAndTryMqttBrokerOpen()) {
+		return;
+	}
+
+	if (checkMqttOpenStateAndConn()) {
+		return;
+	}
+
+	calcVehicleSpeedTimeout();
+
+	readyMqttPublishData();
+
+	publishMqttData();
 
 	/*
 	 * */

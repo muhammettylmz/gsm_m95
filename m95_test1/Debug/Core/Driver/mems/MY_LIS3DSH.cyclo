@@ -14,5 +14,5 @@
 ../Core/Driver/mems/MY_LIS3DSH.c:254:6:checkAxesShakeDetect	4
 ../Core/Driver/mems/MY_LIS3DSH.c:268:6:clearAxesShakeCnt	1
 ../Core/Driver/mems/MY_LIS3DSH.c:274:6:memsControl	8
-../Core/Driver/mems/MY_LIS3DSH.c:304:6:MEMS_Virtual_GPIO_EXTI	1
-../Core/Driver/mems/MY_LIS3DSH.c:308:6:MEMS_Virtual_Systick_Handler	1
+../Core/Driver/mems/MY_LIS3DSH.c:303:6:MEMS_Virtual_GPIO_EXTI	1
+../Core/Driver/mems/MY_LIS3DSH.c:307:6:MEMS_Virtual_Systick_Handler	1
